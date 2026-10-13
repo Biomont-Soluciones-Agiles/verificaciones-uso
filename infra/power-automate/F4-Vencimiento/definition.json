@@ -1,0 +1,329 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_sharepointonline": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "vu_sharepoint"
+        },
+        "api": {
+          "name": "shared_sharepointonline"
+        }
+      },
+      "shared_office365": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "vu_office365"
+        },
+        "api": {
+          "name": "shared_office365"
+        }
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        },
+        "vu_SiteUrl (vu_SiteUrl)": {
+          "defaultValue": "https://biomont.sharepoint.com/sites/VerificacionUso",
+          "type": "String",
+          "metadata": {
+            "schemaName": "vu_SiteUrl",
+            "description": "URL del sitio SharePoint de Verificacion de uso"
+          }
+        },
+        "vu_ListaVerificaciones (vu_ListaVerificaciones)": {
+          "defaultValue": "VU_Verificaciones",
+          "type": "String",
+          "metadata": {
+            "schemaName": "vu_ListaVerificaciones",
+            "description": "Nombre (o GUID) de la lista VU_Verificaciones"
+          }
+        },
+        "vu_ListaSoluciones (vu_ListaSoluciones)": {
+          "defaultValue": "VU_Soluciones",
+          "type": "String",
+          "metadata": {
+            "schemaName": "vu_ListaSoluciones",
+            "description": "Nombre (o GUID) de la lista VU_Soluciones"
+          }
+        },
+        "vu_ListaNotificaciones (vu_ListaNotificaciones)": {
+          "defaultValue": "VU_Notificaciones",
+          "type": "String",
+          "metadata": {
+            "schemaName": "vu_ListaNotificaciones",
+            "description": "Nombre (o GUID) de la lista VU_Notificaciones"
+          }
+        }
+      },
+      "triggers": {
+        "Recurrencia_semanal_lunes_0700_Lima": {
+          "recurrence": {
+            "frequency": "Week",
+            "interval": 1,
+            "timeZone": "SA Pacific Standard Time",
+            "schedule": {
+              "hours": [
+                "7"
+              ],
+              "minutes": [
+                0
+              ],
+              "weekDays": [
+                "Monday"
+              ]
+            }
+          },
+          "type": "Recurrence"
+        }
+      },
+      "actions": {
+        "Hoy_Lima": {
+          "runAfter": {},
+          "type": "Compose",
+          "inputs": "@formatDateTime(convertTimeZone(utcNow(), 'UTC', 'SA Pacific Standard Time'), 'yyyy-MM-dd')"
+        },
+        "Limite_30_dias": {
+          "runAfter": {
+            "Hoy_Lima": [
+              "Succeeded"
+            ]
+          },
+          "type": "Compose",
+          "inputs": "@formatDateTime(addDays(convertTimeZone(utcNow(), 'UTC', 'SA Pacific Standard Time'), 30), 'yyyy-MM-dd')"
+        },
+        "Obtener_soluciones_por_vencer": {
+          "runAfter": {
+            "Limite_30_dias": [
+              "Succeeded"
+            ]
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_sharepointonline",
+              "operationId": "GetItems",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+            },
+            "parameters": {
+              "dataset": "@parameters('vu_SiteUrl (vu_SiteUrl)')",
+              "table": "@parameters('vu_ListaSoluciones (vu_ListaSoluciones)')",
+              "$filter": "ProximaVU le '@{outputs('Limite_30_dias')}T23:59:59Z'"
+            }
+          },
+          "runtimeConfiguration": {
+            "paginationPolicy": {
+              "minimumItemCount": 5000
+            }
+          }
+        },
+        "Para_cada_solucion": {
+          "foreach": "@body('Obtener_soluciones_por_vencer')?['value']",
+          "actions": {
+            "Buscar_verificacion_activa": {
+              "runAfter": {},
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_sharepointonline",
+                  "operationId": "GetItems",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+                },
+                "parameters": {
+                  "dataset": "@parameters('vu_SiteUrl (vu_SiteUrl)')",
+                  "table": "@parameters('vu_ListaVerificaciones (vu_ListaVerificaciones)')",
+                  "$filter": "Solucion/Id eq @{items('Para_cada_solucion')?['ID']} and Estado ne 'Aprobada' and Estado ne 'Cancelada'",
+                  "$top": 1
+                }
+              }
+            },
+            "Si_no_hay_verificacion_activa": {
+              "actions": {
+                "Fecha_ProximaVU": {
+                  "runAfter": {},
+                  "type": "Compose",
+                  "inputs": "@take(string(items('Para_cada_solucion')?['ProximaVU']), 10)"
+                },
+                "Dias_para_vencer": {
+                  "runAfter": {
+                    "Fecha_ProximaVU": [
+                      "Succeeded"
+                    ]
+                  },
+                  "type": "Compose",
+                  "inputs": "@div(sub(ticks(concat(outputs('Fecha_ProximaVU'), 'T00:00:00Z')), ticks(concat(outputs('Hoy_Lima'), 'T00:00:00Z'))), 864000000000)"
+                },
+                "Si_vencida_y_no_Pendiente": {
+                  "actions": {
+                    "Marcar_EstadoVU_Pendiente": {
+                      "runAfter": {},
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "connectionName": "shared_sharepointonline",
+                          "operationId": "PatchItem",
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+                        },
+                        "parameters": {
+                          "dataset": "@parameters('vu_SiteUrl (vu_SiteUrl)')",
+                          "table": "@parameters('vu_ListaSoluciones (vu_ListaSoluciones)')",
+                          "id": "@items('Para_cada_solucion')?['ID']",
+                          "item/Title": "@items('Para_cada_solucion')?['Title']",
+                          "item/Proceso/Id": "@items('Para_cada_solucion')?['Proceso/Id']",
+                          "item/Responsable/Claims": "@items('Para_cada_solucion')?['Responsable/Claims']",
+                          "item/PeriodicidadMeses": "@items('Para_cada_solucion')?['PeriodicidadMeses']",
+                          "item/EstadoVU/Value": "Pendiente"
+                        }
+                      }
+                    }
+                  },
+                  "runAfter": {
+                    "Dias_para_vencer": [
+                      "Succeeded"
+                    ]
+                  },
+                  "expression": {
+                    "and": [
+                      {
+                        "less": [
+                          "@outputs('Dias_para_vencer')",
+                          0
+                        ]
+                      },
+                      {
+                        "not": {
+                          "equals": [
+                            "@items('Para_cada_solucion')?['EstadoVU/Value']",
+                            "Pendiente"
+                          ]
+                        }
+                      }
+                    ]
+                  },
+                  "type": "If",
+                  "else": {
+                    "actions": {}
+                  }
+                },
+                "Enviar_recordatorio": {
+                  "runAfter": {
+                    "Si_vencida_y_no_Pendiente": [
+                      "Succeeded"
+                    ]
+                  },
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "connectionName": "shared_office365",
+                      "operationId": "SendEmailV2",
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365"
+                    },
+                    "parameters": {
+                      "emailMessage/To": "@{items('Para_cada_solucion')?['Responsable/Email']}",
+                      "emailMessage/Subject": "@{if(less(outputs('Dias_para_vencer'), 0), 'Verificación de uso vencida', 'Verificación de uso por vencer')}: @{items('Para_cada_solucion')?['Title']} (@{formatDateTime(outputs('Fecha_ProximaVU'), 'dd/MM/yyyy')})",
+                      "emailMessage/Body": "<p>Hola @{items('Para_cada_solucion')?['Responsable/DisplayName']}:</p><p>La verificación de uso de la solución <b>@{items('Para_cada_solucion')?['Title']}</b> @{if(less(outputs('Dias_para_vencer'), 0), 'venció el', 'vence el')} <b>@{formatDateTime(outputs('Fecha_ProximaVU'), 'dd/MM/yyyy')}</b>@{if(less(outputs('Dias_para_vencer'), 0), '', concat(' (en ', string(outputs('Dias_para_vencer')), ' días)'))} y no tiene ninguna verificación activa.</p><p>Programe una nueva verificación desde la app <i>Verificación de uso</i>.</p>",
+                      "emailMessage/Importance": "Normal"
+                    }
+                  }
+                },
+                "Registrar_recordatorio_enviado": {
+                  "runAfter": {
+                    "Enviar_recordatorio": [
+                      "Succeeded"
+                    ]
+                  },
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "connectionName": "shared_sharepointonline",
+                      "operationId": "PostItem",
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+                    },
+                    "parameters": {
+                      "dataset": "@parameters('vu_SiteUrl (vu_SiteUrl)')",
+                      "table": "@parameters('vu_ListaNotificaciones (vu_ListaNotificaciones)')",
+                      "item/Title": "@{if(less(outputs('Dias_para_vencer'), 0), 'Verificación de uso vencida', 'Verificación de uso por vencer')}: @{items('Para_cada_solucion')?['Title']} (@{formatDateTime(outputs('Fecha_ProximaVU'), 'dd/MM/yyyy')})",
+                      "item/TipoNotificacion/Value": "Recordatorio de vencimiento",
+                      "item/Destinatario/Claims": "@{items('Para_cada_solucion')?['Responsable/Email']}",
+                      "item/Canal/Value": "Correo",
+                      "item/FechaEnvio": "@utcNow()",
+                      "item/EstadoEnvio/Value": "Enviada"
+                    }
+                  }
+                },
+                "Registrar_recordatorio_error": {
+                  "runAfter": {
+                    "Enviar_recordatorio": [
+                      "Failed",
+                      "TimedOut"
+                    ]
+                  },
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "connectionName": "shared_sharepointonline",
+                      "operationId": "PostItem",
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+                    },
+                    "parameters": {
+                      "dataset": "@parameters('vu_SiteUrl (vu_SiteUrl)')",
+                      "table": "@parameters('vu_ListaNotificaciones (vu_ListaNotificaciones)')",
+                      "item/Title": "@{if(less(outputs('Dias_para_vencer'), 0), 'Verificación de uso vencida', 'Verificación de uso por vencer')}: @{items('Para_cada_solucion')?['Title']} (@{formatDateTime(outputs('Fecha_ProximaVU'), 'dd/MM/yyyy')})",
+                      "item/TipoNotificacion/Value": "Recordatorio de vencimiento",
+                      "item/Destinatario/Claims": "@{items('Para_cada_solucion')?['Responsable/Email']}",
+                      "item/Canal/Value": "Correo",
+                      "item/FechaEnvio": "@utcNow()",
+                      "item/EstadoEnvio/Value": "Error"
+                    }
+                  }
+                }
+              },
+              "runAfter": {
+                "Buscar_verificacion_activa": [
+                  "Succeeded"
+                ]
+              },
+              "expression": {
+                "and": [
+                  {
+                    "equals": [
+                      "@length(body('Buscar_verificacion_activa')?['value'])",
+                      0
+                    ]
+                  }
+                ]
+              },
+              "type": "If",
+              "else": {
+                "actions": {}
+              }
+            }
+          },
+          "runAfter": {
+            "Obtener_soluciones_por_vencer": [
+              "Succeeded"
+            ]
+          },
+          "runtimeConfiguration": {
+            "concurrency": {
+              "repetitions": 5
+            }
+          },
+          "type": "Foreach"
+        }
+      },
+      "outputs": {}
+    },
+    "templateName": null
+  },
+  "schemaVersion": "1.0.0.0"
+}

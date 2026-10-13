@@ -1,0 +1,247 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_sharepointonline": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "vu_sharepoint"
+        },
+        "api": {
+          "name": "shared_sharepointonline"
+        }
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        },
+        "vu_SiteUrl (vu_SiteUrl)": {
+          "defaultValue": "https://biomont.sharepoint.com/sites/VerificacionUso",
+          "type": "String",
+          "metadata": {
+            "schemaName": "vu_SiteUrl",
+            "description": "URL del sitio SharePoint de Verificacion de uso"
+          }
+        },
+        "vu_ListaVerificaciones (vu_ListaVerificaciones)": {
+          "defaultValue": "VU_Verificaciones",
+          "type": "String",
+          "metadata": {
+            "schemaName": "vu_ListaVerificaciones",
+            "description": "Nombre (o GUID) de la lista VU_Verificaciones"
+          }
+        },
+        "vu_ListaSoluciones (vu_ListaSoluciones)": {
+          "defaultValue": "VU_Soluciones",
+          "type": "String",
+          "metadata": {
+            "schemaName": "vu_ListaSoluciones",
+            "description": "Nombre (o GUID) de la lista VU_Soluciones"
+          }
+        },
+        "vu_CuentaServicioEmail (vu_CuentaServicioEmail)": {
+          "defaultValue": "",
+          "type": "String",
+          "metadata": {
+            "schemaName": "vu_CuentaServicioEmail",
+            "description": "Correo de la cuenta de servicio duena de las conexiones (excluye sus ediciones de los disparadores)"
+          }
+        }
+      },
+      "triggers": {
+        "Al_crear_o_modificar_una_verificacion": {
+          "recurrence": {
+            "interval": 5,
+            "frequency": "Minute"
+          },
+          "splitOn": "@triggerOutputs()?['body/value']",
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_sharepointonline",
+              "operationId": "GetOnUpdatedItems",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+            },
+            "parameters": {
+              "dataset": "@parameters('vu_SiteUrl (vu_SiteUrl)')",
+              "table": "@parameters('vu_ListaVerificaciones (vu_ListaVerificaciones)')"
+            }
+          },
+          "conditions": [
+            {
+              "expression": "@not(equals(toLower(coalesce(triggerOutputs()?['body/Editor/Email'], '')), toLower(parameters('vu_CuentaServicioEmail (vu_CuentaServicioEmail)'))))"
+            },
+            {
+              "expression": "@not(empty(string(coalesce(triggerOutputs()?['body/Solucion/Id'], ''))))"
+            }
+          ],
+          "runtimeConfiguration": {
+            "concurrency": {
+              "runs": 1
+            }
+          }
+        }
+      },
+      "actions": {
+        "Hoy_Lima": {
+          "runAfter": {},
+          "type": "Compose",
+          "inputs": "@formatDateTime(convertTimeZone(utcNow(), 'UTC', 'SA Pacific Standard Time'), 'yyyy-MM-dd')"
+        },
+        "Leer_solucion": {
+          "runAfter": {
+            "Hoy_Lima": [
+              "Succeeded"
+            ]
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_sharepointonline",
+              "operationId": "GetItem",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+            },
+            "parameters": {
+              "dataset": "@parameters('vu_SiteUrl (vu_SiteUrl)')",
+              "table": "@parameters('vu_ListaSoluciones (vu_ListaSoluciones)')",
+              "id": "@triggerOutputs()?['body/Solucion/Id']"
+            }
+          }
+        },
+        "Leer_ultima_verificacion": {
+          "runAfter": {
+            "Leer_solucion": [
+              "Succeeded"
+            ]
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_sharepointonline",
+              "operationId": "GetItems",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+            },
+            "parameters": {
+              "dataset": "@parameters('vu_SiteUrl (vu_SiteUrl)')",
+              "table": "@parameters('vu_ListaVerificaciones (vu_ListaVerificaciones)')",
+              "$filter": "Solucion/Id eq @{triggerOutputs()?['body/Solucion/Id']} and Estado ne 'Borrador' and Estado ne 'Cancelada'",
+              "$orderby": "ID desc",
+              "$top": 1
+            }
+          }
+        },
+        "Ultima_verificacion": {
+          "runAfter": {
+            "Leer_ultima_verificacion": [
+              "Succeeded"
+            ]
+          },
+          "type": "Compose",
+          "inputs": "@first(body('Leer_ultima_verificacion')?['value'])"
+        },
+        "ProximaVU_actual": {
+          "runAfter": {
+            "Ultima_verificacion": [
+              "Succeeded"
+            ]
+          },
+          "type": "Compose",
+          "inputs": "@if(empty(body('Leer_solucion')?['ProximaVU']), '0000-00-00', take(string(body('Leer_solucion')?['ProximaVU']), 10))"
+        },
+        "Es_vigente": {
+          "runAfter": {
+            "ProximaVU_actual": [
+              "Succeeded"
+            ]
+          },
+          "type": "Compose",
+          "inputs": "@greaterOrEquals(int(replace(outputs('ProximaVU_actual'), '-', '')), int(replace(outputs('Hoy_Lima'), '-', '')))"
+        },
+        "EstadoVU_calculado": {
+          "runAfter": {
+            "Es_vigente": [
+              "Succeeded"
+            ]
+          },
+          "type": "Compose",
+          "inputs": "@if(empty(outputs('Ultima_verificacion')), if(outputs('Es_vigente'), 'Vigente', 'Pendiente'), if(equals(outputs('Ultima_verificacion')?['Estado/Value'], 'Programada'), 'Programada', if(contains(createArray('En levantamiento', 'En evaluación', 'Observada'), outputs('Ultima_verificacion')?['Estado/Value']), 'En proceso', if(contains(createArray('En revisión', 'Aprobada piloto'), outputs('Ultima_verificacion')?['Estado/Value']), 'En revisión', if(outputs('Es_vigente'), 'Vigente', 'Pendiente')))))"
+        },
+        "UltimaVerificacionId_calculado": {
+          "runAfter": {
+            "EstadoVU_calculado": [
+              "Succeeded"
+            ]
+          },
+          "type": "Compose",
+          "inputs": "@if(empty(outputs('Ultima_verificacion')), body('Leer_solucion')?['UltimaVerificacionId'], outputs('Ultima_verificacion')?['ID'])"
+        },
+        "Si_hay_cambios": {
+          "actions": {
+            "Actualizar_solucion": {
+              "runAfter": {},
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_sharepointonline",
+                  "operationId": "PatchItem",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+                },
+                "parameters": {
+                  "dataset": "@parameters('vu_SiteUrl (vu_SiteUrl)')",
+                  "table": "@parameters('vu_ListaSoluciones (vu_ListaSoluciones)')",
+                  "id": "@triggerOutputs()?['body/Solucion/Id']",
+                  "item/Title": "@body('Leer_solucion')?['Title']",
+                  "item/Proceso/Id": "@body('Leer_solucion')?['Proceso/Id']",
+                  "item/Responsable/Claims": "@body('Leer_solucion')?['Responsable/Claims']",
+                  "item/PeriodicidadMeses": "@body('Leer_solucion')?['PeriodicidadMeses']",
+                  "item/EstadoVU/Value": "@outputs('EstadoVU_calculado')",
+                  "item/UltimaVerificacionId": "@outputs('UltimaVerificacionId_calculado')"
+                }
+              }
+            }
+          },
+          "runAfter": {
+            "UltimaVerificacionId_calculado": [
+              "Succeeded"
+            ]
+          },
+          "expression": {
+            "or": [
+              {
+                "not": {
+                  "equals": [
+                    "@coalesce(body('Leer_solucion')?['EstadoVU/Value'], '')",
+                    "@outputs('EstadoVU_calculado')"
+                  ]
+                }
+              },
+              {
+                "not": {
+                  "equals": [
+                    "@first(split(string(coalesce(body('Leer_solucion')?['UltimaVerificacionId'], '')), '.'))",
+                    "@first(split(string(coalesce(outputs('UltimaVerificacionId_calculado'), '')), '.'))"
+                  ]
+                }
+              }
+            ]
+          },
+          "type": "If",
+          "else": {
+            "actions": {}
+          }
+        }
+      },
+      "outputs": {}
+    },
+    "templateName": null
+  },
+  "schemaVersion": "1.0.0.0"
+}

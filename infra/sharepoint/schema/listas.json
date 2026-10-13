@@ -1,0 +1,1261 @@
+{
+  "schemaVersion": "1.0",
+  "source": "docs/diseno-verificacion-uso.md (§2.1, §2.3, §2.4, §2.5, §3.6)",
+  "notes": [
+    "Las listas están en orden de dependencia: catálogos → VU_Verificaciones → hijas → biblioteca.",
+    "name = nombre interno de la lista (segmento de la URL). title = título visible en español (el script solo lo aplica con -TitulosEnEspanol; por defecto el título es igual a name).",
+    "internalName se crea primero como DisplayName (ASCII, sin tildes) y después se cambia el nombre visible a displayName.",
+    "indexed = true en las columnas 🔎 del diseño y, además, en todo Lookup con relationshipBehavior Cascade/Restrict (SharePoint exige índice para exigir la relación).",
+    "relationshipBehavior: Cascade = eliminación en cascada; Restrict = restringir eliminación; None = sin exigir relación.",
+    "enableVersioning = false significa 'el script no lo modifica' (se deja el valor predeterminado de SharePoint)."
+  ],
+  "site": {
+    "defaultUrl": "https://biomont.sharepoint.com/sites/VerificacionUso",
+    "title": "Verificación de uso",
+    "lcid": 3082
+  },
+  "security": {
+    "groups": [
+      {
+        "name": "VU Lectores",
+        "description": "Consulta del catálogo de soluciones digitales (solo lectura de catálogos).",
+        "siteRole": "Read"
+      },
+      {
+        "name": "VU Responsables",
+        "description": "Responsables de verificación de uso: colaboran en verificaciones, entrevistas, respuestas, puntajes y evidencias.",
+        "siteRole": "Read"
+      },
+      {
+        "name": "VU Aprobadores",
+        "description": "Aprobadoras de la verificación de uso: lectura (deciden en Power Automate Approvals).",
+        "siteRole": "Read"
+      },
+      {
+        "name": "VU Administradores",
+        "description": "Administradores de la aplicación Verificación de uso: control total.",
+        "siteRole": "FullControl"
+      }
+    ],
+    "serviceAccountRole": "Edit",
+    "roleTypeKinds": {
+      "Read": "Reader",
+      "Contribute": "Contributor",
+      "Edit": "Editor",
+      "FullControl": "Administrator"
+    },
+    "profiles": {
+      "Catalogo": {
+        "description": "Catálogos: heredan los permisos del sitio (Lectores/Responsables/Aprobadores = Leer, Administradores = Control total).",
+        "breakInheritance": false,
+        "roles": []
+      },
+      "Transaccional": {
+        "description": "Transaccionales: permisos únicos. Responsables = Colaborar, Aprobadores = Leer, Administradores = Control total, Lectores sin acceso.",
+        "breakInheritance": true,
+        "roles": [
+          {
+            "group": "VU Lectores",
+            "role": null
+          },
+          {
+            "group": "VU Responsables",
+            "role": "Contribute"
+          },
+          {
+            "group": "VU Aprobadores",
+            "role": "Read"
+          },
+          {
+            "group": "VU Administradores",
+            "role": "FullControl"
+          }
+        ]
+      },
+      "AprobacionesNotificaciones": {
+        "description": "Aprobaciones y notificaciones: permisos únicos. Responsables y Aprobadores = Leer, Administradores = Control total, Lectores sin acceso.",
+        "breakInheritance": true,
+        "roles": [
+          {
+            "group": "VU Lectores",
+            "role": null
+          },
+          {
+            "group": "VU Responsables",
+            "role": "Read"
+          },
+          {
+            "group": "VU Aprobadores",
+            "role": "Read"
+          },
+          {
+            "group": "VU Administradores",
+            "role": "FullControl"
+          }
+        ]
+      }
+    }
+  },
+  "lists": [
+    {
+      "name": "VU_Areas",
+      "title": "Áreas y procesos",
+      "description": "Catálogo de procesos y áreas de Biomont (jerarquía mediante Área padre).",
+      "template": "GenericList",
+      "enableVersioning": false,
+      "onQuickLaunch": false,
+      "permissionProfile": "Catalogo",
+      "columns": [
+        {
+          "internalName": "Title",
+          "displayName": "Área o proceso",
+          "type": "Text",
+          "required": true,
+          "indexed": false
+        },
+        {
+          "internalName": "TipoArea",
+          "displayName": "Tipo de área",
+          "type": "Choice",
+          "choices": [
+            "Proceso",
+            "Área"
+          ],
+          "required": true,
+          "indexed": false
+        },
+        {
+          "internalName": "AreaPadre",
+          "displayName": "Área padre",
+          "type": "Lookup",
+          "lookupList": "VU_Areas",
+          "lookupField": "Title",
+          "relationshipBehavior": "None",
+          "required": false,
+          "indexed": false,
+          "description": "Ejemplo: Despacho → Operaciones."
+        },
+        {
+          "internalName": "Activo",
+          "displayName": "Activo",
+          "type": "Boolean",
+          "required": true,
+          "indexed": false,
+          "default": true
+        }
+      ]
+    },
+    {
+      "name": "VU_Soluciones",
+      "title": "Soluciones digitales",
+      "description": "Catálogo de soluciones digitales sujetas a verificación de uso.",
+      "template": "GenericList",
+      "enableVersioning": false,
+      "onQuickLaunch": false,
+      "permissionProfile": "Catalogo",
+      "columns": [
+        {
+          "internalName": "Title",
+          "displayName": "Solución",
+          "type": "Text",
+          "required": true,
+          "indexed": false
+        },
+        {
+          "internalName": "Descripcion",
+          "displayName": "Descripción",
+          "type": "Note",
+          "richText": false,
+          "required": false,
+          "indexed": false
+        },
+        {
+          "internalName": "TipoSolucion",
+          "displayName": "Tipo de solución",
+          "type": "Choice",
+          "choices": [
+            "Power App",
+            "Flujo",
+            "Reporte",
+            "Otro"
+          ],
+          "required": false,
+          "indexed": false
+        },
+        {
+          "internalName": "Proceso",
+          "displayName": "Proceso",
+          "type": "Lookup",
+          "lookupList": "VU_Areas",
+          "lookupField": "Title",
+          "relationshipBehavior": "Restrict",
+          "required": true,
+          "indexed": true
+        },
+        {
+          "internalName": "Responsable",
+          "displayName": "Responsable",
+          "type": "User",
+          "required": true,
+          "indexed": true
+        },
+        {
+          "internalName": "UsuariosObjetivo",
+          "displayName": "Usuarios objetivo",
+          "type": "Number",
+          "min": 0,
+          "decimals": 0,
+          "required": false,
+          "indexed": false
+        },
+        {
+          "internalName": "FechaActualizacion",
+          "displayName": "Fecha de actualización",
+          "type": "DateTime",
+          "format": "DateOnly",
+          "required": false,
+          "indexed": false
+        },
+        {
+          "internalName": "PeriodicidadMeses",
+          "displayName": "Periodicidad (meses)",
+          "type": "Number",
+          "min": 1,
+          "decimals": 0,
+          "required": true,
+          "indexed": false,
+          "default": 6
+        },
+        {
+          "internalName": "ProximaVU",
+          "displayName": "Próxima VU",
+          "type": "DateTime",
+          "format": "DateOnly",
+          "required": false,
+          "indexed": true,
+          "description": "RN-10: fecha de aprobación + periodicidad."
+        },
+        {
+          "internalName": "EstadoVU",
+          "displayName": "Estado de la VU",
+          "type": "Choice",
+          "choices": [
+            "Pendiente",
+            "Programada",
+            "En proceso",
+            "En revisión",
+            "Vigente"
+          ],
+          "required": true,
+          "indexed": true,
+          "default": "Pendiente",
+          "description": "Estado derivado (§2.5); lo escribe el flujo F3."
+        },
+        {
+          "internalName": "UltimaVerificacionId",
+          "displayName": "ID de la última verificación",
+          "type": "Number",
+          "decimals": 0,
+          "required": false,
+          "indexed": false,
+          "description": "ID de VU_Verificaciones (sin búsqueda, para evitar referencia circular)."
+        }
+      ]
+    },
+    {
+      "name": "VU_DocumentosSolucion",
+      "title": "Documentos de la solución",
+      "description": "Material de cada solución (manual, instructivo, video, carpeta) que se muestra en «Ver detalle».",
+      "template": "GenericList",
+      "enableVersioning": false,
+      "onQuickLaunch": false,
+      "permissionProfile": "Catalogo",
+      "columns": [
+        {
+          "internalName": "Title",
+          "displayName": "Documento",
+          "type": "Text",
+          "required": true,
+          "indexed": false
+        },
+        {
+          "internalName": "Solucion",
+          "displayName": "Solución",
+          "type": "Lookup",
+          "lookupList": "VU_Soluciones",
+          "lookupField": "Title",
+          "relationshipBehavior": "Cascade",
+          "required": true,
+          "indexed": true
+        },
+        {
+          "internalName": "TipoDocumento",
+          "displayName": "Tipo de documento",
+          "type": "Choice",
+          "choices": [
+            "Manual",
+            "Instructivo",
+            "Video",
+            "Carpeta",
+            "Otro"
+          ],
+          "required": true,
+          "indexed": false,
+          "description": "Define el icono."
+        },
+        {
+          "internalName": "Formato",
+          "displayName": "Formato",
+          "type": "Text",
+          "required": false,
+          "indexed": false,
+          "description": "PDF, Teams, SharePoint."
+        },
+        {
+          "internalName": "Enlace",
+          "displayName": "Enlace",
+          "type": "URL",
+          "required": true,
+          "indexed": false,
+          "description": "PDF, video de Stream/Teams o carpeta."
+        },
+        {
+          "internalName": "Version",
+          "displayName": "Versión del documento",
+          "type": "Text",
+          "required": false,
+          "indexed": false
+        },
+        {
+          "internalName": "Vigente",
+          "displayName": "Vigente",
+          "type": "Boolean",
+          "required": true,
+          "indexed": false,
+          "default": true
+        }
+      ]
+    },
+    {
+      "name": "VU_Criterios",
+      "title": "Criterios de evaluación",
+      "description": "Criterios ponderados del índice de adopción. La suma de los pesos de los criterios activos debe ser 100.",
+      "template": "GenericList",
+      "enableVersioning": false,
+      "onQuickLaunch": false,
+      "permissionProfile": "Catalogo",
+      "columns": [
+        {
+          "internalName": "Title",
+          "displayName": "Criterio",
+          "type": "Text",
+          "required": true,
+          "indexed": false
+        },
+        {
+          "internalName": "Peso",
+          "displayName": "Peso (%)",
+          "type": "Number",
+          "min": 0,
+          "max": 100,
+          "required": true,
+          "indexed": false,
+          "description": "La suma de los activos debe dar 100 (lo valida la pantalla de administración)."
+        },
+        {
+          "internalName": "Orden",
+          "displayName": "Orden",
+          "type": "Number",
+          "decimals": 0,
+          "required": true,
+          "indexed": false
+        },
+        {
+          "internalName": "Activo",
+          "displayName": "Activo",
+          "type": "Boolean",
+          "required": true,
+          "indexed": false,
+          "default": true
+        }
+      ]
+    },
+    {
+      "name": "VU_Preguntas",
+      "title": "Preguntas definidas",
+      "description": "Catálogo de preguntas definidas para las entrevistas, asociadas a un criterio.",
+      "template": "GenericList",
+      "enableVersioning": false,
+      "onQuickLaunch": false,
+      "permissionProfile": "Catalogo",
+      "columns": [
+        {
+          "internalName": "Title",
+          "displayName": "Pregunta",
+          "type": "Text",
+          "required": true,
+          "indexed": false,
+          "description": "Texto de la pregunta (máximo 255 caracteres)."
+        },
+        {
+          "internalName": "Criterio",
+          "displayName": "Criterio",
+          "type": "Lookup",
+          "lookupList": "VU_Criterios",
+          "lookupField": "Title",
+          "relationshipBehavior": "Restrict",
+          "required": true,
+          "indexed": true
+        },
+        {
+          "internalName": "TipoRespuesta",
+          "displayName": "Tipo de respuesta",
+          "type": "Choice",
+          "choices": [
+            "Selección",
+            "Texto",
+            "Numérica"
+          ],
+          "required": true,
+          "indexed": false
+        },
+        {
+          "internalName": "Orden",
+          "displayName": "Orden",
+          "type": "Number",
+          "decimals": 0,
+          "required": true,
+          "indexed": false
+        },
+        {
+          "internalName": "Activo",
+          "displayName": "Activo",
+          "type": "Boolean",
+          "required": true,
+          "indexed": false,
+          "default": true
+        }
+      ]
+    },
+    {
+      "name": "VU_OpcionesRespuesta",
+      "title": "Opciones de respuesta",
+      "description": "Opciones de las preguntas de selección con su puntaje sugerido.",
+      "template": "GenericList",
+      "enableVersioning": false,
+      "onQuickLaunch": false,
+      "permissionProfile": "Catalogo",
+      "columns": [
+        {
+          "internalName": "Title",
+          "displayName": "Opción",
+          "type": "Text",
+          "required": true,
+          "indexed": false
+        },
+        {
+          "internalName": "Pregunta",
+          "displayName": "Pregunta",
+          "type": "Lookup",
+          "lookupList": "VU_Preguntas",
+          "lookupField": "Title",
+          "relationshipBehavior": "Cascade",
+          "required": true,
+          "indexed": true
+        },
+        {
+          "internalName": "PuntajeSugerido",
+          "displayName": "Puntaje sugerido",
+          "type": "Number",
+          "min": 1,
+          "max": 10,
+          "required": true,
+          "indexed": false,
+          "description": "Precarga el puntaje de la respuesta."
+        },
+        {
+          "internalName": "Orden",
+          "displayName": "Orden",
+          "type": "Number",
+          "decimals": 0,
+          "required": true,
+          "indexed": false
+        }
+      ]
+    },
+    {
+      "name": "VU_Verificaciones",
+      "title": "Verificaciones de uso",
+      "description": "Cabecera de cada verificación de uso (VU) de una solución.",
+      "template": "GenericList",
+      "enableVersioning": true,
+      "onQuickLaunch": false,
+      "permissionProfile": "Transaccional",
+      "columns": [
+        {
+          "internalName": "Title",
+          "displayName": "Código",
+          "type": "Text",
+          "required": true,
+          "indexed": false,
+          "description": "VU- + ID con 5 dígitos (lo escribe la app al crear)."
+        },
+        {
+          "internalName": "Solucion",
+          "displayName": "Solución",
+          "type": "Lookup",
+          "lookupList": "VU_Soluciones",
+          "lookupField": "Title",
+          "relationshipBehavior": "Restrict",
+          "required": true,
+          "indexed": true
+        },
+        {
+          "internalName": "Responsable",
+          "displayName": "Responsable",
+          "type": "User",
+          "required": true,
+          "indexed": true
+        },
+        {
+          "internalName": "FechaObjetivo",
+          "displayName": "Fecha objetivo",
+          "type": "DateTime",
+          "format": "DateOnly",
+          "required": true,
+          "indexed": false
+        },
+        {
+          "internalName": "DiasAnticipacion",
+          "displayName": "Días de anticipación",
+          "type": "Number",
+          "min": 7,
+          "max": 30,
+          "decimals": 0,
+          "required": true,
+          "indexed": false,
+          "validation": {
+            "formula": "=OR([DiasAnticipacion]=7,[DiasAnticipacion]=15,[DiasAnticipacion]=30)",
+            "message": "Los días de anticipación deben ser 7, 15 o 30."
+          }
+        },
+        {
+          "internalName": "FechaAlerta",
+          "displayName": "Fecha de alerta",
+          "type": "DateTime",
+          "format": "DateOnly",
+          "required": true,
+          "indexed": true,
+          "description": "RN-01: fecha objetivo − días de anticipación (la escribe la app)."
+        },
+        {
+          "internalName": "AlertaEnviada",
+          "displayName": "Alerta enviada",
+          "type": "Boolean",
+          "required": true,
+          "indexed": false,
+          "default": false,
+          "description": "Evita enviar la alerta dos veces."
+        },
+        {
+          "internalName": "EntrevistasPrevistas",
+          "displayName": "Entrevistas previstas",
+          "type": "Number",
+          "min": 1,
+          "max": 20,
+          "decimals": 0,
+          "required": true,
+          "indexed": false
+        },
+        {
+          "internalName": "EntrevistasCompletas",
+          "displayName": "Entrevistas completas",
+          "type": "Number",
+          "min": 0,
+          "decimals": 0,
+          "required": true,
+          "indexed": false,
+          "default": 0,
+          "description": "Lo recuenta la app al completar una entrevista (RN-02 / RN-07)."
+        },
+        {
+          "internalName": "Modalidad",
+          "displayName": "Modalidad",
+          "type": "Choice",
+          "choices": [
+            "Teams",
+            "Presencial",
+            "Mixta"
+          ],
+          "required": true,
+          "indexed": false
+        },
+        {
+          "internalName": "Objetivo",
+          "displayName": "Objetivo",
+          "type": "Note",
+          "richText": false,
+          "required": false,
+          "indexed": false
+        },
+        {
+          "internalName": "Estado",
+          "displayName": "Estado",
+          "type": "Choice",
+          "choices": [
+            "Borrador",
+            "Programada",
+            "En levantamiento",
+            "En evaluación",
+            "En revisión",
+            "Observada",
+            "Aprobada piloto",
+            "Aprobada",
+            "Cancelada"
+          ],
+          "required": true,
+          "indexed": true,
+          "default": "Borrador",
+          "description": "§2.4. La app solo cambia el estado hasta «En revisión»; los posteriores los escribe el flujo F2."
+        },
+        {
+          "internalName": "IndiceAdopcion",
+          "displayName": "Índice de adopción (%)",
+          "type": "Number",
+          "min": 0,
+          "max": 100,
+          "decimals": 1,
+          "required": false,
+          "indexed": false,
+          "description": "RN-03."
+        },
+        {
+          "internalName": "Resultado",
+          "displayName": "Resultado",
+          "type": "Choice",
+          "choices": [
+            "Adopción plena",
+            "Adopción parcial",
+            "Adopción baja"
+          ],
+          "required": false,
+          "indexed": false,
+          "description": "RN-09."
+        },
+        {
+          "internalName": "SustentoGlobal",
+          "displayName": "Sustento global",
+          "type": "Note",
+          "richText": false,
+          "required": false,
+          "indexed": false
+        },
+        {
+          "internalName": "OportunidadesConsolidadas",
+          "displayName": "Oportunidades de mejora consolidadas",
+          "type": "Note",
+          "richText": false,
+          "required": false,
+          "indexed": false,
+          "description": "Una por línea."
+        },
+        {
+          "internalName": "RecomendacionesConsolidadas",
+          "displayName": "Recomendaciones consolidadas",
+          "type": "Note",
+          "richText": false,
+          "required": false,
+          "indexed": false
+        },
+        {
+          "internalName": "AprobadorPiloto",
+          "displayName": "Aprobador del piloto",
+          "type": "User",
+          "required": false,
+          "indexed": false,
+          "description": "Obligatorio al finalizar (lo valida la app)."
+        },
+        {
+          "internalName": "AprobadorProductivo",
+          "displayName": "Aprobador productivo",
+          "type": "User",
+          "required": false,
+          "indexed": false
+        },
+        {
+          "internalName": "NotificarAlFinalizar",
+          "displayName": "Notificar al finalizar",
+          "type": "Boolean",
+          "required": true,
+          "indexed": false,
+          "default": false
+        },
+        {
+          "internalName": "FechaEnvio",
+          "displayName": "Fecha de envío",
+          "type": "DateTime",
+          "format": "DateTime",
+          "required": false,
+          "indexed": false
+        },
+        {
+          "internalName": "FechaAprobacion",
+          "displayName": "Fecha de aprobación",
+          "type": "DateTime",
+          "format": "DateTime",
+          "required": false,
+          "indexed": false
+        }
+      ]
+    },
+    {
+      "name": "VU_Entrevistas",
+      "title": "Entrevistas",
+      "description": "Entrevistas de cada verificación de uso.",
+      "template": "GenericList",
+      "enableVersioning": false,
+      "onQuickLaunch": false,
+      "permissionProfile": "Transaccional",
+      "columns": [
+        {
+          "internalName": "Title",
+          "displayName": "Entrevista",
+          "type": "Text",
+          "required": true,
+          "indexed": false,
+          "description": "Ejemplo: «Entrevista 3 – Lucía Campos»."
+        },
+        {
+          "internalName": "Verificacion",
+          "displayName": "Verificación",
+          "type": "Lookup",
+          "lookupList": "VU_Verificaciones",
+          "lookupField": "Title",
+          "relationshipBehavior": "Cascade",
+          "required": true,
+          "indexed": true
+        },
+        {
+          "internalName": "Numero",
+          "displayName": "Número",
+          "type": "Number",
+          "min": 1,
+          "decimals": 0,
+          "required": true,
+          "indexed": false
+        },
+        {
+          "internalName": "Entrevistado",
+          "displayName": "Entrevistado",
+          "type": "User",
+          "required": false,
+          "indexed": false,
+          "description": "Cualquier usuario de Entra ID; no necesita licencia de Power Apps."
+        },
+        {
+          "internalName": "EntrevistadoNombre",
+          "displayName": "Nombre del entrevistado",
+          "type": "Text",
+          "required": true,
+          "indexed": false,
+          "description": "Respaldo si es externo; la app lo llena con el nombre de la persona."
+        },
+        {
+          "internalName": "Area",
+          "displayName": "Área",
+          "type": "Lookup",
+          "lookupList": "VU_Areas",
+          "lookupField": "Title",
+          "relationshipBehavior": "Restrict",
+          "required": false,
+          "indexed": true
+        },
+        {
+          "internalName": "FechaHora",
+          "displayName": "Fecha y hora",
+          "type": "DateTime",
+          "format": "DateTime",
+          "required": false,
+          "indexed": false
+        },
+        {
+          "internalName": "Modalidad",
+          "displayName": "Modalidad",
+          "type": "Choice",
+          "choices": [
+            "Teams",
+            "Presencial"
+          ],
+          "required": false,
+          "indexed": false
+        },
+        {
+          "internalName": "Estado",
+          "displayName": "Estado",
+          "type": "Choice",
+          "choices": [
+            "Pendiente",
+            "En curso",
+            "Completa"
+          ],
+          "required": true,
+          "indexed": true,
+          "default": "Pendiente"
+        },
+        {
+          "internalName": "UrlGrabacion",
+          "displayName": "Grabación",
+          "type": "URL",
+          "required": false,
+          "indexed": false,
+          "description": "Enlace a la grabación de Teams (ya está en SharePoint/OneDrive)."
+        },
+        {
+          "internalName": "OportunidadesMejora",
+          "displayName": "Oportunidades de mejora",
+          "type": "Note",
+          "richText": false,
+          "required": false,
+          "indexed": false
+        },
+        {
+          "internalName": "Recomendaciones",
+          "displayName": "Recomendaciones",
+          "type": "Note",
+          "richText": false,
+          "required": false,
+          "indexed": false
+        },
+        {
+          "internalName": "FechaCompletada",
+          "displayName": "Fecha de finalización",
+          "type": "DateTime",
+          "format": "DateTime",
+          "required": false,
+          "indexed": false
+        }
+      ]
+    },
+    {
+      "name": "VU_Respuestas",
+      "title": "Respuestas",
+      "description": "Respuestas de las entrevistas: preguntas definidas y preguntas surgidas en la reunión.",
+      "template": "GenericList",
+      "enableVersioning": false,
+      "onQuickLaunch": false,
+      "permissionProfile": "Transaccional",
+      "columns": [
+        {
+          "internalName": "Title",
+          "displayName": "Texto de la pregunta",
+          "type": "Text",
+          "required": true,
+          "indexed": false,
+          "description": "Copia del texto de la pregunta (también para las definidas)."
+        },
+        {
+          "internalName": "Entrevista",
+          "displayName": "Entrevista",
+          "type": "Lookup",
+          "lookupList": "VU_Entrevistas",
+          "lookupField": "Title",
+          "relationshipBehavior": "Cascade",
+          "required": true,
+          "indexed": true
+        },
+        {
+          "internalName": "Verificacion",
+          "displayName": "Verificación",
+          "type": "Lookup",
+          "lookupList": "VU_Verificaciones",
+          "lookupField": "Title",
+          "relationshipBehavior": "None",
+          "required": true,
+          "indexed": true,
+          "description": "Desnormalizada: permite traer todas las respuestas de una verificación en una sola consulta (RN-04)."
+        },
+        {
+          "internalName": "Origen",
+          "displayName": "Origen",
+          "type": "Choice",
+          "choices": [
+            "Definida",
+            "Surgida en reunión"
+          ],
+          "required": true,
+          "indexed": false
+        },
+        {
+          "internalName": "Pregunta",
+          "displayName": "Pregunta",
+          "type": "Lookup",
+          "lookupList": "VU_Preguntas",
+          "lookupField": "Title",
+          "relationshipBehavior": "Restrict",
+          "required": false,
+          "indexed": true,
+          "description": "Solo en las definidas."
+        },
+        {
+          "internalName": "Criterio",
+          "displayName": "Criterio",
+          "type": "Lookup",
+          "lookupList": "VU_Criterios",
+          "lookupField": "Title",
+          "relationshipBehavior": "Restrict",
+          "required": true,
+          "indexed": true
+        },
+        {
+          "internalName": "Opcion",
+          "displayName": "Opción",
+          "type": "Lookup",
+          "lookupList": "VU_OpcionesRespuesta",
+          "lookupField": "Title",
+          "relationshipBehavior": "Restrict",
+          "required": false,
+          "indexed": true
+        },
+        {
+          "internalName": "RespuestaTexto",
+          "displayName": "Respuesta",
+          "type": "Note",
+          "richText": false,
+          "required": false,
+          "indexed": false
+        },
+        {
+          "internalName": "Puntaje",
+          "displayName": "Puntaje",
+          "type": "Number",
+          "min": 1,
+          "max": 10,
+          "required": false,
+          "indexed": false,
+          "description": "Obligatorio en las definidas (lo valida la app)."
+        },
+        {
+          "internalName": "Sustento",
+          "displayName": "Sustento",
+          "type": "Note",
+          "richText": false,
+          "required": false,
+          "indexed": false
+        },
+        {
+          "internalName": "Orden",
+          "displayName": "Orden",
+          "type": "Number",
+          "decimals": 0,
+          "required": true,
+          "indexed": false
+        }
+      ]
+    },
+    {
+      "name": "VU_PuntajesCriterio",
+      "title": "Puntajes por criterio",
+      "description": "Puntaje sugerido y final de cada criterio en cada verificación (una fila por criterio y verificación).",
+      "template": "GenericList",
+      "enableVersioning": true,
+      "onQuickLaunch": false,
+      "permissionProfile": "Transaccional",
+      "columns": [
+        {
+          "internalName": "Title",
+          "displayName": "Nombre del criterio",
+          "type": "Text",
+          "required": true,
+          "indexed": false,
+          "description": "Copia del nombre del criterio."
+        },
+        {
+          "internalName": "Verificacion",
+          "displayName": "Verificación",
+          "type": "Lookup",
+          "lookupList": "VU_Verificaciones",
+          "lookupField": "Title",
+          "relationshipBehavior": "Cascade",
+          "required": true,
+          "indexed": true,
+          "description": "La app impide duplicados de (Verificación, Criterio)."
+        },
+        {
+          "internalName": "Criterio",
+          "displayName": "Criterio",
+          "type": "Lookup",
+          "lookupList": "VU_Criterios",
+          "lookupField": "Title",
+          "relationshipBehavior": "Restrict",
+          "required": true,
+          "indexed": true
+        },
+        {
+          "internalName": "Peso",
+          "displayName": "Peso (%)",
+          "type": "Number",
+          "min": 0,
+          "max": 100,
+          "required": true,
+          "indexed": false,
+          "description": "Copia del peso al crear la verificación."
+        },
+        {
+          "internalName": "PuntajeSugerido",
+          "displayName": "Puntaje sugerido",
+          "type": "Number",
+          "min": 1,
+          "max": 10,
+          "decimals": 1,
+          "required": false,
+          "indexed": false,
+          "description": "RN-04."
+        },
+        {
+          "internalName": "PuntajeFinal",
+          "displayName": "Puntaje final",
+          "type": "Number",
+          "min": 1,
+          "max": 10,
+          "decimals": 1,
+          "required": true,
+          "indexed": false
+        },
+        {
+          "internalName": "SustentoAjuste",
+          "displayName": "Sustento del ajuste",
+          "type": "Note",
+          "richText": false,
+          "required": false,
+          "indexed": false,
+          "description": "Obligatorio si el puntaje final es distinto del sugerido (RN-05, lo valida la app)."
+        }
+      ]
+    },
+    {
+      "name": "VU_Aprobaciones",
+      "title": "Aprobaciones",
+      "description": "Aprobaciones en dos niveles (piloto y productiva) de cada verificación (RN-08).",
+      "template": "GenericList",
+      "enableVersioning": true,
+      "onQuickLaunch": false,
+      "permissionProfile": "AprobacionesNotificaciones",
+      "columns": [
+        {
+          "internalName": "Title",
+          "displayName": "Título",
+          "type": "Text",
+          "required": true,
+          "indexed": false,
+          "description": "Ejemplo: «VU-00012 · Piloto»."
+        },
+        {
+          "internalName": "Verificacion",
+          "displayName": "Verificación",
+          "type": "Lookup",
+          "lookupList": "VU_Verificaciones",
+          "lookupField": "Title",
+          "relationshipBehavior": "Cascade",
+          "required": true,
+          "indexed": true
+        },
+        {
+          "internalName": "Nivel",
+          "displayName": "Nivel",
+          "type": "Choice",
+          "choices": [
+            "Piloto",
+            "Productiva"
+          ],
+          "required": true,
+          "indexed": false
+        },
+        {
+          "internalName": "Aprobador",
+          "displayName": "Aprobador",
+          "type": "User",
+          "required": true,
+          "indexed": false
+        },
+        {
+          "internalName": "Decision",
+          "displayName": "Decisión",
+          "type": "Choice",
+          "choices": [
+            "Pendiente",
+            "Aprobada",
+            "Observada",
+            "Rechazada"
+          ],
+          "required": true,
+          "indexed": false,
+          "default": "Pendiente"
+        },
+        {
+          "internalName": "Comentario",
+          "displayName": "Comentario",
+          "type": "Note",
+          "richText": false,
+          "required": false,
+          "indexed": false
+        },
+        {
+          "internalName": "FechaSolicitud",
+          "displayName": "Fecha de solicitud",
+          "type": "DateTime",
+          "format": "DateTime",
+          "required": true,
+          "indexed": false
+        },
+        {
+          "internalName": "FechaDecision",
+          "displayName": "Fecha de decisión",
+          "type": "DateTime",
+          "format": "DateTime",
+          "required": false,
+          "indexed": false
+        },
+        {
+          "internalName": "ApprovalId",
+          "displayName": "ID de aprobación (Power Automate)",
+          "type": "Text",
+          "required": false,
+          "indexed": false
+        }
+      ]
+    },
+    {
+      "name": "VU_Notificaciones",
+      "title": "Notificaciones",
+      "description": "Bitácora de notificaciones enviadas; garantiza RN-06 (sin notificaciones parciales).",
+      "template": "GenericList",
+      "enableVersioning": false,
+      "onQuickLaunch": false,
+      "permissionProfile": "AprobacionesNotificaciones",
+      "columns": [
+        {
+          "internalName": "Title",
+          "displayName": "Asunto",
+          "type": "Text",
+          "required": true,
+          "indexed": false
+        },
+        {
+          "internalName": "Verificacion",
+          "displayName": "Verificación",
+          "type": "Lookup",
+          "lookupList": "VU_Verificaciones",
+          "lookupField": "Title",
+          "relationshipBehavior": "Cascade",
+          "required": false,
+          "indexed": true
+        },
+        {
+          "internalName": "TipoNotificacion",
+          "displayName": "Tipo de notificación",
+          "type": "Choice",
+          "choices": [
+            "Alerta anticipada",
+            "Envío a revisión",
+            "Decisión",
+            "Recordatorio de vencimiento"
+          ],
+          "required": true,
+          "indexed": false
+        },
+        {
+          "internalName": "Destinatario",
+          "displayName": "Destinatario",
+          "type": "User",
+          "required": true,
+          "indexed": false
+        },
+        {
+          "internalName": "Canal",
+          "displayName": "Canal",
+          "type": "Choice",
+          "choices": [
+            "Correo",
+            "Teams"
+          ],
+          "required": true,
+          "indexed": false
+        },
+        {
+          "internalName": "FechaEnvio",
+          "displayName": "Fecha de envío",
+          "type": "DateTime",
+          "format": "DateTime",
+          "required": true,
+          "indexed": false
+        },
+        {
+          "internalName": "EstadoEnvio",
+          "displayName": "Estado del envío",
+          "type": "Choice",
+          "choices": [
+            "Enviada",
+            "Error"
+          ],
+          "required": true,
+          "indexed": false
+        }
+      ]
+    },
+    {
+      "name": "VU_Evidencias",
+      "title": "Evidencias",
+      "description": "Capturas y documentos de las entrevistas. Carpeta por verificación y entrevista: /{VU-00012}/Entrevista-03/.",
+      "template": "DocumentLibrary",
+      "enableVersioning": false,
+      "onQuickLaunch": false,
+      "permissionProfile": "Transaccional",
+      "columns": [
+        {
+          "internalName": "Verificacion",
+          "displayName": "Verificación",
+          "type": "Lookup",
+          "lookupList": "VU_Verificaciones",
+          "lookupField": "Title",
+          "relationshipBehavior": "None",
+          "required": true,
+          "indexed": true,
+          "description": "Permite contar las evidencias de una verificación con una sola consulta."
+        },
+        {
+          "internalName": "Entrevista",
+          "displayName": "Entrevista",
+          "type": "Lookup",
+          "lookupList": "VU_Entrevistas",
+          "lookupField": "Title",
+          "relationshipBehavior": "None",
+          "required": true,
+          "indexed": true
+        },
+        {
+          "internalName": "Respuesta",
+          "displayName": "Respuesta",
+          "type": "Lookup",
+          "lookupList": "VU_Respuestas",
+          "lookupField": "Title",
+          "relationshipBehavior": "None",
+          "required": false,
+          "indexed": false,
+          "description": "Vincula una captura específica a una respuesta."
+        },
+        {
+          "internalName": "TipoEvidencia",
+          "displayName": "Tipo de evidencia",
+          "type": "Choice",
+          "choices": [
+            "Captura",
+            "Documento"
+          ],
+          "required": true,
+          "indexed": false,
+          "description": "Las grabaciones se registran en VU_Entrevistas.UrlGrabacion."
+        }
+      ]
+    }
+  ]
+}

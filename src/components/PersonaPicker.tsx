@@ -1,0 +1,73 @@
+import { Combobox, Option, Text, tokens } from '@fluentui/react-components';
+import { useState } from 'react';
+import { usePersonas } from '../data/hooks/useCatalogo';
+import type { Persona } from '../domain/tipos';
+
+const RE_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+export interface PersonaPickerProps {
+  id?: string;
+  valor: Persona | null;
+  onChange: (persona: Persona | null) => void;
+  deshabilitado?: boolean;
+  placeholder?: string;
+}
+
+/**
+ * Selector de personas. En modo mock usa el directorio de ejemplo; con SharePoint requiere
+ * el conector Office 365 Users. Si la búsqueda no está disponible se puede escribir un correo.
+ * Usar dentro de un `<Field>` para la etiqueta.
+ */
+export function PersonaPicker({ id, valor, onChange, deshabilitado, placeholder }: PersonaPickerProps) {
+  const { data: personas = [] } = usePersonas();
+  const [texto, setTexto] = useState(valor?.nombre ?? '');
+  const t = texto.trim().toLocaleLowerCase('es');
+  const filtradas = personas.filter(
+    (p) => !t || p.nombre.toLocaleLowerCase('es').includes(t) || p.email.toLocaleLowerCase().includes(t),
+  );
+
+  const confirmarTextoLibre = () => {
+    const limpio = texto.trim();
+    if (!limpio) {
+      if (valor) onChange(null);
+      return;
+    }
+    if (valor && (limpio === valor.nombre || limpio === valor.email)) return;
+    const exacta = personas.find((p) => p.nombre === limpio || p.email === limpio);
+    if (exacta) onChange(exacta);
+    else if (RE_EMAIL.test(limpio)) onChange({ email: limpio, nombre: limpio });
+    else setTexto(valor?.nombre ?? '');
+  };
+
+  return (
+    <Combobox
+      id={id}
+      freeform
+      disabled={deshabilitado}
+      placeholder={placeholder ?? 'Buscar por nombre o correo'}
+      value={texto}
+      selectedOptions={valor ? [valor.email] : []}
+      onChange={(e) => setTexto(e.target.value)}
+      onBlur={confirmarTextoLibre}
+      onOptionSelect={(_, d) => {
+        const persona = personas.find((p) => p.email === d.optionValue);
+        if (persona) {
+          setTexto(persona.nombre);
+          onChange(persona);
+        }
+      }}
+    >
+      {filtradas.map((p) => (
+        <Option key={p.email} value={p.email} text={p.nombre}>
+          <span>
+            {p.nombre}
+            <br />
+            <Text size={200} style={{ color: tokens.colorNeutralForeground3 }}>
+              {p.email}
+            </Text>
+          </span>
+        </Option>
+      ))}
+    </Combobox>
+  );
+}

@@ -1,0 +1,13 @@
+{
+  "lista": "VU_Areas",
+  "descripcion": "Procesos de las soluciones del prototipo (columna Proceso del catálogo) y áreas de los entrevistados (Operaciones, Despacho, Logística, Almacén). AreaPadre se indica por Title y se resuelve a ID en una segunda pasada.",
+  "elementos": [
+    { "Title": "Operaciones", "TipoArea": "Proceso", "AreaPadre": null, "Activo": true },
+    { "Title": "Producción", "TipoArea": "Proceso", "AreaPadre": null, "Activo": true },
+    { "Title": "Comercial", "TipoArea": "Proceso", "AreaPadre": null, "Activo": true },
+    { "Title": "Comercio exterior", "TipoArea": "Proceso", "AreaPadre": null, "Activo": true },
+    { "Title": "Despacho", "TipoArea": "Área", "AreaPadre": "Operaciones", "Activo": true },
+    { "Title": "Logística", "TipoArea": "Área", "AreaPadre": null, "Activo": true },
+    { "Title": "Almacén", "TipoArea": "Área", "AreaPadre": null, "Activo": true }
+  ]
+}

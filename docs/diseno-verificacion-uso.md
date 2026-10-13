@@ -275,7 +275,7 @@ Leyenda: 🔎 = columna indexada · **Req.** = obligatoria en SharePoint · toda
 | Columna | Tipo SP | Req. | Notas |
 |---|---|---|---|
 | Title | Una línea | Sí | Asunto |
-| Verificacion 🔎 | Búsqueda → VU_Verificaciones (cascada) | Sí | |
+| Verificacion 🔎 | Búsqueda → VU_Verificaciones (cascada) | No | Vacía en los recordatorios de F4 de soluciones que nunca tuvieron una verificación |
 | TipoNotificacion | Elección: Alerta anticipada / Envío a revisión / Decisión / Recordatorio de vencimiento | Sí | |
 | Destinatario | Persona | Sí | |
 | Canal | Elección: Correo / Teams | Sí | |
