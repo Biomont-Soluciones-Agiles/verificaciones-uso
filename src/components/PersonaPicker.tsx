@@ -29,7 +29,10 @@ export function PersonaPicker({ id, valor, onChange, deshabilitado, placeholder,
   const { data: personas = [], isSuccess } = usePersonas(origen);
   const admiteCorreoLibre = origen === 'directorio';
   const [texto, setTexto] = useState(valor?.nombre ?? '');
-  const t = texto.trim().toLocaleLowerCase('es');
+  // El cuadro muestra el nombre de la persona elegida: eso no es una búsqueda, así que no filtra
+  // (si no, al abrir la lista solo aparecería ella). Se filtra en cuanto se escribe otra cosa.
+  const buscando = texto !== (valor?.nombre ?? '');
+  const t = buscando ? texto.trim().toLocaleLowerCase('es') : '';
   const filtradas = personas.filter(
     (p) => !t || p.nombre.toLocaleLowerCase('es').includes(t) || p.email.toLocaleLowerCase().includes(t),
   );
