@@ -87,7 +87,8 @@ export const MODALIDADES_ENTREVISTA = ['Teams', 'Presencial'] as const;
 export type ModalidadEntrevista = (typeof MODALIDADES_ENTREVISTA)[number];
 
 /** RN-09 `VU_Verificaciones.Resultado` */
-export const RESULTADOS_ADOPCION = ['Adopción plena', 'Adopción parcial', 'Adopción baja'] as const;
+/** RN-09, con los nombres del Excel de verificaciones. */
+export const RESULTADOS_ADOPCION = ['Usabilidad confirmada', 'Usabilidad parcial', 'No confirmada'] as const;
 export type ResultadoAdopcion = (typeof RESULTADOS_ADOPCION)[number];
 
 export const ESTADOS_ENTREVISTA = ['Pendiente', 'En curso', 'Completa'] as const;

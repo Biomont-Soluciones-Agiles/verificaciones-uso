@@ -31,9 +31,9 @@ export const Vu_verificacionsvu_modalidad = {
 } as const;
 export type Vu_verificacionsvu_modalidad = keyof typeof Vu_verificacionsvu_modalidad;
 export const Vu_verificacionsvu_resultado = {
-  100000000: 'Adopción plena',
-  100000001: 'Adopción parcial',
-  100000002: 'Adopción baja'
+  100000000: 'Usabilidad confirmada',
+  100000001: 'Usabilidad parcial',
+  100000002: 'No confirmada'
 } as const;
 export type Vu_verificacionsvu_resultado = keyof typeof Vu_verificacionsvu_resultado;
 

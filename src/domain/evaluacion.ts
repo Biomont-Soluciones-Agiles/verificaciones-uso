@@ -1,8 +1,10 @@
 import type { Criterio, Entrevista, Id, PuntajeCriterio, Respuesta, ResultadoAdopcion } from './tipos';
 
-/** RN-09: umbrales del resultado (propuesta del diseño; a validar con negocio). */
-export const UMBRAL_ADOPCION_PLENA = 85;
-export const UMBRAL_ADOPCION_PARCIAL = 60;
+/** RN-09: umbrales del Excel de verificaciones ("Criterios (validar)"), sobre un máximo de 40. */
+export const UMBRAL_USABILIDAD_CONFIRMADA = 30;
+export const UMBRAL_USABILIDAD_PARCIAL = 20;
+/** Máximo del puntaje de usabilidad: 4 criterios × 10, como la suma del Excel. */
+export const PUNTAJE_USABILIDAD_MAXIMO = 40;
 
 export const PUNTAJE_MINIMO = 1;
 export const PUNTAJE_MAXIMO = 10;
@@ -42,17 +44,21 @@ export function puntajeSugerido(
   return redondear1(puntajes.reduce((s, p) => s + p, 0) / puntajes.length);
 }
 
-/** RN-03: índice de adopción = Σ(puntaje final × peso) / 10, redondeado a 1 decimal (0–100). */
+/**
+ * RN-03: puntaje de usabilidad (0–40) = Σ(puntaje final × peso) × 40 / (10 × 100), a 1 decimal.
+ * Es la suma de los 4 criterios del Excel, ponderada: con los 4 pesos en 25 da exactamente la
+ * suma de los promedios por criterio (7,3 + 10 + 10 + 6,5 → 33,8).
+ */
 export function indiceAdopcion(puntajes: readonly Pick<PuntajeCriterio, 'puntajeFinal' | 'peso'>[]): number {
   const total = puntajes.reduce((s, p) => s + p.puntajeFinal * p.peso, 0);
-  return redondear1(total / 10);
+  return redondear1((total * PUNTAJE_USABILIDAD_MAXIMO) / (PUNTAJE_MAXIMO * SUMA_PESOS_REQUERIDA));
 }
 
-/** RN-09: resultado derivado del índice. */
+/** RN-09: interpretación del Excel (≥ 30 confirmada, 20–30 parcial, < 20 no confirmada). */
 export function resultado(indice: number): ResultadoAdopcion {
-  if (indice >= UMBRAL_ADOPCION_PLENA) return 'Adopción plena';
-  if (indice >= UMBRAL_ADOPCION_PARCIAL) return 'Adopción parcial';
-  return 'Adopción baja';
+  if (indice >= UMBRAL_USABILIDAD_CONFIRMADA) return 'Usabilidad confirmada';
+  if (indice >= UMBRAL_USABILIDAD_PARCIAL) return 'Usabilidad parcial';
+  return 'No confirmada';
 }
 
 /**
@@ -91,10 +97,10 @@ export function pesosValidos(criterios: readonly Pick<Criterio, 'peso' | 'activo
   return sumaPesos(criterios) === SUMA_PESOS_REQUERIDA;
 }
 
-/** `72` → `72 %`, `72.5` → `72,5 %`. */
+/** `33.8` → `33.8 / 40` (separador decimal de es-PE). */
 export function formatearIndice(indice: number | null | undefined): string {
   if (indice === null || indice === undefined) return '—';
-  return `${indice.toLocaleString('es-PE', { maximumFractionDigits: 1 })} %`;
+  return `${indice.toLocaleString('es-PE', { maximumFractionDigits: 1 })} / ${PUNTAJE_USABILIDAD_MAXIMO}`;
 }
 
 /** `8` → `8`, `7.5` → `7,5`. */

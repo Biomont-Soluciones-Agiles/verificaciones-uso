@@ -7,13 +7,25 @@ import {
   puntajeSugerido,
   requiereSustento,
   resultado,
-  UMBRAL_ADOPCION_PARCIAL,
-  UMBRAL_ADOPCION_PLENA,
+  formatearIndice,
+  UMBRAL_USABILIDAD_CONFIRMADA,
+  UMBRAL_USABILIDAD_PARCIAL,
 } from '../evaluacion';
 import type { Entrevista, PuntajeCriterio, Respuesta } from '../tipos';
 
-describe('indiceAdopcion (RN-03)', () => {
-  it('finales 8, 6, 7, 8 con pesos 30, 25, 30, 15 → 72', () => {
+describe('indiceAdopcion (RN-03, escala 0–40)', () => {
+  it('con pesos iguales replica la suma del Excel: 7,33 + 10 + 10 + 6,5 → 33,8', () => {
+    expect(
+      indiceAdopcion([
+        { puntajeFinal: 7.3333, peso: 25 },
+        { puntajeFinal: 10, peso: 25 },
+        { puntajeFinal: 10, peso: 25 },
+        { puntajeFinal: 6.5, peso: 25 },
+      ]),
+    ).toBe(33.8);
+  });
+
+  it('finales 8, 6, 7, 8 con pesos 30, 25, 30, 15 → 28,8', () => {
     expect(
       indiceAdopcion([
         { puntajeFinal: 8, peso: 30 },
@@ -21,7 +33,7 @@ describe('indiceAdopcion (RN-03)', () => {
         { puntajeFinal: 7, peso: 30 },
         { puntajeFinal: 8, peso: 15 },
       ]),
-    ).toBe(72);
+    ).toBe(28.8);
   });
 
   it('redondea a 1 decimal', () => {
@@ -32,28 +44,32 @@ describe('indiceAdopcion (RN-03)', () => {
         { puntajeFinal: 7, peso: 30 },
         { puntajeFinal: 8, peso: 15 },
       ]),
-    ).toBe(72.2);
+    ).toBe(28.9);
   });
 
-  it('todo 10 → 100', () => {
-    expect(indiceAdopcion([{ puntajeFinal: 10, peso: 60 }, { puntajeFinal: 10, peso: 40 }])).toBe(100);
+  it('todo 10 → 40', () => {
+    expect(indiceAdopcion([{ puntajeFinal: 10, peso: 60 }, { puntajeFinal: 10, peso: 40 }])).toBe(40);
+  });
+
+  it('se muestra sobre 40', () => {
+    expect(formatearIndice(33.8)).toBe('33.8 / 40');
   });
 });
 
 describe('resultado (RN-09)', () => {
   it('umbrales exportados', () => {
-    expect(UMBRAL_ADOPCION_PLENA).toBe(85);
-    expect(UMBRAL_ADOPCION_PARCIAL).toBe(60);
+    expect(UMBRAL_USABILIDAD_CONFIRMADA).toBe(30);
+    expect(UMBRAL_USABILIDAD_PARCIAL).toBe(20);
   });
 
   it.each([
-    [100, 'Adopción plena'],
-    [85, 'Adopción plena'],
-    [84.9, 'Adopción parcial'],
-    [72, 'Adopción parcial'],
-    [60, 'Adopción parcial'],
-    [59.9, 'Adopción baja'],
-    [10, 'Adopción baja'],
+    [40, 'Usabilidad confirmada'],
+    [33.8, 'Usabilidad confirmada'],
+    [30, 'Usabilidad confirmada'],
+    [29.9, 'Usabilidad parcial'],
+    [20, 'Usabilidad parcial'],
+    [19.9, 'No confirmada'],
+    [4, 'No confirmada'],
   ] as const)('%d → %s', (indice, esperado) => {
     expect(resultado(indice)).toBe(esperado);
   });

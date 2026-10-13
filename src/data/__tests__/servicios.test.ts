@@ -143,8 +143,8 @@ describe('evaluación y envío', () => {
       notificarAlFinalizar: true,
     });
     expect(v.estado).toBe('En revisión');
-    expect(v.indiceAdopcion).toBe(72);
-    expect(v.resultado).toBe('Adopción parcial');
+    expect(v.indiceAdopcion).toBe(28.8);
+    expect(v.resultado).toBe('Usabilidad parcial');
     expect(v.fechaEnvio).not.toBeNull();
     // Simulación de F2: aprobación de nivel Piloto pendiente.
     const aprobaciones = await repos.aprobaciones.listarPorVerificacion('1');

@@ -77,7 +77,7 @@ export function FormularioEvaluacion({ verificacion, puntajesIniciales, entrevis
       <Encabezado
         titulo="Evaluación sugerida"
         subtitulo="Los puntajes consideran preguntas definidas y preguntas surgidas en todas las entrevistas completas."
-        extra={<IndiceAdopcion indice={indice} etiqueta="Índice preliminar" />}
+        extra={<IndiceAdopcion indice={indice} etiqueta="Puntaje preliminar" />}
       />
       <Tarjeta titulo="Puntaje por criterio">
         {puntajes.map((p) => (

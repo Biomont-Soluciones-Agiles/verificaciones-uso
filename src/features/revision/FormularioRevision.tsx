@@ -72,7 +72,7 @@ export function FormularioRevision({ verificacion, entrevistas, evidencias, punt
       <DosColumnas>
         <Pila>
           <Tarjeta titulo="Resumen de resultados">
-            <IndiceAdopcion indice={indice} etiqueta={editable ? 'Índice preliminar' : 'Índice de adopción'} />
+            <IndiceAdopcion indice={indice} etiqueta={editable ? 'Puntaje preliminar' : 'Puntaje de usabilidad'} />
             <ListaResumen>
               <LineaResumen etiqueta="Solución" valor={verificacion.solucionNombre} />
               <LineaResumen etiqueta="Verificación" valor={verificacion.codigo} />

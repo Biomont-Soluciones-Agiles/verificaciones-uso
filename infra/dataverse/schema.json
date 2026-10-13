@@ -903,7 +903,7 @@
         {
           "logicalName": "vu_indiceadopcion",
           "schemaName": "vu_IndiceAdopcion",
-          "displayName": "Índice de adopción (%)",
+          "displayName": "Puntaje de usabilidad (0–40)",
           "type": "Decimal",
           "minValue": 0,
           "maxValue": 100,
@@ -919,15 +919,15 @@
           "options": [
             {
               "value": 100000000,
-              "label": "Adopción plena"
+              "label": "Usabilidad confirmada"
             },
             {
               "value": 100000001,
-              "label": "Adopción parcial"
+              "label": "Usabilidad parcial"
             },
             {
               "value": 100000002,
-              "label": "Adopción baja"
+              "label": "No confirmada"
             }
           ]
         },

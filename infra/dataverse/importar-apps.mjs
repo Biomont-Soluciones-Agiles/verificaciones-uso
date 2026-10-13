@@ -53,9 +53,10 @@ async function actualizar(table, id, body, what) {
 }
 
 // ---------------------------------------------------------------- reglas (§1.3)
-const UMBRAL_PLENA = 85, UMBRAL_PARCIAL = 60;
-const indice = (puntajes, pesos) => Math.round(Object.keys(pesos).reduce((s, c) => s + puntajes[c] * pesos[c], 0) / 10 * 10) / 10;
-const resultado = (i) => (i >= UMBRAL_PLENA ? 'Adopción plena' : i >= UMBRAL_PARCIAL ? 'Adopción parcial' : 'Adopción baja');
+// Igual que src/domain/evaluacion.ts: puntaje de usabilidad 0–40 = Σ(final × peso) × 40 / 1000.
+const UMBRAL_CONFIRMADA = 30, UMBRAL_PARCIAL = 20;
+const indice = (puntajes, pesos) => Math.round(Object.keys(pesos).reduce((s, c) => s + puntajes[c] * pesos[c], 0) * 40 / 1000 * 10) / 10;
+const resultado = (i) => (i >= UMBRAL_CONFIRMADA ? 'Usabilidad confirmada' : i >= UMBRAL_PARCIAL ? 'Usabilidad parcial' : 'No confirmada');
 const hoy = new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Lima' }); // yyyy-MM-dd
 
 // ---------------------------------------------------------------- importar
@@ -111,7 +112,7 @@ async function importarVuHistorica(app, solucionId, criterios) {
     vu_entrevistascompletas: 0,
     vu_alertaenviada: true,
     vu_notificaralfinalizar: false,
-  }), `VU histórica Aprobada de "${app.nombre}" (índice ${i} %, ${resultado(i)})`);
+  }), `VU histórica Aprobada de "${app.nombre}" (puntaje ${i} / 40, ${resultado(i)})`);
   for (const [nombre, c] of Object.entries(criterios)) {
     await crear('vu_puntajecriterio', {
       vu_name: nombre,
