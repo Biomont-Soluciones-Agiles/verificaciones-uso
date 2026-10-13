@@ -41,6 +41,7 @@ const useStyles = makeStyles({
   },
   aprobacionTextos: { display: 'flex', flexDirection: 'column', minWidth: 0 },
   nota: { color: tokens.colorNeutralForeground3 },
+  persona: { display: 'flex', flexDirection: 'column', minWidth: 0 },
 });
 
 export interface ControlEnvioProps {
@@ -165,6 +166,18 @@ export function ControlEnvio({ verificacion, completas, puntajes, datos, onCambi
           deshabilitado={!editable}
           onChange={(p) => onCambiar('aprobadorPiloto', p)}
         />
+      </Field>
+      <Field label="Responsable de la verificación">
+        {verificacion.responsable ? (
+          <span className={styles.persona}>
+            <Text>{verificacion.responsable.nombre}</Text>
+            <Text size={200} className={styles.nota}>
+              {verificacion.responsable.email}
+            </Text>
+          </span>
+        ) : (
+          <Text className={styles.nota}>Sin responsable</Text>
+        )}
       </Field>
       <Field label="Aprobadora productiva posterior">
         <PersonaPicker
