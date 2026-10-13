@@ -46,6 +46,8 @@ DV = "shared_commondataserviceforapps"
 REFERENCIAS = {DV: "vu_dataverse", "shared_approvals": "vu_approvals",
                "shared_office365": "vu_office365", "shared_teams": "vu_teams"}
 OPS_DV = {"ListRecords", "GetItem", "CreateRecord", "UpdateOnlyRecord", "UpdateRecord", "SubscribeWebhookTrigger"}
+# Valores de approvalType que devuelve GetApprovalTypes del conector Approvals ("Custom" no existe).
+TIPOS_APROBACION = {"Basic", "BasicAwaitAll", "CustomResponse", "CustomResponseAwaitAll", "Sequential"}
 
 # Columnas de sistema que existen en toda tabla personalizada
 SISTEMA = {"createdon": "datetime", "modifiedon": "datetime", "statecode": "int", "statuscode": "int",
@@ -461,6 +463,10 @@ def validar(ruta):
         host = revisar_host(nombre, a)
         if not host:
             continue
+        if host.get("operationId") == "StartAndWaitForAnApproval":
+            tipo = a["inputs"].get("parameters", {}).get("approvalType")
+            if tipo not in TIPOS_APROBACION:
+                err("%s: %s: approvalType %r no existe (válidos: %s)" % (rel, nombre, tipo, ", ".join(sorted(TIPOS_APROBACION))))
         if host.get("connectionName") != DV:
             continue
         opid = host.get("operationId")

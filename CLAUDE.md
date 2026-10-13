@@ -27,10 +27,11 @@ Infra (Node 18+, no npm deps; auth via `az login`; default org `https://org4d363
 ```bash
 node infra/dataverse/provision.mjs [--dry-run] [--verbose]   # idempotent schema creation (first run ~15–20 min)
 node infra/dataverse/verify.mjs                              # diff environment metadata vs schema.json; exit≠0 on drift
-node infra/dataverse/seed.mjs [--demo]                       # idempotent seed data
-node infra/dataverse/importar-apps.mjs --file apps.json [--reemplazar] [--dry-run]  # real catalog import
+node infra/dataverse/seed.mjs                                # idempotent config seed (areas, criteria, question)
+node infra/dataverse/importar-apps.mjs --file apps.json [--dry-run]  # real solution catalog import
 node scripts/smoke-dataverse.mjs                             # READ-ONLY: runs the app's exact OData queries via Web API
 python -I infra/power-automate/validar_definiciones.py       # static validation of flow definitions vs §2.3 + schema.json
+node infra/power-automate/desplegar.mjs [--dry-run] [--sin-activar]  # idempotent: connection refs + F1–F4 into the solution, then activate
 ```
 
 `infra/dataverse/tools/apps_xlsx_a_json.py` produces the `apps.json` for `importar-apps.mjs`; that JSON contains business data and must not be committed.
@@ -57,7 +58,7 @@ Changing the data model touches, in order: `docs/diseno-verificacion-uso.md` §2
 
 ### Power Automate flows (`infra/power-automate/F1…F4`)
 
-`definition.json` files are solution-flow `clientdata`; they are not deployed by any script. F2 (review/approvals) and F3 (solution state recalculation) trigger on `vu_verificacion` with **filtering column `vu_estado`**, so only state changes fire flows — the app should send `vu_estado` only when it actually changes. Date-only columns use Lima time (`SA Pacific Standard Time`). Use `UpdateOnlyRecord`, not `UpdateRecord` (upsert). See that README for conventions and known design gaps.
+`definition.json` files are solution-flow `clientdata`; `desplegar.mjs` creates/updates them as `workflow` rows in the `VerificacionUso` solution using the `az` user's own connections (dev only — production must use a service account). F2 (review/approvals) and F3 (solution state recalculation) trigger on `vu_verificacion` with **filtering column `vu_estado`**, so only state changes fire flows — the app should send `vu_estado` only when it actually changes. Date-only columns use Lima time (`SA Pacific Standard Time`). Use `UpdateOnlyRecord`, not `UpdateRecord` (upsert). See that README for conventions and known design gaps.
 
 ## Dataverse gotchas
 

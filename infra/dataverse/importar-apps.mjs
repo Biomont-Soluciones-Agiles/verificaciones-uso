@@ -3,25 +3,21 @@
 // convertida con tools/apps_xlsx_a_json.py). Idempotente: busca por vu_name antes de crear.
 //
 // Uso:
-//   node infra/dataverse/importar-apps.mjs --file apps.json [--reemplazar] [--dry-run] [--org URL]
+//   node infra/dataverse/importar-apps.mjs --file apps.json [--dry-run] [--org URL]
 //
-// --reemplazar  borra antes el catálogo de ejemplo de seed/ (soluciones de seed/soluciones.json con sus
-//               documentos y verificaciones, y las áreas de seed/areas.json que dejen de usarse).
 // Las VU marcadas "Realizada" en la lista se crean como vu_verificacion Aprobada con sus 4 puntajes.
 import { readFileSync } from 'node:fs';
-import { schema, parseArgs, createClient, log, warn, readJson, q } from './lib.mjs';
+import { schema, parseArgs, createClient, log, q } from './lib.mjs';
 
 // ---------------------------------------------------------------- argumentos
 const argv = process.argv.slice(2);
 const take = (flag) => { const i = argv.indexOf(flag); if (i < 0) return undefined; const v = argv[i + 1]; argv.splice(i, 2); return v; };
-const flag = (f) => { const i = argv.indexOf(f); if (i < 0) return false; argv.splice(i, 1); return true; };
 const file = take('--file');
-const REEMPLAZAR = flag('--reemplazar');
 const args = parseArgs(argv);
 if (!file) { console.error('Falta --file <apps.json>'); process.exit(2); }
 const DRY = args.dryRun;
 const api = createClient(args.org);
-const stats = { creados: 0, actualizados: 0, borrados: 0, existentes: 0 };
+const stats = { creados: 0, actualizados: 0, existentes: 0 };
 
 // ---------------------------------------------------------------- metadatos de schema.json
 const T = Object.fromEntries(schema.tables.map((t) => [t.logicalName, t]));
@@ -55,11 +51,6 @@ async function actualizar(table, id, body, what) {
   await api.request('PATCH', `${set(table)}(${id})`, body);
   stats.actualizados++; log(`[actual.] ${what}`);
 }
-async function borrar(table, id, what) {
-  if (DRY) { log(`[dry-run] BORRARÍA ${what}`); stats.borrados++; return; }
-  await api.request('DELETE', `${set(table)}(${id})`);
-  stats.borrados++; log(`[borrado] ${what}`);
-}
 
 // ---------------------------------------------------------------- reglas (§1.3)
 const UMBRAL_PLENA = 85, UMBRAL_PARCIAL = 60;
@@ -67,34 +58,7 @@ const indice = (puntajes, pesos) => Math.round(Object.keys(pesos).reduce((s, c) 
 const resultado = (i) => (i >= UMBRAL_PLENA ? 'Adopción plena' : i >= UMBRAL_PARCIAL ? 'Adopción parcial' : 'Adopción baja');
 const hoy = new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Lima' }); // yyyy-MM-dd
 
-// ---------------------------------------------------------------- 1) borrar el catálogo de ejemplo
-async function reemplazarEjemplo(nombresImportados) {
-  for (const s of readJson('seed/soluciones.json').soluciones) {
-    if (nombresImportados.has(s.vu_name)) continue; // la lista real la reutiliza: se actualiza, no se borra
-    for (const sol of await buscar('vu_solucion', eqName(s.vu_name))) {
-      const id = sol[pk('vu_solucion')];
-      // vu_verificacion → vu_solucion es Restrict: primero las verificaciones (cascada a sus hijas)
-      for (const v of await buscar('vu_verificacion', `_vu_solucionid_value eq ${id}`, 'vu_verificacionid,vu_name')) {
-        await borrar('vu_verificacion', v.vu_verificacionid, `verificación ${v.vu_name} (de ${s.vu_name}, con entrevistas, respuestas, evidencias, puntajes y aprobaciones)`);
-      }
-      await borrar('vu_solucion', id, `solución de ejemplo "${s.vu_name}" (con sus documentos)`);
-    }
-  }
-}
-async function limpiarAreasEjemplo(areasUsadas) {
-  for (const a of [...readJson('seed/areas.json').areas].reverse()) { // hijas antes que padres
-    if (areasUsadas.has(a.vu_name)) continue;
-    for (const fila of await buscar('vu_area', eqName(a.vu_name))) {
-      const id = fila.vu_areaid;
-      const enUso = (await buscar('vu_solucion', `_vu_procesoid_value eq ${id}`)).length
-        + (await buscar('vu_entrevista', `_vu_areaid_value eq ${id}`)).length;
-      if (enUso && !DRY) { warn(`el área "${a.vu_name}" sigue en uso; no se borra`); continue; }
-      await borrar('vu_area', id, `área de ejemplo "${a.vu_name}"`);
-    }
-  }
-}
-
-// ---------------------------------------------------------------- 2) importar
+// ---------------------------------------------------------------- importar
 async function asegurarArea(nombre, cache) {
   if (cache[nombre]) return cache[nombre];
   const f = await buscar('vu_area', eqName(nombre));
@@ -164,8 +128,7 @@ const isDryId = (id) => typeof id === 'string' && id.startsWith('dry-');
 // ---------------------------------------------------------------- main
 (async () => {
   const { apps } = JSON.parse(readFileSync(file, 'utf8'));
-  log(`Entorno: ${args.org}${DRY ? '  (DRY-RUN)' : ''} · ${apps.length} apps${REEMPLAZAR ? ' · REEMPLAZA el catálogo de ejemplo' : ''}`);
-  const nombres = new Set(apps.map((a) => a.nombre));
+  log(`Entorno: ${args.org}${DRY ? '  (DRY-RUN)' : ''} · ${apps.length} apps`);
 
   const criterios = {};
   for (const c of await api.get(`${set('vu_criterio')}?$select=vu_criterioid,vu_name,vu_peso&$filter=statecode eq 0`).then((d) => d.value)) {
@@ -173,8 +136,6 @@ const isDryId = (id) => typeof id === 'string' && id.startsWith('dry-');
   }
   const suma = Object.values(criterios).reduce((s, c) => s + c.peso, 0);
   if (suma !== 100) throw new Error(`Los pesos de los criterios activos suman ${suma}, no 100`);
-
-  if (REEMPLAZAR) await reemplazarEjemplo(nombres);
 
   const areas = {};
   for (const app of apps) {
@@ -197,6 +158,5 @@ const isDryId = (id) => typeof id === 'string' && id.startsWith('dry-');
     }
   }
 
-  if (REEMPLAZAR) await limpiarAreasEjemplo(new Set(apps.map((a) => a.area)));
-  log(`Resumen: creados ${stats.creados} · actualizados ${stats.actualizados} · borrados ${stats.borrados} · ya existían ${stats.existentes}`);
+  log(`Resumen: creados ${stats.creados} · actualizados ${stats.actualizados} · ya existían ${stats.existentes}`);
 })().catch((e) => { console.error('\nERROR:', e.message); if (e.body?.error) console.error(JSON.stringify(e.body.error, null, 2).slice(0, 2000)); process.exit(1); });

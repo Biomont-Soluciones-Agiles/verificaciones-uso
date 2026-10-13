@@ -108,13 +108,25 @@ Leyenda de **Req.**: **Sí** = obligatorio para la empresa (*ApplicationRequired
 | vu_descripcion | Texto multilínea (2000) | No | |
 | vu_tiposolucion | Opción local: Power App 100000000 / Flujo 100000001 / Reporte 100000002 / Otro 100000003 | No | |
 | vu_procesoid | Búsqueda → vu_area (Restrict) | Sí | |
-| vu_responsableid | Búsqueda → systemuser | Sí | |
+| vu_responsableid | Búsqueda → systemuser (RemoveLink) | No | El catálogo importado llega sin responsable; la app lo muestra como "Sin responsable" |
 | vu_usuariosobjetivo | Entero | No | |
 | vu_fechaactualizacion | Fecha (solo fecha, *DateOnly*) | No | |
 | vu_periodicidadmeses | Entero 1–36 (predeterminado 6) | Sí | |
 | vu_proximavu | Fecha (solo fecha) | No | RN-10 |
 | vu_estadovu | Opción global `vu_estadovu` | Sí | Lo escribe F3 (§2.5) |
 | vu_ultimaverificacionid | Búsqueda → vu_verificacion (RemoveLink) | No | |
+| vu_tipoproceso | Opción local: Estratégico 100000000 / Operativo 100000001 / Soporte 100000002 | No | Datos del catálogo importado (lista SharePoint "Apps") desde aquí hasta el final de la tabla |
+| vu_proveedor | Texto (100) | No | |
+| vu_tipodiseno | Opción local: Lienzo 100000000 / Model Driven 100000001 / Otro 100000002 | No | |
+| vu_basedatos | Opción local: SharePoint 100000000 / Dataverse 100000001 / Otro 100000002 | No | |
+| vu_tienedashboard | Sí/No (predeterminado No) | No | |
+| vu_estadodesarrollo | Opción local: En proceso 100000000 / Entregado 100000001 / En uso 100000002 | No | |
+| vu_evolucion | Opción local: En proceso 100000000 / Implementado 100000001 | No | |
+| vu_beneficioanualpen | Decimal 0–100 000 000 000 (2) | No | Beneficio anual en soles |
+| vu_capexpen | Decimal 0–100 000 000 000 (2) | No | CAPEX en soles |
+| vu_capexusd | Decimal 0–100 000 000 000 (2) | No | CAPEX en dólares |
+| vu_fechaimplementacion | Fecha (solo fecha) | No | |
+| vu_resultadovu | Opción local: En uso 100000000 / Uso parcial 100000001 / No confirmada 100000002 | No | Resultado VU **declarado** en la lista; no es el resultado RN-09 de una verificación |
 
 **`vu_documentosolucion`**: Documento de la solución
 | Columna lógica | Tipo | Req. | Notas |
@@ -296,8 +308,8 @@ La app solo puede cambiar el estado hasta *En revisión*. Los estados posteriore
 ### 2.6 Datos semilla
 - vu_criterio: Frecuencia 30, Cobertura 25, Sustitución 30, Satisfacción 15.
 - vu_pregunta y vu_opcionrespuesta: "¿Con qué frecuencia utiliza la solución?" (Frecuencia) con las opciones Diariamente 9, Varias veces por semana 8, Semanalmente 6, Ocasionalmente 4, No la utiliza 1.
-- vu_area y vu_solucion: las 4 soluciones y las áreas del prototipo, con sus documentos.
-- **Solo en desarrollo**: una verificación de demostración de "Plan de entregas" con 4 entrevistas, igual que el prototipo.
+- vu_area: las áreas del prototipo.
+- vu_solucion: no hay datos de ejemplo; el catálogo real se importa desde la lista SharePoint "Apps" (`infra/dataverse/importar-apps.mjs`).
 
 ---
 

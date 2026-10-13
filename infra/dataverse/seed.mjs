@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-// Semilla idempotente de Verificación de uso (busca por vu_name + padre antes de crear).
-// Uso: node infra/dataverse/seed.mjs [--org URL] [--demo] [--dry-run] [--verbose]
+// Semilla idempotente de la configuración de Verificación de uso: áreas, criterios, pregunta y
+// opciones (busca por vu_name + padre antes de crear). El catálogo de soluciones lo carga importar-apps.mjs.
+// Uso: node infra/dataverse/seed.mjs [--org URL] [--dry-run] [--verbose]
 import { schema, parseArgs, createClient, log, readJson, q } from './lib.mjs';
 
 const args = parseArgs();
@@ -33,9 +34,7 @@ const eqLookup = (lookup, id) => `_${lookup}_value eq ${id}`;
 const isDry = (id) => typeof id === 'string' && id.startsWith('dry-');
 
 (async () => {
-  log(`Entorno: ${args.org}${DRY ? '  (DRY-RUN)' : ''}${args.demo ? '  (+ demo)' : ''}`);
-  const me = (await api.get('WhoAmI')).UserId;
-  log(`Responsable de la semilla (WhoAmI): ${me}`);
+  log(`Entorno: ${args.org}${DRY ? '  (DRY-RUN)' : ''}`);
 
   // Áreas
   const areas = {};
@@ -61,84 +60,6 @@ const isDry = (id) => typeof id === 'string' && id.startsWith('dry-');
       opciones[`${p.vu_name}|${o.vu_name}`] = await ensure('vu_opcionrespuesta', `${eqName(o.vu_name)}${isDry(pid) ? '' : ' and ' + eqLookup('vu_preguntaid', pid)}`, {
         vu_name: o.vu_name, vu_puntajesugerido: o.vu_puntajesugerido, vu_orden: o.vu_orden, ...bind('vu_opcionrespuesta', 'vu_preguntaid', 'vu_pregunta', pid),
       }, `opción ${o.vu_name} (${o.vu_puntajesugerido})`);
-    }
-  }
-
-  // Soluciones y documentos
-  const sd = readJson('seed/soluciones.json');
-  const soluciones = {};
-  for (const s of sd.soluciones) {
-    const body = {
-      vu_name: s.vu_name, vu_descripcion: s.vu_descripcion, vu_tiposolucion: s.vu_tiposolucion,
-      vu_usuariosobjetivo: s.vu_usuariosobjetivo, vu_fechaactualizacion: s.vu_fechaactualizacion,
-      vu_periodicidadmeses: s.vu_periodicidadmeses, vu_estadovu: s.vu_estadovu,
-      ...(s.vu_proximavu ? { vu_proximavu: s.vu_proximavu } : {}),
-      ...bind('vu_solucion', 'vu_procesoid', 'vu_area', areas[s.proceso]),
-      ...bind('vu_solucion', 'vu_responsableid', 'systemuser', me),
-    };
-    const sid = await ensure('vu_solucion', eqName(s.vu_name), body, `solución ${s.vu_name}`);
-    soluciones[s.vu_name] = sid;
-    for (const d of sd.documentosPorSolucion) {
-      await ensure('vu_documentosolucion', `${eqName(d.vu_name)}${isDry(sid) ? '' : ' and ' + eqLookup('vu_solucionid', sid)}`, {
-        vu_name: d.vu_name, vu_tipodocumento: d.vu_tipodocumento, vu_formato: d.vu_formato, vu_version: d.vu_version,
-        vu_enlace: `${sd.baseEnlaceEjemplo}${s.slug}/${d.slug}`, vu_vigente: true,
-        ...bind('vu_documentosolucion', 'vu_solucionid', 'vu_solucion', sid),
-      }, `  documento ${d.vu_name} de ${s.vu_name}`);
-    }
-  }
-
-  // Demostración (solo desarrollo)
-  if (args.demo) {
-    const demo = readJson('seed/demo.json');
-    const sid = soluciones[demo.solucion];
-    const v = demo.verificacion;
-    const vFilter = isDry(sid) ? `vu_fechaobjetivo eq ${v.vu_fechaobjetivo}` : `${eqLookup('vu_solucionid', sid)} and vu_fechaobjetivo eq ${v.vu_fechaobjetivo}`;
-    const vid = await ensure('vu_verificacion', vFilter, {
-      ...v, ...bind('vu_verificacion', 'vu_solucionid', 'vu_solucion', sid), ...bind('vu_verificacion', 'vu_responsableid', 'systemuser', me),
-    }, `verificación demo de ${demo.solucion} (${v.vu_fechaobjetivo})`);
-
-    for (const e of demo.entrevistas) {
-      const { area, respuestas = [], ...fields } = e;
-      const eid = await ensure('vu_entrevista', `${eqName(e.vu_name)}${isDry(vid) ? '' : ' and ' + eqLookup('vu_verificacionid', vid)}`, {
-        ...fields, ...bind('vu_entrevista', 'vu_verificacionid', 'vu_verificacion', vid), ...(area ? bind('vu_entrevista', 'vu_areaid', 'vu_area', areas[area]) : {}),
-      }, `  ${e.vu_name}`);
-      for (const r of respuestas) {
-        const { pregunta, criterio, opcion, ...rf } = r;
-        await ensure('vu_respuesta', `${eqName(r.vu_name)}${isDry(eid) ? '' : ' and ' + eqLookup('vu_entrevistaid', eid)}`, {
-          ...rf,
-          ...bind('vu_respuesta', 'vu_entrevistaid', 'vu_entrevista', eid),
-          ...bind('vu_respuesta', 'vu_verificacionid', 'vu_verificacion', vid),
-          ...bind('vu_respuesta', 'vu_criterioid', 'vu_criterio', criterios[criterio]),
-          ...(pregunta ? bind('vu_respuesta', 'vu_preguntaid', 'vu_pregunta', preguntas[pregunta]) : {}),
-          ...(opcion ? bind('vu_respuesta', 'vu_opcionid', 'vu_opcionrespuesta', opciones[`${pregunta}|${opcion}`]) : {}),
-        }, `    respuesta "${r.vu_name}" (${criterio}, ${r.vu_puntaje})`);
-      }
-    }
-
-    const pesos = Object.fromEntries(cp.criterios.map((c) => [c.vu_name, c.vu_peso]));
-    for (const p of demo.puntajes) {
-      const cid = criterios[p.criterio];
-      await ensure('vu_puntajecriterio', isDry(vid) ? eqName(p.criterio) : `${eqLookup('vu_verificacionid', vid)} and ${eqLookup('vu_criterioid', cid)}`, {
-        vu_name: p.criterio, vu_peso: pesos[p.criterio], vu_puntajesugerido: p.vu_puntajesugerido, vu_puntajefinal: p.vu_puntajefinal,
-        ...bind('vu_puntajecriterio', 'vu_verificacionid', 'vu_verificacion', vid),
-        ...bind('vu_puntajecriterio', 'vu_criterioid', 'vu_criterio', cid),
-      }, `  puntaje ${p.criterio} = ${p.vu_puntajefinal}`);
-    }
-
-    // La solución refleja la verificación en curso (§2.5: En levantamiento → En proceso)
-    if (!isDry(sid) && !isDry(vid)) {
-      const cur = await api.get(`${set('vu_solucion')}(${sid})?$select=vu_estadovu,_vu_ultimaverificacionid_value`);
-      if (cur.vu_estadovu !== demo.actualizarSolucion.vu_estadovu || cur._vu_ultimaverificacionid_value !== vid) {
-        if (DRY) log(`[dry-run] actualizaría ${demo.solucion}: vu_estadovu y vu_ultimaverificacionid`);
-        else {
-          await api.request('PATCH', `${set('vu_solucion')}(${sid})`, { ...demo.actualizarSolucion, ...bind('vu_solucion', 'vu_ultimaverificacionid', 'vu_verificacion', vid) });
-          stats.actualizados++; log(`[ajuste]  ${demo.solucion}: vu_estadovu = En proceso, vu_ultimaverificacionid = demo`);
-        }
-      } else stats.existentes++;
-    }
-    if (!isDry(vid)) {
-      const vv = await api.get(`${set('vu_verificacion')}(${vid})?$select=vu_name`);
-      log(`Verificación demo: ${vv.vu_name} (${vid})`);
     }
   }
 

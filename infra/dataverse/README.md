@@ -6,7 +6,8 @@ Scripts Node (sin dependencias npm, Node 18+ por el `fetch` nativo) que crean y 
 |---|---|
 | `schema.json` | Publicador, solución, 3 opciones globales, 13 tablas, 96 columnas (29 búsquedas con su relación 1:N y cascada), autonumeración, columna de archivo, clave alternativa y 4 roles. |
 | `provision.mjs` | Crea todo lo anterior de forma **idempotente** (comprueba antes de crear) y publica. |
-| `seed.mjs` + `seed/*.json` | Semilla idempotente (áreas, criterios, pregunta y opciones, soluciones y documentos); con `--demo`, la verificación de demostración. |
+| `seed.mjs` + `seed/*.json` | Semilla idempotente de la configuración: áreas, criterios, pregunta y opciones. |
+| `importar-apps.mjs` + `tools/apps_xlsx_a_json.py` | Importa el catálogo real de soluciones desde la exportación a Excel de la lista SharePoint "Apps" (el JSON no se versiona). |
 | `verify.mjs` | Compara los metadatos del entorno con `schema.json`; sale con código ≠ 0 si hay diferencias. |
 | `lib.mjs` | Token de `az`, cliente Web API v9.2 con reintentos (429/503 respetando `Retry-After`, bloqueo de personalización), etiquetas. |
 
@@ -56,14 +57,20 @@ La primera ejecución tarda unos 15–20 minutos (cada tabla y cada relación es
 ### Semilla
 
 ```bash
-node infra/dataverse/seed.mjs            # catálogos: 7 áreas, 4 criterios, 1 pregunta + 5 opciones, 4 soluciones × 4 documentos
-node infra/dataverse/seed.mjs --demo     # + verificación demo de "Plan de entregas" (solo desarrollo)
+node infra/dataverse/seed.mjs            # 7 áreas, 4 criterios, 1 pregunta + 5 opciones
 ```
 
-- Busca cada fila por `vu_name` + padre (la verificación demo, por solución + fecha objetivo) y solo crea lo que falta; no sobrescribe filas existentes.
-- El responsable de las soluciones y de la verificación es el usuario que ejecuta el script (`WhoAmI`): no hay correos reales. El nombre del prototipo queda en `responsablePrototipo` como referencia.
-- Los enlaces de los documentos son **de ejemplo** (`https://example.invalid/ejemplo/...`), igual que la URL de la grabación de la entrevista 3.
-- Demo: estado *En levantamiento*, 4 entrevistas (2 completas, 1 en curso, 1 pendiente), las 2 respuestas de la entrevista 3, puntajes finales 8/6/7/8, fecha objetivo 2026-08-15, anticipación 15 días, alerta 2026-07-31. La solución queda en `vu_estadovu = En proceso` (§2.5) con `vu_ultimaverificacionid` apuntando a la demo.
+- Busca cada fila por `vu_name` + padre y solo crea lo que falta; no sobrescribe filas existentes.
+- No crea soluciones ni verificaciones: el catálogo de soluciones (y sus VU históricas aprobadas) lo carga `importar-apps.mjs`.
+
+### Catálogo de soluciones
+
+```bash
+python -I infra/dataverse/tools/apps_xlsx_a_json.py <Libro.xlsx> apps.json
+node infra/dataverse/importar-apps.mjs --file apps.json [--dry-run]
+```
+
+Idempotente: busca cada solución por `vu_name` y la actualiza si ya existe.
 
 ### Verificación
 

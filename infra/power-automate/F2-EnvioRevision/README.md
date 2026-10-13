@@ -51,7 +51,7 @@ flowchart TD
 Cada **Scope_Nivel_<N>** hace:
 
 1. `Add a new row` en `vu_aprobacions`: `vu_name = "<código> · <nivel>"`, `vu_VerificacionId@odata.bind`, `vu_nivel`, `vu_AprobadorId@odata.bind`, `vu_decision = Pendiente`, `vu_fechasolicitud`.
-2. *Start and wait for an approval* (`Custom`, `Aprobar/Observar/Rechazar`, `limit.timeout = P14D`).
+2. *Start and wait for an approval* (`CustomResponse`, `Aprobar/Observar/Rechazar`, `limit.timeout = P14D`).
 3. `vu_notificacion` *Envío a revisión* hacia la aprobadora (`Error` si la solicitud falló). Si la solicitud falló, la ejecución termina en `Failed` y la verificación se queda como estaba.
 4. `Update a row` en `vu_aprobacions`: `vu_decision`, `vu_comentario`, `vu_fechadecision`, `vu_approvalid`.
 5. Fija `varEstadoFinal`, avisa al responsable por correo y Teams y registra ambos avisos (`runAfter` Succeeded/Failed/TimedOut con `vu_estadoenvio` calculado, para que un fallo de aviso no detenga la aprobación).

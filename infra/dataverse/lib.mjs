@@ -10,11 +10,10 @@ export const schema = readJson('schema.json');
 
 // ---------- argumentos ----------
 export function parseArgs(argv = process.argv.slice(2)) {
-  const args = { dryRun: false, demo: false, org: process.env.DATAVERSE_URL || schema.environment.url, verbose: false };
+  const args = { dryRun: false, org: process.env.DATAVERSE_URL || schema.environment.url, verbose: false };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--dry-run') args.dryRun = true;
-    else if (a === '--demo') args.demo = true;
     else if (a === '--verbose' || a === '-v') args.verbose = true;
     else if (a === '--org') args.org = argv[++i];
     else if (a.startsWith('--org=')) args.org = a.slice(6);

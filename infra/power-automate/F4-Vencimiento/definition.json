@@ -163,96 +163,118 @@
                     "actions": {}
                   }
                 },
-                "Leer_responsable": {
+                "Si_tiene_responsable": {
+                  "type": "If",
+                  "description": "El catálogo importado puede no tener responsable: se marca Pendiente igual, pero no hay a quién avisar.",
+                  "expression": {
+                    "and": [
+                      {
+                        "not": {
+                          "equals": [
+                            "@empty(items('Para_cada_solucion')?['_vu_responsableid_value'])",
+                            true
+                          ]
+                        }
+                      }
+                    ]
+                  },
+                  "actions": {
+                    "Leer_responsable": {
+                      "runAfter": {},
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "connectionName": "shared_commondataserviceforapps",
+                          "operationId": "GetItem",
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                        },
+                        "parameters": {
+                          "entityName": "systemusers",
+                          "recordId": "@items('Para_cada_solucion')?['_vu_responsableid_value']",
+                          "$select": "systemuserid,fullname,internalemailaddress,domainname"
+                        }
+                      }
+                    },
+                    "Enviar_recordatorio": {
+                      "runAfter": {
+                        "Leer_responsable": [
+                          "Succeeded"
+                        ]
+                      },
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "connectionName": "shared_office365",
+                          "operationId": "SendEmailV2",
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365"
+                        },
+                        "parameters": {
+                          "emailMessage/To": "@{coalesce(body('Leer_responsable')?['internalemailaddress'], body('Leer_responsable')?['domainname'])}",
+                          "emailMessage/Subject": "@{if(less(outputs('Dias_para_vencer'), 0), 'Verificación de uso vencida', 'Verificación de uso por vencer')}: @{items('Para_cada_solucion')?['vu_name']} (@{formatDateTime(items('Para_cada_solucion')?['vu_proximavu'], 'dd/MM/yyyy')})",
+                          "emailMessage/Body": "<p>Hola @{body('Leer_responsable')?['fullname']}:</p><p>La verificación de uso de la solución <b>@{items('Para_cada_solucion')?['vu_name']}</b> @{if(less(outputs('Dias_para_vencer'), 0), 'venció el', 'vence el')} <b>@{formatDateTime(items('Para_cada_solucion')?['vu_proximavu'], 'dd/MM/yyyy')}</b>@{if(less(outputs('Dias_para_vencer'), 0), '', concat(' (en ', string(outputs('Dias_para_vencer')), ' días)'))} y no tiene ninguna verificación activa.</p><p>Programe una nueva verificación desde la app <i>Verificación de uso</i>.</p>",
+                          "emailMessage/Importance": "Normal"
+                        }
+                      }
+                    },
+                    "Registrar_recordatorio_enviado": {
+                      "runAfter": {
+                        "Enviar_recordatorio": [
+                          "Succeeded"
+                        ]
+                      },
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "connectionName": "shared_commondataserviceforapps",
+                          "operationId": "CreateRecord",
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                        },
+                        "parameters": {
+                          "entityName": "vu_notificacions",
+                          "item/vu_name": "@{if(less(outputs('Dias_para_vencer'), 0), 'Verificación de uso vencida', 'Verificación de uso por vencer')}: @{items('Para_cada_solucion')?['vu_name']} (@{formatDateTime(items('Para_cada_solucion')?['vu_proximavu'], 'dd/MM/yyyy')})",
+                          "item/vu_tiponotificacion": 100000003,
+                          "item/vu_DestinatarioId@odata.bind": "/systemusers(@{items('Para_cada_solucion')?['_vu_responsableid_value']})",
+                          "item/vu_canal": 100000000,
+                          "item/vu_fechaenvio": "@utcNow()",
+                          "item/vu_estadoenvio": 100000000,
+                          "item/vu_SolucionId@odata.bind": "/vu_solucions(@{items('Para_cada_solucion')?['vu_solucionid']})"
+                        }
+                      }
+                    },
+                    "Registrar_recordatorio_error": {
+                      "runAfter": {
+                        "Enviar_recordatorio": [
+                          "Failed",
+                          "TimedOut"
+                        ]
+                      },
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "connectionName": "shared_commondataserviceforapps",
+                          "operationId": "CreateRecord",
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                        },
+                        "parameters": {
+                          "entityName": "vu_notificacions",
+                          "item/vu_name": "@{if(less(outputs('Dias_para_vencer'), 0), 'Verificación de uso vencida', 'Verificación de uso por vencer')}: @{items('Para_cada_solucion')?['vu_name']} (@{formatDateTime(items('Para_cada_solucion')?['vu_proximavu'], 'dd/MM/yyyy')})",
+                          "item/vu_tiponotificacion": 100000003,
+                          "item/vu_DestinatarioId@odata.bind": "/systemusers(@{items('Para_cada_solucion')?['_vu_responsableid_value']})",
+                          "item/vu_canal": 100000000,
+                          "item/vu_fechaenvio": "@utcNow()",
+                          "item/vu_estadoenvio": 100000001,
+                          "item/vu_SolucionId@odata.bind": "/vu_solucions(@{items('Para_cada_solucion')?['vu_solucionid']})"
+                        }
+                      }
+                    }
+                  },
+                  "else": {
+                    "actions": {}
+                  },
                   "runAfter": {
                     "Si_vencida_y_no_Pendiente": [
                       "Succeeded"
                     ]
-                  },
-                  "type": "OpenApiConnection",
-                  "inputs": {
-                    "host": {
-                      "connectionName": "shared_commondataserviceforapps",
-                      "operationId": "GetItem",
-                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
-                    },
-                    "parameters": {
-                      "entityName": "systemusers",
-                      "recordId": "@items('Para_cada_solucion')?['_vu_responsableid_value']",
-                      "$select": "systemuserid,fullname,internalemailaddress,domainname"
-                    }
-                  }
-                },
-                "Enviar_recordatorio": {
-                  "runAfter": {
-                    "Leer_responsable": [
-                      "Succeeded"
-                    ]
-                  },
-                  "type": "OpenApiConnection",
-                  "inputs": {
-                    "host": {
-                      "connectionName": "shared_office365",
-                      "operationId": "SendEmailV2",
-                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365"
-                    },
-                    "parameters": {
-                      "emailMessage/To": "@{coalesce(body('Leer_responsable')?['internalemailaddress'], body('Leer_responsable')?['domainname'])}",
-                      "emailMessage/Subject": "@{if(less(outputs('Dias_para_vencer'), 0), 'Verificación de uso vencida', 'Verificación de uso por vencer')}: @{items('Para_cada_solucion')?['vu_name']} (@{formatDateTime(items('Para_cada_solucion')?['vu_proximavu'], 'dd/MM/yyyy')})",
-                      "emailMessage/Body": "<p>Hola @{body('Leer_responsable')?['fullname']}:</p><p>La verificación de uso de la solución <b>@{items('Para_cada_solucion')?['vu_name']}</b> @{if(less(outputs('Dias_para_vencer'), 0), 'venció el', 'vence el')} <b>@{formatDateTime(items('Para_cada_solucion')?['vu_proximavu'], 'dd/MM/yyyy')}</b>@{if(less(outputs('Dias_para_vencer'), 0), '', concat(' (en ', string(outputs('Dias_para_vencer')), ' días)'))} y no tiene ninguna verificación activa.</p><p>Programe una nueva verificación desde la app <i>Verificación de uso</i>.</p>",
-                      "emailMessage/Importance": "Normal"
-                    }
-                  }
-                },
-                "Registrar_recordatorio_enviado": {
-                  "runAfter": {
-                    "Enviar_recordatorio": [
-                      "Succeeded"
-                    ]
-                  },
-                  "type": "OpenApiConnection",
-                  "inputs": {
-                    "host": {
-                      "connectionName": "shared_commondataserviceforapps",
-                      "operationId": "CreateRecord",
-                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
-                    },
-                    "parameters": {
-                      "entityName": "vu_notificacions",
-                      "item/vu_name": "@{if(less(outputs('Dias_para_vencer'), 0), 'Verificación de uso vencida', 'Verificación de uso por vencer')}: @{items('Para_cada_solucion')?['vu_name']} (@{formatDateTime(items('Para_cada_solucion')?['vu_proximavu'], 'dd/MM/yyyy')})",
-                      "item/vu_tiponotificacion": 100000003,
-                      "item/vu_DestinatarioId@odata.bind": "/systemusers(@{items('Para_cada_solucion')?['_vu_responsableid_value']})",
-                      "item/vu_canal": 100000000,
-                      "item/vu_fechaenvio": "@utcNow()",
-                      "item/vu_estadoenvio": 100000000,
-                      "item/vu_SolucionId@odata.bind": "/vu_solucions(@{items('Para_cada_solucion')?['vu_solucionid']})"
-                    }
-                  }
-                },
-                "Registrar_recordatorio_error": {
-                  "runAfter": {
-                    "Enviar_recordatorio": [
-                      "Failed",
-                      "TimedOut"
-                    ]
-                  },
-                  "type": "OpenApiConnection",
-                  "inputs": {
-                    "host": {
-                      "connectionName": "shared_commondataserviceforapps",
-                      "operationId": "CreateRecord",
-                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
-                    },
-                    "parameters": {
-                      "entityName": "vu_notificacions",
-                      "item/vu_name": "@{if(less(outputs('Dias_para_vencer'), 0), 'Verificación de uso vencida', 'Verificación de uso por vencer')}: @{items('Para_cada_solucion')?['vu_name']} (@{formatDateTime(items('Para_cada_solucion')?['vu_proximavu'], 'dd/MM/yyyy')})",
-                      "item/vu_tiponotificacion": 100000003,
-                      "item/vu_DestinatarioId@odata.bind": "/systemusers(@{items('Para_cada_solucion')?['_vu_responsableid_value']})",
-                      "item/vu_canal": 100000000,
-                      "item/vu_fechaenvio": "@utcNow()",
-                      "item/vu_estadoenvio": 100000001,
-                      "item/vu_SolucionId@odata.bind": "/vu_solucions(@{items('Para_cada_solucion')?['vu_solucionid']})"
-                    }
                   }
                 }
               },

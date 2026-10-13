@@ -23,8 +23,10 @@ flowchart TD
     K -- sí --> D[Dias_para_vencer]
     D --> V{¿Vencida y vu_estadovu ≠ Pendiente?}
     V -- sí --> P["Update a row: vu_estadovu = Pendiente 100000000"]
-    V --> R[Leer_responsable systemusers]
-    P --> R
+    V --> Q{¿Tiene responsable?}
+    P --> Q
+    Q -- no --> Fin2[Sin aviso]
+    Q -- sí --> R[Leer_responsable systemusers]
     R --> M[Send an email V2: por vencer / vencida]
     M -- Succeeded --> N1["vu_notificacion · Recordatorio de vencimiento · Enviada<br/>vu_SolucionId@odata.bind, sin vu_verificacionid"]
     M -- Failed / TimedOut --> N2["vu_notificacion · … · Error"]
@@ -34,3 +36,4 @@ flowchart TD
 - La fila de `vu_notificacion` lleva `vu_solucionid` y deja `vu_verificacionid` vacía (§2.3: opcional).
 - Solo se recuerdan las soluciones activas (`statecode eq 0`) que tienen `vu_proximavu`. Las que nunca se han verificado (sin fecha) no se recuerdan.
 - El recordatorio se repite cada lunes mientras siga sin haber una verificación activa.
+- Las soluciones sin responsable (el catálogo importado llega así) se marcan *Pendiente* igual, pero no generan correo ni fila en `vu_notificacion`: no hay destinatario (`vu_destinatarioid` apunta a `systemuser`).

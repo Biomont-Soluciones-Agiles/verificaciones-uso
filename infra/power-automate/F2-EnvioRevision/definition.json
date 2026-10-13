@@ -335,7 +335,7 @@
                       "apiId": "/providers/Microsoft.PowerApps/apis/shared_approvals"
                     },
                     "parameters": {
-                      "approvalType": "Custom",
+                      "approvalType": "CustomResponse",
                       "WebhookApprovalCreationInput/title": "Verificación de uso @{outputs('Datos_RN07')?['codigo']} · @{outputs('Datos_RN07')?['solucion']} · nivel Piloto",
                       "WebhookApprovalCreationInput/responseOptions": [
                         "Aprobar",
@@ -730,7 +730,7 @@
                           "apiId": "/providers/Microsoft.PowerApps/apis/shared_approvals"
                         },
                         "parameters": {
-                          "approvalType": "Custom",
+                          "approvalType": "CustomResponse",
                           "WebhookApprovalCreationInput/title": "Verificación de uso @{outputs('Datos_RN07')?['codigo']} · @{outputs('Datos_RN07')?['solucion']} · nivel Productiva",
                           "WebhookApprovalCreationInput/responseOptions": [
                             "Aprobar",
