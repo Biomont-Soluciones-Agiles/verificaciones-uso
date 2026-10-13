@@ -1,4 +1,4 @@
-import { Button, Field, Input, makeStyles, Select, tokens } from '@fluentui/react-components';
+import { Button, Field, Input, makeStyles, Select, Text, tokens } from '@fluentui/react-components';
 import { Add24Regular, Search20Regular } from '@fluentui/react-icons';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -13,20 +13,22 @@ const useStyles = makeStyles({
     display: 'flex',
     flexWrap: 'wrap',
     gap: tokens.spacingHorizontalM,
+    alignItems: 'flex-end',
     '& > *': { flex: '1 1 260px' },
   },
+  conteo: { color: tokens.colorNeutralForeground2, flex: '0 0 auto' },
 });
 
 function coincide(s: Solucion, texto: string): boolean {
   const t = texto.trim().toLocaleLowerCase('es');
   if (!t) return true;
-  return [s.titulo, s.procesoNombre, s.responsable.nombre].some((v) => v.toLocaleLowerCase('es').includes(t));
+  return [s.titulo, s.procesoNombre, s.responsable?.nombre ?? ''].some((v) => v.toLocaleLowerCase('es').includes(t));
 }
 
 export function CatalogoPage() {
   const styles = useStyles();
   const navigate = useNavigate();
-  const { data: soluciones, isPending, error } = useSoluciones();
+  const { data: soluciones, isPending, error, refetch } = useSoluciones();
   const [busqueda, setBusqueda] = useState('');
   const [estado, setEstado] = useState<EstadoVU | 'Todos'>('Todos');
   const [detalle, setDetalle] = useState<Solucion | null>(null);
@@ -34,6 +36,11 @@ export function CatalogoPage() {
   const filtradas = (soluciones ?? []).filter(
     (s) => coincide(s, busqueda) && (estado === 'Todos' || s.estadoVU === estado),
   );
+  const hayFiltros = busqueda.trim() !== '' || estado !== 'Todos';
+  const limpiarFiltros = () => {
+    setBusqueda('');
+    setEstado('Todos');
+  };
 
   return (
     <Pila>
@@ -66,14 +73,22 @@ export function CatalogoPage() {
             ))}
           </Select>
         </Field>
+        {soluciones && (
+          <Text className={styles.conteo} role="status" aria-live="polite">
+            {filtradas.length === soluciones.length
+              ? `${soluciones.length} ${soluciones.length === 1 ? 'solución' : 'soluciones'}`
+              : `${filtradas.length} de ${soluciones.length} soluciones`}
+          </Text>
+        )}
       </div>
       {error ? (
-        <ErrorCarga error={error} />
+        <ErrorCarga error={error} onReintentar={() => void refetch()} />
       ) : isPending ? (
-        <Cargando />
+        <Cargando texto="Cargando el catálogo…" />
       ) : (
         <TablaSoluciones
           soluciones={filtradas}
+          onLimpiarFiltros={hayFiltros ? limpiarFiltros : undefined}
           onVerDetalle={setDetalle}
           onAbrirVerificacion={(id) => navigate(`/verificaciones/${id}/programacion`)}
         />

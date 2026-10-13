@@ -12,8 +12,10 @@ import { AlertOn24Regular, Dismiss24Regular, Save24Regular } from '@fluentui/rea
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MENSAJES, useAvisos } from '../../components/avisos';
+import { useConfirmar } from '../../components/Confirmacion';
 import { EstadoBadge } from '../../components/EstadoBadge';
 import { Acciones, Campos, DosColumnas, Encabezado, ListaMotivos, Pila, Tarjeta } from '../../components/Estructura';
+import { iconoOcupado } from '../../components/iconoOcupado';
 import { PersonaPicker } from '../../components/PersonaPicker';
 import { useCancelarVerificacion, useProgramarVerificacion, useVerificaciones } from '../../data/hooks/useVerificaciones';
 import { calcularFechaAlerta, compararFechas, esFechaValida, formatearFecha, hoyISO } from '../../domain/fechas';
@@ -78,11 +80,14 @@ function BannerAlerta({ valores, verificacion }: { valores: ValoresProgramacion;
 export function FormularioProgramacion({ verificacion, soluciones, inicial }: FormularioProgramacionProps) {
   const navigate = useNavigate();
   const avisos = useAvisos();
+  const confirmar = useConfirmar();
   const programar = useProgramarVerificacion();
   const cancelar = useCancelarVerificacion();
   const { data: verificaciones = [] } = useVerificaciones();
   const [valores, setValores] = useState<ValoresProgramacion>(inicial);
   const [intentado, setIntentado] = useState(false);
+  const activando = programar.isPending && programar.variables?.activar === true;
+  const guardandoBorrador = programar.isPending && !activando;
 
   const estado = verificacion?.estado ?? 'Borrador';
   const editable = estado === 'Borrador' || estado === 'Programada';
@@ -118,7 +123,15 @@ export function FormularioProgramacion({ verificacion, soluciones, inicial }: Fo
   };
 
   const cancelarVerificacion = async () => {
-    if (!verificacion || !window.confirm(`¿Cancelar la verificación ${verificacion.codigo}?`)) return;
+    if (!verificacion) return;
+    const ok = await confirmar({
+      titulo: `¿Cancelar la verificación ${verificacion.codigo}?`,
+      mensaje: 'La verificación pasará a estado "Cancelada" y no se podrá reactivar.',
+      confirmar: 'Cancelar verificación',
+      cancelar: 'Mantener',
+      peligrosa: true,
+    });
+    if (!ok) return;
     try {
       await cancelar.mutateAsync(verificacion.id);
       avisos.info(`Verificación ${verificacion.codigo} cancelada.`);
@@ -224,16 +237,30 @@ export function FormularioProgramacion({ verificacion, soluciones, inicial }: Fo
           {editable && (
             <Acciones>
               {verificacion && (
-                <Button appearance="subtle" icon={<Dismiss24Regular />} disabled={ocupado} onClick={cancelarVerificacion}>
+                <Button
+                  appearance="subtle"
+                  icon={iconoOcupado(cancelar.isPending, <Dismiss24Regular />)}
+                  disabled={ocupado}
+                  onClick={cancelarVerificacion}
+                >
                   Cancelar verificación
                 </Button>
               )}
-              <Button icon={<Save24Regular />} disabled={ocupado} onClick={() => guardar(false)}>
-                {estado === 'Programada' ? 'Guardar cambios' : 'Guardar borrador'}
+              <Button
+                icon={iconoOcupado(guardandoBorrador, <Save24Regular />)}
+                disabled={ocupado}
+                onClick={() => guardar(false)}
+              >
+                {guardandoBorrador ? 'Guardando…' : estado === 'Programada' ? 'Guardar cambios' : 'Guardar borrador'}
               </Button>
               {estado === 'Borrador' && (
-                <Button appearance="primary" icon={<AlertOn24Regular />} disabled={ocupado} onClick={() => guardar(true)}>
-                  Programar y activar alerta
+                <Button
+                  appearance="primary"
+                  icon={iconoOcupado(activando, <AlertOn24Regular />)}
+                  disabled={ocupado}
+                  onClick={() => guardar(true)}
+                >
+                  {activando ? 'Programando…' : 'Programar y activar alerta'}
                 </Button>
               )}
             </Acciones>

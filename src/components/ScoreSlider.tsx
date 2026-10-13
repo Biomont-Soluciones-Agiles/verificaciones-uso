@@ -4,12 +4,25 @@ import { formatearPuntaje, PUNTAJE_MAXIMO, PUNTAJE_MINIMO } from '../domain/eval
 const useStyles = makeStyles({
   fila: {
     display: 'grid',
-    gridTemplateColumns: 'minmax(150px, 200px) 1fr 80px',
-    gap: tokens.spacingHorizontalM,
+    gridTemplateColumns: 'minmax(150px, 220px) minmax(0, 1fr) 80px',
+    gridTemplateAreas: '"etiqueta deslizador valor"',
+    columnGap: tokens.spacingHorizontalM,
+    rowGap: tokens.spacingVerticalXXS,
     alignItems: 'center',
-    '@media (max-width: 640px)': { gridTemplateColumns: '1fr' },
+    // En pantallas estrechas: etiqueta y valor en una fila, el deslizador a todo el ancho debajo.
+    '@media (max-width: 640px)': {
+      gridTemplateColumns: 'minmax(0, 1fr) auto',
+      gridTemplateAreas: '"etiqueta valor" "deslizador deslizador"',
+    },
   },
-  valor: { textAlign: 'right', fontWeight: tokens.fontWeightSemibold },
+  etiqueta: { gridArea: 'etiqueta', fontWeight: tokens.fontWeightSemibold },
+  deslizador: { gridArea: 'deslizador', width: '100%' },
+  valor: {
+    gridArea: 'valor',
+    textAlign: 'right',
+    fontWeight: tokens.fontWeightSemibold,
+    fontVariantNumeric: 'tabular-nums',
+  },
 });
 
 export interface ScoreSliderProps {
@@ -27,9 +40,12 @@ export function ScoreSlider({ etiqueta, valor, onChange, paso = 0.1, deshabilita
   const id = useId('puntaje');
   return (
     <div className={styles.fila}>
-      <Label htmlFor={id}>{etiqueta}</Label>
+      <Label htmlFor={id} className={styles.etiqueta}>
+        {etiqueta}
+      </Label>
       <Slider
         id={id}
+        className={styles.deslizador}
         min={PUNTAJE_MINIMO}
         max={PUNTAJE_MAXIMO}
         step={paso}

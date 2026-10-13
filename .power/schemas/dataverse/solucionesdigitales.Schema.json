@@ -277,6 +277,62 @@
           "x-ms-schema-name": "VersionNumber",
           "x-ms-read-only": true
         },
+        "vu_basedatos": {
+          "type": "string",
+          "title": "Base de datos",
+          "x-ms-dataverse-attribute": "vu_basedatos",
+          "x-ms-dataverse-type": "PicklistType",
+          "x-ms-schema-name": "vu_BaseDatos",
+          "enum": [
+            "SharePoint",
+            "Dataverse",
+            "Otro"
+          ],
+          "x-ms-enum-values": [
+            100000000,
+            100000001,
+            100000002
+          ],
+          "Color": [
+            null,
+            null,
+            null
+          ],
+          "x-ms-optionsetmetadataid": "77992e6e-27c7-f111-a05c-7ced8da8a834",
+          "x-ms-isGlobal": false,
+          "x-ms-optionsetdisplayname": "Base de datos",
+          "x-ms-optionSetType": "Picklist"
+        },
+        "vu_basedatosname": {
+          "type": "string",
+          "title": "vu_basedatosname",
+          "x-ms-dataverse-attribute": "vu_basedatosname",
+          "x-ms-dataverse-type": "VirtualType",
+          "x-ms-schema-name": "vu_basedatosName",
+          "x-ms-dataverse-attribute-of": "vu_basedatos",
+          "x-ms-read-only": true
+        },
+        "vu_beneficioanualpen": {
+          "type": "string",
+          "title": "Beneficio anual (S/.)",
+          "x-ms-dataverse-attribute": "vu_beneficioanualpen",
+          "x-ms-dataverse-type": "DecimalType",
+          "x-ms-schema-name": "vu_BeneficioAnualPen"
+        },
+        "vu_capexpen": {
+          "type": "string",
+          "title": "CAPEX (S/.)",
+          "x-ms-dataverse-attribute": "vu_capexpen",
+          "x-ms-dataverse-type": "DecimalType",
+          "x-ms-schema-name": "vu_CapexPen"
+        },
+        "vu_capexusd": {
+          "type": "string",
+          "title": "CAPEX (US$)",
+          "x-ms-dataverse-attribute": "vu_capexusd",
+          "x-ms-dataverse-type": "DecimalType",
+          "x-ms-schema-name": "vu_CapexUsd"
+        },
         "vu_descripcion": {
           "type": "string",
           "title": "Descripción",
@@ -284,6 +340,41 @@
           "x-ms-dataverse-type": "MemoType",
           "x-ms-schema-name": "vu_Descripcion",
           "maxLength": 2000
+        },
+        "vu_estadodesarrollo": {
+          "type": "string",
+          "title": "Estado del desarrollo",
+          "x-ms-dataverse-attribute": "vu_estadodesarrollo",
+          "x-ms-dataverse-type": "PicklistType",
+          "x-ms-schema-name": "vu_EstadoDesarrollo",
+          "enum": [
+            "En proceso",
+            "Entregado",
+            "En uso"
+          ],
+          "x-ms-enum-values": [
+            100000000,
+            100000001,
+            100000002
+          ],
+          "Color": [
+            null,
+            null,
+            null
+          ],
+          "x-ms-optionsetmetadataid": "81992e6e-27c7-f111-a05c-7ced8da8a834",
+          "x-ms-isGlobal": false,
+          "x-ms-optionsetdisplayname": "Estado del desarrollo",
+          "x-ms-optionSetType": "Picklist"
+        },
+        "vu_estadodesarrolloname": {
+          "type": "string",
+          "title": "vu_estadodesarrolloname",
+          "x-ms-dataverse-attribute": "vu_estadodesarrolloname",
+          "x-ms-dataverse-type": "VirtualType",
+          "x-ms-schema-name": "vu_estadodesarrolloName",
+          "x-ms-dataverse-attribute-of": "vu_estadodesarrollo",
+          "x-ms-read-only": true
         },
         "vu_estadovu": {
           "type": "string",
@@ -327,12 +418,51 @@
           "x-ms-dataverse-attribute-of": "vu_estadovu",
           "x-ms-read-only": true
         },
+        "vu_evolucion": {
+          "type": "string",
+          "title": "Evolución",
+          "x-ms-dataverse-attribute": "vu_evolucion",
+          "x-ms-dataverse-type": "PicklistType",
+          "x-ms-schema-name": "vu_Evolucion",
+          "enum": [
+            "En proceso",
+            "Implementado"
+          ],
+          "x-ms-enum-values": [
+            100000000,
+            100000001
+          ],
+          "Color": [
+            null,
+            null
+          ],
+          "x-ms-optionsetmetadataid": "86992e6e-27c7-f111-a05c-7ced8da8a834",
+          "x-ms-isGlobal": false,
+          "x-ms-optionsetdisplayname": "Evolución",
+          "x-ms-optionSetType": "Picklist"
+        },
+        "vu_evolucionname": {
+          "type": "string",
+          "title": "vu_evolucionname",
+          "x-ms-dataverse-attribute": "vu_evolucionname",
+          "x-ms-dataverse-type": "VirtualType",
+          "x-ms-schema-name": "vu_evolucionName",
+          "x-ms-dataverse-attribute-of": "vu_evolucion",
+          "x-ms-read-only": true
+        },
         "vu_fechaactualizacion": {
           "type": "string",
           "title": "Fecha de actualización",
           "x-ms-dataverse-attribute": "vu_fechaactualizacion",
           "x-ms-dataverse-type": "DateTimeType",
           "x-ms-schema-name": "vu_FechaActualizacion"
+        },
+        "vu_fechaimplementacion": {
+          "type": "string",
+          "title": "Fecha de implementación",
+          "x-ms-dataverse-attribute": "vu_fechaimplementacion",
+          "x-ms-dataverse-type": "DateTimeType",
+          "x-ms-schema-name": "vu_FechaImplementacion"
         },
         "vu_name": {
           "type": "string",
@@ -373,6 +503,14 @@
           "x-ms-read-only": true,
           "maxLength": 850
         },
+        "vu_proveedor": {
+          "type": "string",
+          "title": "Proveedor",
+          "x-ms-dataverse-attribute": "vu_proveedor",
+          "x-ms-dataverse-type": "StringType",
+          "x-ms-schema-name": "vu_Proveedor",
+          "maxLength": 100
+        },
         "vu_proximavu": {
           "type": "string",
           "title": "Próxima VU",
@@ -388,8 +526,7 @@
           "x-ms-schema-name": "vu_ResponsableId",
           "x-ms-dataverse-navigation-properties": [
             "vu_ResponsableId"
-          ],
-          "required": true
+          ]
         },
         "vu_responsableidname": {
           "type": "string",
@@ -411,6 +548,41 @@
           "x-ms-read-only": true,
           "maxLength": 200
         },
+        "vu_resultadovu": {
+          "type": "string",
+          "title": "Resultado VU declarado",
+          "x-ms-dataverse-attribute": "vu_resultadovu",
+          "x-ms-dataverse-type": "PicklistType",
+          "x-ms-schema-name": "vu_ResultadoVu",
+          "enum": [
+            "En uso",
+            "Uso parcial",
+            "No confirmada"
+          ],
+          "x-ms-enum-values": [
+            100000000,
+            100000001,
+            100000002
+          ],
+          "Color": [
+            null,
+            null,
+            null
+          ],
+          "x-ms-optionsetmetadataid": "62249f74-27c7-f111-a05c-7ced8da8a834",
+          "x-ms-isGlobal": false,
+          "x-ms-optionsetdisplayname": "Resultado VU declarado",
+          "x-ms-optionSetType": "Picklist"
+        },
+        "vu_resultadovuname": {
+          "type": "string",
+          "title": "vu_resultadovuname",
+          "x-ms-dataverse-attribute": "vu_resultadovuname",
+          "x-ms-dataverse-type": "VirtualType",
+          "x-ms-schema-name": "vu_resultadovuName",
+          "x-ms-dataverse-attribute-of": "vu_resultadovu",
+          "x-ms-read-only": true
+        },
         "vu_solucionid": {
           "type": "string",
           "title": "Solución digital",
@@ -420,6 +592,108 @@
           "x-ms-dataverse-primary-id": true,
           "required": true,
           "x-ms-keyType": "primary"
+        },
+        "vu_tienedashboard": {
+          "type": "string",
+          "title": "Tiene dashboard",
+          "x-ms-dataverse-attribute": "vu_tienedashboard",
+          "x-ms-dataverse-type": "BooleanType",
+          "x-ms-schema-name": "vu_TieneDashboard",
+          "enum": [
+            "No",
+            "Sí"
+          ],
+          "x-ms-enum-values": [
+            0,
+            1
+          ],
+          "Color": [
+            null,
+            null
+          ],
+          "x-ms-optionsetmetadataid": "7c992e6e-27c7-f111-a05c-7ced8da8a834",
+          "x-ms-isGlobal": false,
+          "x-ms-optionsetdisplayname": "Tiene dashboard",
+          "x-ms-optionSetType": "Boolean"
+        },
+        "vu_tienedashboardname": {
+          "type": "string",
+          "title": "vu_tienedashboardname",
+          "x-ms-dataverse-attribute": "vu_tienedashboardname",
+          "x-ms-dataverse-type": "VirtualType",
+          "x-ms-schema-name": "vu_tienedashboardName",
+          "x-ms-dataverse-attribute-of": "vu_tienedashboard",
+          "x-ms-read-only": true
+        },
+        "vu_tipodiseno": {
+          "type": "string",
+          "title": "Tipo de diseño",
+          "x-ms-dataverse-attribute": "vu_tipodiseno",
+          "x-ms-dataverse-type": "PicklistType",
+          "x-ms-schema-name": "vu_TipoDiseno",
+          "enum": [
+            "Lienzo",
+            "Model Driven",
+            "Otro"
+          ],
+          "x-ms-enum-values": [
+            100000000,
+            100000001,
+            100000002
+          ],
+          "Color": [
+            null,
+            null,
+            null
+          ],
+          "x-ms-optionsetmetadataid": "68b92268-27c7-f111-a05c-7ced8da8a834",
+          "x-ms-isGlobal": false,
+          "x-ms-optionsetdisplayname": "Tipo de diseño",
+          "x-ms-optionSetType": "Picklist"
+        },
+        "vu_tipodisenoname": {
+          "type": "string",
+          "title": "vu_tipodisenoname",
+          "x-ms-dataverse-attribute": "vu_tipodisenoname",
+          "x-ms-dataverse-type": "VirtualType",
+          "x-ms-schema-name": "vu_tipodisenoName",
+          "x-ms-dataverse-attribute-of": "vu_tipodiseno",
+          "x-ms-read-only": true
+        },
+        "vu_tipoproceso": {
+          "type": "string",
+          "title": "Tipo de proceso",
+          "x-ms-dataverse-attribute": "vu_tipoproceso",
+          "x-ms-dataverse-type": "PicklistType",
+          "x-ms-schema-name": "vu_TipoProceso",
+          "enum": [
+            "Estratégico",
+            "Operativo",
+            "Soporte"
+          ],
+          "x-ms-enum-values": [
+            100000000,
+            100000001,
+            100000002
+          ],
+          "Color": [
+            null,
+            null,
+            null
+          ],
+          "x-ms-optionsetmetadataid": "5eb92268-27c7-f111-a05c-7ced8da8a834",
+          "x-ms-isGlobal": false,
+          "x-ms-optionsetdisplayname": "Tipo de proceso",
+          "x-ms-optionSetType": "Picklist"
+        },
+        "vu_tipoprocesoname": {
+          "type": "string",
+          "title": "vu_tipoprocesoname",
+          "x-ms-dataverse-attribute": "vu_tipoprocesoname",
+          "x-ms-dataverse-type": "VirtualType",
+          "x-ms-schema-name": "vu_tipoprocesoName",
+          "x-ms-dataverse-attribute-of": "vu_tipoproceso",
+          "x-ms-read-only": true
         },
         "vu_tiposolucion": {
           "type": "string",
@@ -498,7 +772,6 @@
         "vu_name",
         "vu_periodicidadmeses",
         "vu_procesoid",
-        "vu_responsableid",
         "vu_solucionid"
       ]
     }

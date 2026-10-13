@@ -312,15 +312,15 @@ export function crearRepositoriosDataverse(): Repositorios {
   );
 
   // --- Personas en las filas leídas -----------------------------------------
-  const conPersonasSolucion = async <T extends { responsable: Persona } | null>(x: T): Promise<T> => {
+  const conPersonasSolucion = async <T extends { responsable: Persona | null } | null>(x: T): Promise<T> => {
     if (x) await personas.completar([x.responsable]);
     return x;
   };
-  const conPersonasSoluciones = async <T extends { responsable: Persona }>(xs: T[]): Promise<T[]> => {
+  const conPersonasSoluciones = async <T extends { responsable: Persona | null }>(xs: T[]): Promise<T[]> => {
     await personas.completar(xs.map((x) => x.responsable));
     return xs;
   };
-  type ConPersonasVerificacion = { responsable: Persona; aprobadorPiloto: Persona | null; aprobadorProductivo: Persona | null };
+  type ConPersonasVerificacion = { responsable: Persona | null; aprobadorPiloto: Persona | null; aprobadorProductivo: Persona | null };
   const conPersonasVerificaciones = async <T extends ConPersonasVerificacion>(xs: T[]): Promise<T[]> => {
     await personas.completar(xs.flatMap((x) => [x.responsable, x.aprobadorPiloto, x.aprobadorProductivo]));
     return xs;
@@ -349,13 +349,13 @@ export function crearRepositoriosDataverse(): Repositorios {
     soluciones: {
       listar: async () => conPersonasSoluciones(await soluciones.listar({ orderBy: ['vu_name asc'] })),
       obtener: async (id) => conPersonasSolucion(await soluciones.obtener(id)),
+      // El responsable es opcional (catálogo importado sin responsables); null = sin asignar.
       crear: async (datos) => {
-        const responsable = await personas.conId(datos.responsable);
-        return conPersonasSolucion(await soluciones.crear(solucionARegistro({ ...datos, responsable: responsable! }, true)));
+        const responsable = (await personas.conId(datos.responsable)) ?? null;
+        return conPersonasSolucion(await soluciones.crear(solucionARegistro({ ...datos, responsable }, true)));
       },
       actualizar: async (id, cambios) => {
-        const responsable = await personas.conId(cambios.responsable);
-        const registro = solucionARegistro({ ...cambios, ...(responsable ? { responsable } : {}) });
+        const registro = solucionARegistro({ ...cambios, responsable: await personas.conId(cambios.responsable) });
         return conPersonasSolucion(await soluciones.actualizar(id, registro));
       },
       // Restrict: Dataverse rechaza el borrado si hay verificaciones; los documentos van en cascada.

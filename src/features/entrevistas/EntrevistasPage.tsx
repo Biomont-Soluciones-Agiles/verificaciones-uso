@@ -1,7 +1,8 @@
-import { Badge, makeStyles, MessageBar, MessageBarBody, Text, tokens } from '@fluentui/react-components';
+import { Badge, makeStyles, MessageBar, MessageBarBody, tokens } from '@fluentui/react-components';
+import { PeopleChat24Regular } from '@fluentui/react-icons';
 import { useSearchParams } from 'react-router-dom';
 import { useVerificacionDeRuta } from '../../app/useVerificacionDeRuta';
-import { Cargando, Encabezado, ErrorCarga, Pila, Tarjeta } from '../../components/Estructura';
+import { Cargando, Encabezado, ErrorCarga, EstadoVacio, Pila } from '../../components/Estructura';
 import { useCriterios, useOpciones, usePreguntas } from '../../data/hooks/useCatalogo';
 import { useEntrevistas, useEvidencias } from '../../data/hooks/useEntrevistas';
 import { admiteEntrevistas, contarCompletas } from '../../domain/flujo';
@@ -17,7 +18,6 @@ const useStyles = makeStyles({
     alignItems: 'start',
     '@media (max-width: 860px)': { gridTemplateColumns: '1fr' },
   },
-  nota: { color: tokens.colorNeutralForeground3 },
 });
 
 function predeterminada(entrevistas: Entrevista[]): Entrevista | undefined {
@@ -39,9 +39,15 @@ export function EntrevistasPage() {
   const criterios = useCriterios();
 
   const error = entrevistas.error ?? evidencias.error ?? preguntas.error ?? opciones.error ?? criterios.error;
-  if (error) return <ErrorCarga error={error} />;
+  if (error) {
+    const reintentar = () =>
+      [entrevistas, evidencias, preguntas, opciones, criterios].forEach((q) => {
+        if (q.error) void q.refetch();
+      });
+    return <ErrorCarga error={error} onReintentar={reintentar} />;
+  }
   if (!entrevistas.data || !evidencias.data || !preguntas.data || !opciones.data || !criterios.data) {
-    return <Cargando />;
+    return <Cargando texto="Cargando las entrevistas…" />;
   }
 
   const lista = entrevistas.data;
@@ -92,11 +98,15 @@ export function EntrevistasPage() {
             soloLectura={!editable}
           />
         ) : (
-          <Tarjeta>
-            <Text className={styles.nota}>
-              Aún no hay entrevistas registradas. Usa "Agregar entrevista" para empezar el levantamiento.
-            </Text>
-          </Tarjeta>
+          <EstadoVacio
+            icono={<PeopleChat24Regular />}
+            titulo="Aún no hay entrevistas registradas"
+            descripcion={
+              editable
+                ? 'Usa "Agregar entrevista" para registrar a la primera persona entrevistada y empezar el levantamiento.'
+                : 'Las entrevistas aparecerán aquí cuando se registren.'
+            }
+          />
         )}
       </div>
     </Pila>

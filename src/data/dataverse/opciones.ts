@@ -1,5 +1,11 @@
 import type {
+  BaseDatos,
   DecisionAprobacion,
+  EstadoDesarrollo,
+  Evolucion,
+  ResultadoVUDeclarado,
+  TipoDiseno,
+  TipoProceso,
   EstadoEntrevista,
   EstadoVerificacion,
   EstadoVU,
@@ -26,6 +32,8 @@ export interface Opcion<T extends string> {
   /** Lanza un error si el valor no pertenece a la opción (no se inventan estados). */
   aTexto(valor: number): T;
   aTextoONull(valor: number | null | undefined): T | null;
+  /** Para escribir: `undefined` = no se envía; `null` = se vacía la columna. */
+  aNumeroONull(texto: T | null | undefined): number | null | undefined;
 }
 
 function opcion<T extends string>(nombre: string, valores: Record<T, number>): Opcion<T> {
@@ -40,6 +48,7 @@ function opcion<T extends string>(nombre: string, valores: Record<T, number>): O
     aNumero: (texto) => valores[texto],
     aTexto,
     aTextoONull: (valor) => (valor === null || valor === undefined ? null : aTexto(valor)),
+    aNumeroONull: (texto) => (texto === undefined ? undefined : texto === null ? null : valores[texto]),
   };
 }
 
@@ -80,6 +89,41 @@ export const TIPO_SOLUCION = opcion<TipoSolucion>('vu_solucion.vu_tiposolucion',
   Flujo: 100000001,
   Reporte: 100000002,
   Otro: 100000003,
+});
+
+export const TIPO_PROCESO = opcion<TipoProceso>('vu_solucion.vu_tipoproceso', {
+  Estratégico: 100000000,
+  Operativo: 100000001,
+  Soporte: 100000002,
+});
+
+export const TIPO_DISENO = opcion<TipoDiseno>('vu_solucion.vu_tipodiseno', {
+  Lienzo: 100000000,
+  'Model Driven': 100000001,
+  Otro: 100000002,
+});
+
+export const BASE_DATOS = opcion<BaseDatos>('vu_solucion.vu_basedatos', {
+  SharePoint: 100000000,
+  Dataverse: 100000001,
+  Otro: 100000002,
+});
+
+export const ESTADO_DESARROLLO = opcion<EstadoDesarrollo>('vu_solucion.vu_estadodesarrollo', {
+  'En proceso': 100000000,
+  Entregado: 100000001,
+  'En uso': 100000002,
+});
+
+export const EVOLUCION = opcion<Evolucion>('vu_solucion.vu_evolucion', {
+  'En proceso': 100000000,
+  Implementado: 100000001,
+});
+
+export const RESULTADO_VU_DECLARADO = opcion<ResultadoVUDeclarado>('vu_solucion.vu_resultadovu', {
+  'En uso': 100000000,
+  'Uso parcial': 100000001,
+  'No confirmada': 100000002,
 });
 
 export const TIPO_DOCUMENTO = opcion<TipoDocumento>('vu_documentosolucion.vu_tipodocumento', {

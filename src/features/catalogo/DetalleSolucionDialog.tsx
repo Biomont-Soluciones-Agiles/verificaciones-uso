@@ -15,7 +15,7 @@ import { Dismiss24Regular } from '@fluentui/react-icons';
 import { useNavigate } from 'react-router-dom';
 import { useAvisos } from '../../components/avisos';
 import { DocItem } from '../../components/DocItem';
-import { LineaResumen } from '../../components/Estructura';
+import { LineaResumen, ListaResumen } from '../../components/Estructura';
 import { useFuenteDatos } from '../../data/contexto';
 import { useDocumentos } from '../../data/hooks/useSoluciones';
 import { useVerificaciones } from '../../data/hooks/useVerificaciones';
@@ -25,7 +25,8 @@ import type { Solucion } from '../../domain/tipos';
 
 const useStyles = makeStyles({
   contenido: { display: 'flex', flexDirection: 'column', gap: tokens.spacingVerticalM },
-  descripcion: { color: tokens.colorNeutralForeground3 },
+  descripcion: { color: tokens.colorNeutralForeground2 },
+  documentos: { display: 'flex', flexDirection: 'column', gap: tokens.spacingVerticalXS },
 });
 
 export interface DetalleSolucionDialogProps {
@@ -57,21 +58,24 @@ export function DetalleSolucionDialog({ solucion, onCerrar }: DetalleSolucionDia
             <Text id="detalle-solucion-descripcion" className={styles.descripcion}>
               {solucion.descripcion}
             </Text>
-            <div>
+            <ListaResumen>
               <LineaResumen etiqueta="Área propietaria" valor={solucion.procesoNombre} />
-              <LineaResumen etiqueta="Responsable" valor={solucion.responsable.nombre} />
+              <LineaResumen etiqueta="Responsable" valor={solucion.responsable?.nombre ?? 'Sin responsable'} />
               <LineaResumen
                 etiqueta="Usuarios objetivo"
                 valor={solucion.usuariosObjetivo !== null ? `${solucion.usuariosObjetivo} usuarios` : '—'}
               />
               <LineaResumen etiqueta="Actualización" valor={formatearFecha(solucion.fechaActualizacion)} />
               <LineaResumen etiqueta="Próxima VU" valor={formatearFecha(solucion.proximaVU)} />
-            </div>
-            <section aria-label="Documentos de la solución">
+            </ListaResumen>
+            <section aria-labelledby="detalle-solucion-documentos" className={styles.documentos}>
+              <Text as="h3" id="detalle-solucion-documentos" weight="semibold">
+                Material de la solución
+              </Text>
               {isPending ? (
                 <Spinner size="small" label="Cargando documentos…" />
               ) : vigentes.length === 0 ? (
-                <Text className={styles.descripcion}>No hay documentos vigentes.</Text>
+                <Text className={styles.descripcion}>Esta solución aún no tiene manual, instructivo ni video vigentes.</Text>
               ) : (
                 vigentes.map((d) => (
                   <DocItem

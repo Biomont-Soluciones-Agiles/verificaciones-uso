@@ -16,12 +16,18 @@ export function AdminPage() {
         titulo="Administración"
         subtitulo="Criterios y pesos, preguntas y opciones de respuesta, soluciones y su documentación."
       />
-      <TabList selectedValue={pestana} onTabSelect={(_, d) => setPestana(d.value as Pestana)}>
-        <Tab value="criterios">Criterios y pesos</Tab>
-        <Tab value="preguntas">Preguntas y opciones</Tab>
-        <Tab value="soluciones">Soluciones y documentos</Tab>
+      <TabList aria-label="Secciones de administración" selectedValue={pestana} onTabSelect={(_, d) => setPestana(d.value as Pestana)}>
+        <Tab value="criterios" id="admin-tab-criterios" aria-controls="admin-panel">
+          Criterios y pesos
+        </Tab>
+        <Tab value="preguntas" id="admin-tab-preguntas" aria-controls="admin-panel">
+          Preguntas y opciones
+        </Tab>
+        <Tab value="soluciones" id="admin-tab-soluciones" aria-controls="admin-panel">
+          Soluciones y documentos
+        </Tab>
       </TabList>
-      <div role="tabpanel" aria-label={pestana}>
+      <div role="tabpanel" id="admin-panel" aria-labelledby={`admin-tab-${pestana}`}>
         {pestana === 'criterios' && <AdminCriterios />}
         {pestana === 'preguntas' && <AdminPreguntas />}
         {pestana === 'soluciones' && <AdminSoluciones />}

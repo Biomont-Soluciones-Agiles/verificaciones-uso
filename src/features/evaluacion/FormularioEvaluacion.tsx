@@ -1,5 +1,4 @@
 import {
-  Badge,
   Button,
   Field,
   MessageBar,
@@ -7,13 +6,15 @@ import {
   MessageBarTitle,
   Textarea,
 } from '@fluentui/react-components';
-import { Save24Regular, Sparkle24Regular } from '@fluentui/react-icons';
+import { ArrowRight24Regular, Save24Regular, Sparkle24Regular } from '@fluentui/react-icons';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MENSAJES, useAvisos } from '../../components/avisos';
 import { Acciones, Encabezado, Pila, Tarjeta } from '../../components/Estructura';
+import { iconoOcupado } from '../../components/iconoOcupado';
+import { IndiceAdopcion } from '../../components/IndiceAdopcion';
 import { useGuardarEvaluacion } from '../../data/hooks/useEvaluacion';
-import { faltaSustento, formatearIndice, formatearPuntaje, indiceAdopcion, resultado } from '../../domain/evaluacion';
+import { faltaSustento, formatearPuntaje, indiceAdopcion } from '../../domain/evaluacion';
 import { esEditableDesdeApp } from '../../domain/flujo';
 import type { PuntajeCriterio, Verificacion } from '../../domain/tipos';
 import { CriterioEvaluacion } from './CriterioEvaluacion';
@@ -44,6 +45,7 @@ export function FormularioEvaluacion({ verificacion, puntajesIniciales, entrevis
   const [puntajes, setPuntajes] = useState(puntajesIniciales);
   const [sustentoGlobal, setSustentoGlobal] = useState(verificacion.sustentoGlobal);
   const [intentado, setIntentado] = useState(false);
+  const [accion, setAccion] = useState<'guardar' | 'consolidado' | null>(null);
 
   const soloLectura = !esEditableDesdeApp(verificacion.estado);
   const indice = indiceAdopcion(puntajes);
@@ -58,12 +60,15 @@ export function FormularioEvaluacion({ verificacion, puntajesIniciales, entrevis
       if (irAlConsolidado) navigate(`/verificaciones/${verificacion.id}/revision`);
       return;
     }
+    setAccion(irAlConsolidado ? 'consolidado' : 'guardar');
     try {
       await guardar.mutateAsync({ puntajes, sustentoGlobal });
       avisos.exito(MENSAJES.borradorGuardado);
       if (irAlConsolidado) navigate(`/verificaciones/${verificacion.id}/revision`);
     } catch (e) {
       avisos.error(e);
+    } finally {
+      setAccion(null);
     }
   };
 
@@ -72,15 +77,9 @@ export function FormularioEvaluacion({ verificacion, puntajesIniciales, entrevis
       <Encabezado
         titulo="Evaluación sugerida"
         subtitulo="Los puntajes consideran preguntas definidas y preguntas surgidas en todas las entrevistas completas."
-        extra={
-          <span aria-live="polite">
-            <Badge appearance="tint" size="large" color="brand">
-              Índice preliminar: {formatearIndice(indice)} · {resultado(indice)}
-            </Badge>
-          </span>
-        }
+        extra={<IndiceAdopcion indice={indice} etiqueta="Índice preliminar" />}
       />
-      <Tarjeta>
+      <Tarjeta titulo="Puntaje por criterio">
         {puntajes.map((p) => (
           <CriterioEvaluacion
             key={p.id}
@@ -106,7 +105,7 @@ export function FormularioEvaluacion({ verificacion, puntajesIniciales, entrevis
             </MessageBarBody>
           </MessageBar>
         )}
-        <Field label="Sustento global">
+        <Field label="Sustento global" hint="Resume por qué la solución obtiene este resultado.">
           <Textarea
             rows={4}
             resize="vertical"
@@ -117,12 +116,22 @@ export function FormularioEvaluacion({ verificacion, puntajesIniciales, entrevis
         </Field>
         <Acciones>
           {!soloLectura && (
-            <Button icon={<Save24Regular />} disabled={guardar.isPending} onClick={() => guardarBorrador(false)}>
-              Guardar evaluación en borrador
+            <Button
+              icon={iconoOcupado(accion === 'guardar', <Save24Regular />)}
+              disabled={guardar.isPending}
+              onClick={() => guardarBorrador(false)}
+            >
+              {accion === 'guardar' ? 'Guardando…' : 'Guardar evaluación en borrador'}
             </Button>
           )}
-          <Button appearance="primary" disabled={guardar.isPending} onClick={() => guardarBorrador(true)}>
-            Ver consolidado
+          <Button
+            appearance="primary"
+            icon={accion === 'consolidado' ? iconoOcupado(true, <Save24Regular />) : <ArrowRight24Regular />}
+            iconPosition="after"
+            disabled={guardar.isPending}
+            onClick={() => guardarBorrador(true)}
+          >
+            {soloLectura ? 'Ver consolidado' : 'Guardar y ver consolidado'}
           </Button>
         </Acciones>
       </Tarjeta>

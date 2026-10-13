@@ -16,6 +16,7 @@ import {
 import { Add24Regular, Delete24Regular, Edit24Regular, Save24Regular } from '@fluentui/react-icons';
 import { useState } from 'react';
 import { useAvisos } from '../../components/avisos';
+import { useConfirmar } from '../../components/Confirmacion';
 import { DocItem } from '../../components/DocItem';
 import { EstadoBadge } from '../../components/EstadoBadge';
 import { Acciones, Campos, Cargando, ErrorCarga, Pila, Tarjeta } from '../../components/Estructura';
@@ -45,6 +46,7 @@ type Seleccion = { modo: 'nueva' } | { modo: 'editar'; solucion: Solucion } | nu
 
 export function AdminSoluciones() {
   const avisos = useAvisos();
+  const confirmar = useConfirmar();
   const soluciones = useSoluciones();
   const areas = useAreas();
   const eliminar = useEliminarSolucion();
@@ -57,7 +59,13 @@ export function AdminSoluciones() {
   const listaAreas = areas.data;
 
   const borrar = async (s: Solucion) => {
-    if (!window.confirm(`¿Eliminar la solución "${s.titulo}" y sus documentos?`)) return;
+    const ok = await confirmar({
+      titulo: '¿Eliminar la solución?',
+      mensaje: `Se eliminarán "${s.titulo}" y sus documentos.`,
+      confirmar: 'Eliminar solución',
+      peligrosa: true,
+    });
+    if (!ok) return;
     try {
       await eliminar.mutateAsync(s.id);
       setSeleccion(null);
@@ -88,7 +96,7 @@ export function AdminSoluciones() {
               <TableRow key={s.id}>
                 <TableCell>{s.titulo}</TableCell>
                 <TableCell>{s.procesoNombre}</TableCell>
-                <TableCell>{s.responsable.nombre}</TableCell>
+                <TableCell>{s.responsable?.nombre ?? 'Sin responsable'}</TableCell>
                 <TableCell>{s.periodicidadMeses} meses</TableCell>
                 <TableCell>
                   <EstadoBadge estado={s.estadoVU} />
@@ -250,6 +258,7 @@ const DOCUMENTO_VACIO = (solucionId: Id): Omit<Documento, 'id'> => ({
 
 function DocumentosSolucion({ solucionId }: { solucionId: Id }) {
   const avisos = useAvisos();
+  const confirmar = useConfirmar();
   const { data: documentos = [] } = useDocumentos(solucionId);
   const guardar = useGuardarDocumento();
   const eliminar = useEliminarDocumento();
@@ -267,7 +276,13 @@ function DocumentosSolucion({ solucionId }: { solucionId: Id }) {
   };
 
   const borrar = async (d: Documento) => {
-    if (!window.confirm(`¿Eliminar "${d.titulo}"?`)) return;
+    const ok = await confirmar({
+      titulo: '¿Eliminar el documento?',
+      mensaje: `"${d.titulo}" dejará de aparecer en el detalle de la solución.`,
+      confirmar: 'Eliminar documento',
+      peligrosa: true,
+    });
+    if (!ok) return;
     try {
       await eliminar.mutateAsync(d);
     } catch (e) {

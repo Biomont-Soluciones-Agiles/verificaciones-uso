@@ -8,8 +8,11 @@ import { useVerificaciones } from '../../data/hooks/useVerificaciones';
 import { idDeTexto } from '../../domain/codigo';
 import { sumarDias, hoyISO } from '../../domain/fechas';
 import { esVerificacionActiva } from '../../domain/flujo';
-import type { Id, Solucion } from '../../domain/tipos';
+import type { DiasAnticipacion, Id, Modalidad, Solucion } from '../../domain/tipos';
 import { FormularioProgramacion, OBJETIVO_PREDETERMINADO, type ValoresProgramacion } from './FormularioProgramacion';
+
+const DIAS_ANTICIPACION_PREDETERMINADOS: DiasAnticipacion = 15;
+const MODALIDAD_PREDETERMINADA: Modalidad = 'Teams';
 
 /** `/verificaciones/:id/programacion`: programación de una verificación existente. */
 export function ProgramacionPage() {
@@ -25,10 +28,11 @@ export function ProgramacionPage() {
       inicial={{
         solucionId: verificacion.solucionId,
         responsable: verificacion.responsable,
-        fechaObjetivo: verificacion.fechaObjetivo,
-        diasAnticipacion: verificacion.diasAnticipacion,
+        // Las verificaciones históricas llegan sin estos datos: fecha vacía y valores por defecto.
+        fechaObjetivo: verificacion.fechaObjetivo ?? '',
+        diasAnticipacion: verificacion.diasAnticipacion ?? DIAS_ANTICIPACION_PREDETERMINADOS,
         entrevistasPrevistas: verificacion.entrevistasPrevistas,
-        modalidad: verificacion.modalidad,
+        modalidad: verificacion.modalidad ?? MODALIDAD_PREDETERMINADA,
         objetivo: verificacion.objetivo,
       }}
     />
@@ -47,9 +51,9 @@ function valoresIniciales(
     solucionId: solucion?.id ?? null,
     responsable,
     fechaObjetivo: propuesta,
-    diasAnticipacion: 15,
+    diasAnticipacion: DIAS_ANTICIPACION_PREDETERMINADOS,
     entrevistasPrevistas: 4,
-    modalidad: 'Teams',
+    modalidad: MODALIDAD_PREDETERMINADA,
     objetivo: OBJETIVO_PREDETERMINADO,
   };
 }

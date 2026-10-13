@@ -1,4 +1,4 @@
-import { Button, Field, makeStyles, Text, Textarea, tokens } from '@fluentui/react-components';
+import { Badge, Button, Field, makeStyles, Text, Textarea, tokens } from '@fluentui/react-components';
 import { ArrowUndo16Regular } from '@fluentui/react-icons';
 import { ScoreSlider } from '../../components/ScoreSlider';
 import { faltaSustento, formatearPuntaje, requiereSustento } from '../../domain/evaluacion';
@@ -9,11 +9,11 @@ const useStyles = makeStyles({
     display: 'flex',
     flexDirection: 'column',
     gap: tokens.spacingVerticalXS,
-    paddingBottom: tokens.spacingVerticalM,
+    paddingBlock: tokens.spacingVerticalM,
     borderBottom: `1px solid ${tokens.colorNeutralStroke2}`,
   },
   sugerido: { display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: tokens.spacingHorizontalS },
-  nota: { color: tokens.colorNeutralForeground3 },
+  nota: { color: tokens.colorNeutralForeground2, fontVariantNumeric: 'tabular-nums' },
 });
 
 export interface CriterioEvaluacionProps {
@@ -43,6 +43,11 @@ export function CriterioEvaluacion({ puntaje, soloLectura, mostrarErrores, onCha
             ? 'Sin sugerencia: ninguna respuesta de entrevistas completas impacta este criterio.'
             : `Sugerido: ${formatearPuntaje(puntaje.puntajeSugerido)} · Final: ${formatearPuntaje(puntaje.puntajeFinal)}`}
         </Text>
+        {exige && puntaje.puntajeSugerido !== null && (
+          <Badge appearance="outline" color="warning" size="small">
+            Ajustado
+          </Badge>
+        )}
         {!soloLectura && exige && puntaje.puntajeSugerido !== null && (
           <Button
             size="small"

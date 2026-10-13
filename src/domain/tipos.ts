@@ -36,6 +36,26 @@ export type TipoSolucion = (typeof TIPOS_SOLUCION)[number];
 export const ESTADOS_VU = ['Pendiente', 'Programada', 'En proceso', 'En revisión', 'Vigente'] as const;
 export type EstadoVU = (typeof ESTADOS_VU)[number];
 
+/** Clasificación del catálogo importado (`vu_solucion`, opciones locales). */
+export const TIPOS_PROCESO = ['Estratégico', 'Operativo', 'Soporte'] as const;
+export type TipoProceso = (typeof TIPOS_PROCESO)[number];
+
+export const TIPOS_DISENO = ['Lienzo', 'Model Driven', 'Otro'] as const;
+export type TipoDiseno = (typeof TIPOS_DISENO)[number];
+
+export const BASES_DATOS = ['SharePoint', 'Dataverse', 'Otro'] as const;
+export type BaseDatos = (typeof BASES_DATOS)[number];
+
+export const ESTADOS_DESARROLLO = ['En proceso', 'Entregado', 'En uso'] as const;
+export type EstadoDesarrollo = (typeof ESTADOS_DESARROLLO)[number];
+
+export const EVOLUCIONES = ['En proceso', 'Implementado'] as const;
+export type Evolucion = (typeof EVOLUCIONES)[number];
+
+/** "Resultado VU declarado" del catálogo (no es el resultado RN-09 de una verificación). */
+export const RESULTADOS_VU_DECLARADO = ['En uso', 'Uso parcial', 'No confirmada'] as const;
+export type ResultadoVUDeclarado = (typeof RESULTADOS_VU_DECLARADO)[number];
+
 export const TIPOS_DOCUMENTO = ['Manual', 'Instructivo', 'Video', 'Carpeta', 'Otro'] as const;
 export type TipoDocumento = (typeof TIPOS_DOCUMENTO)[number];
 
@@ -120,7 +140,8 @@ export interface Solucion {
   procesoId: Id;
   /** Valor de la búsqueda (solo lectura). */
   procesoNombre: string;
-  responsable: Persona;
+  /** Opcional: el catálogo importado no tiene responsables. */
+  responsable: Persona | null;
   usuariosObjetivo: number | null;
   fechaActualizacion: FechaISO | null;
   periodicidadMeses: number;
@@ -128,6 +149,19 @@ export interface Solucion {
   /** Lo escribe el flujo F3 (§2.5); la app solo lo lee. */
   estadoVU: EstadoVU;
   ultimaVerificacionId: Id | null;
+  // --- Datos del catálogo importado (todos opcionales) ---
+  tipoProceso?: TipoProceso | null;
+  proveedor?: string | null;
+  tipoDiseno?: TipoDiseno | null;
+  baseDatos?: BaseDatos | null;
+  tieneDashboard?: boolean | null;
+  estadoDesarrollo?: EstadoDesarrollo | null;
+  evolucion?: Evolucion | null;
+  beneficioAnualPEN?: number | null;
+  capexPEN?: number | null;
+  capexUSD?: number | null;
+  fechaImplementacion?: FechaISO | null;
+  resultadoVUDeclarado?: ResultadoVUDeclarado | null;
 }
 
 export interface Documento {
@@ -177,14 +211,18 @@ export interface Verificacion {
   solucionId: Id;
   /** Valor de la búsqueda (solo lectura). */
   solucionNombre: string;
-  responsable: Persona;
-  fechaObjetivo: FechaISO;
-  diasAnticipacion: DiasAnticipacion;
-  fechaAlerta: FechaISO;
+  /**
+   * Las verificaciones históricas (importadas, ya Aprobadas) no tienen responsable, fechas,
+   * anticipación, modalidad ni entrevistas: esos campos llegan nulos y se muestran como "—".
+   */
+  responsable: Persona | null;
+  fechaObjetivo: FechaISO | null;
+  diasAnticipacion: DiasAnticipacion | null;
+  fechaAlerta: FechaISO | null;
   alertaEnviada: boolean;
   entrevistasPrevistas: number;
   entrevistasCompletas: number;
-  modalidad: Modalidad;
+  modalidad: Modalidad | null;
   objetivo: string;
   estado: EstadoVerificacion;
   indiceAdopcion: number | null;

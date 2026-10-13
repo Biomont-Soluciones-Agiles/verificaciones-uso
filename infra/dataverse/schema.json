@@ -259,7 +259,7 @@
           "type": "Lookup",
           "target": "systemuser",
           "cascade": "RemoveLink",
-          "requiredLevel": "ApplicationRequired",
+          "requiredLevel": "None",
           "relationshipSchemaName": "vu_systemuser_solucion_responsableid",
           "navigationProperty": "vu_ResponsableId",
           "odataBind": "vu_ResponsableId@odata.bind",
@@ -322,6 +322,186 @@
           "navigationProperty": "vu_UltimaVerificacionId",
           "odataBind": "vu_UltimaVerificacionId@odata.bind",
           "readProperty": "_vu_ultimaverificacionid_value"
+        },
+        {
+          "logicalName": "vu_tipoproceso",
+          "schemaName": "vu_TipoProceso",
+          "displayName": "Tipo de proceso",
+          "type": "Picklist",
+          "requiredLevel": "None",
+          "options": [
+            {
+              "value": 100000000,
+              "label": "Estratégico"
+            },
+            {
+              "value": 100000001,
+              "label": "Operativo"
+            },
+            {
+              "value": 100000002,
+              "label": "Soporte"
+            }
+          ]
+        },
+        {
+          "logicalName": "vu_proveedor",
+          "schemaName": "vu_Proveedor",
+          "displayName": "Proveedor",
+          "type": "String",
+          "maxLength": 100,
+          "requiredLevel": "None",
+          "format": "Text"
+        },
+        {
+          "logicalName": "vu_tipodiseno",
+          "schemaName": "vu_TipoDiseno",
+          "displayName": "Tipo de diseño",
+          "type": "Picklist",
+          "requiredLevel": "None",
+          "options": [
+            {
+              "value": 100000000,
+              "label": "Lienzo"
+            },
+            {
+              "value": 100000001,
+              "label": "Model Driven"
+            },
+            {
+              "value": 100000002,
+              "label": "Otro"
+            }
+          ]
+        },
+        {
+          "logicalName": "vu_basedatos",
+          "schemaName": "vu_BaseDatos",
+          "displayName": "Base de datos",
+          "type": "Picklist",
+          "requiredLevel": "None",
+          "options": [
+            {
+              "value": 100000000,
+              "label": "SharePoint"
+            },
+            {
+              "value": 100000001,
+              "label": "Dataverse"
+            },
+            {
+              "value": 100000002,
+              "label": "Otro"
+            }
+          ]
+        },
+        {
+          "logicalName": "vu_tienedashboard",
+          "schemaName": "vu_TieneDashboard",
+          "displayName": "Tiene dashboard",
+          "type": "Boolean",
+          "defaultValue": false,
+          "trueLabel": "Sí",
+          "falseLabel": "No",
+          "requiredLevel": "None"
+        },
+        {
+          "logicalName": "vu_estadodesarrollo",
+          "schemaName": "vu_EstadoDesarrollo",
+          "displayName": "Estado del desarrollo",
+          "type": "Picklist",
+          "requiredLevel": "None",
+          "options": [
+            {
+              "value": 100000000,
+              "label": "En proceso"
+            },
+            {
+              "value": 100000001,
+              "label": "Entregado"
+            },
+            {
+              "value": 100000002,
+              "label": "En uso"
+            }
+          ]
+        },
+        {
+          "logicalName": "vu_evolucion",
+          "schemaName": "vu_Evolucion",
+          "displayName": "Evolución",
+          "type": "Picklist",
+          "requiredLevel": "None",
+          "options": [
+            {
+              "value": 100000000,
+              "label": "En proceso"
+            },
+            {
+              "value": 100000001,
+              "label": "Implementado"
+            }
+          ]
+        },
+        {
+          "logicalName": "vu_beneficioanualpen",
+          "schemaName": "vu_BeneficioAnualPen",
+          "displayName": "Beneficio anual (S/.)",
+          "type": "Decimal",
+          "minValue": 0,
+          "maxValue": 100000000000,
+          "precision": 2,
+          "requiredLevel": "None"
+        },
+        {
+          "logicalName": "vu_capexpen",
+          "schemaName": "vu_CapexPen",
+          "displayName": "CAPEX (S/.)",
+          "type": "Decimal",
+          "minValue": 0,
+          "maxValue": 100000000000,
+          "precision": 2,
+          "requiredLevel": "None"
+        },
+        {
+          "logicalName": "vu_capexusd",
+          "schemaName": "vu_CapexUsd",
+          "displayName": "CAPEX (US$)",
+          "type": "Decimal",
+          "minValue": 0,
+          "maxValue": 100000000000,
+          "precision": 2,
+          "requiredLevel": "None"
+        },
+        {
+          "logicalName": "vu_fechaimplementacion",
+          "schemaName": "vu_FechaImplementacion",
+          "displayName": "Fecha de implementación",
+          "type": "DateTime",
+          "format": "DateOnly",
+          "dateTimeBehavior": "DateOnly",
+          "requiredLevel": "None"
+        },
+        {
+          "logicalName": "vu_resultadovu",
+          "schemaName": "vu_ResultadoVu",
+          "displayName": "Resultado VU declarado",
+          "type": "Picklist",
+          "requiredLevel": "None",
+          "options": [
+            {
+              "value": 100000000,
+              "label": "En uso"
+            },
+            {
+              "value": 100000001,
+              "label": "Uso parcial"
+            },
+            {
+              "value": 100000002,
+              "label": "No confirmada"
+            }
+          ]
         }
       ],
       "keys": []

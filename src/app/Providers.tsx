@@ -2,6 +2,7 @@ import { FluentProvider, Toaster, webLightTheme } from '@fluentui/react-componen
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';
 import { TOASTER_ID } from '../components/avisos';
+import { ConfirmacionProvider } from '../components/Confirmacion';
 import { RepositoriesProvider } from './RepositoriesProvider';
 
 function crearQueryClient() {
@@ -19,8 +20,10 @@ export function Providers({ children }: { children: ReactNode }) {
     <FluentProvider theme={webLightTheme} style={{ minHeight: '100vh' }}>
       <QueryClientProvider client={queryClient}>
         <RepositoriesProvider>
-          {children}
-          <Toaster toasterId={TOASTER_ID} position="top-end" />
+          <ConfirmacionProvider>
+            {children}
+            <Toaster toasterId={TOASTER_ID} position="top-end" />
+          </ConfirmacionProvider>
         </RepositoriesProvider>
       </QueryClientProvider>
     </FluentProvider>

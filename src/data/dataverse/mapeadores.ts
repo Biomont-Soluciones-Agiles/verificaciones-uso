@@ -20,6 +20,7 @@ import {
   aFechaSolo,
   bind,
   booleano,
+  booleanoONull,
   CONJUNTOS,
   fechaHora,
   fechaSolo,
@@ -34,7 +35,13 @@ import {
   type Registro,
 } from './odata';
 import {
+  BASE_DATOS,
   DECISION_APROBACION,
+  ESTADO_DESARROLLO,
+  EVOLUCION,
+  RESULTADO_VU_DECLARADO,
+  TIPO_DISENO,
+  TIPO_PROCESO,
   ESTADO_ACTIVO,
   ESTADO_ENTREVISTA,
   ESTADO_INACTIVO,
@@ -82,6 +89,18 @@ export const SELECT = {
     'vu_proximavu',
     'vu_estadovu',
     '_vu_ultimaverificacionid_value',
+    'vu_tipoproceso',
+    'vu_proveedor',
+    'vu_tipodiseno',
+    'vu_basedatos',
+    'vu_tienedashboard',
+    'vu_estadodesarrollo',
+    'vu_evolucion',
+    'vu_beneficioanualpen',
+    'vu_capexpen',
+    'vu_capexusd',
+    'vu_fechaimplementacion',
+    'vu_resultadovu',
   ],
   documento: [
     'vu_documentosolucionid',
@@ -254,13 +273,25 @@ export function solucionDesdeFila(f: Fila): Solucion {
     tipoSolucion: TIPO_SOLUCION.aTextoONull(numeroONull(f, 'vu_tiposolucion')),
     procesoId: busqueda(f, 'vu_procesoid'),
     procesoNombre: nombreBusqueda(f, 'vu_procesoid') ?? '',
-    responsable: personaDeBusqueda(f, 'vu_responsableid') ?? { id: null, nombre: '', email: '' },
+    responsable: personaDeBusqueda(f, 'vu_responsableid'),
     usuariosObjetivo: numeroONull(f, 'vu_usuariosobjetivo'),
     fechaActualizacion: fechaSolo(f, 'vu_fechaactualizacion'),
     periodicidadMeses: numero(f, 'vu_periodicidadmeses', PERIODICIDAD_PREDETERMINADA),
     proximaVU: fechaSolo(f, 'vu_proximavu'),
     estadoVU: ESTADO_VU.aTexto(numero(f, 'vu_estadovu', ESTADO_VU.valores.Pendiente)),
     ultimaVerificacionId: leerId(f, 'vu_ultimaverificacionid'),
+    tipoProceso: TIPO_PROCESO.aTextoONull(numeroONull(f, 'vu_tipoproceso')),
+    proveedor: textoONull(f, 'vu_proveedor'),
+    tipoDiseno: TIPO_DISENO.aTextoONull(numeroONull(f, 'vu_tipodiseno')),
+    baseDatos: BASE_DATOS.aTextoONull(numeroONull(f, 'vu_basedatos')),
+    tieneDashboard: booleanoONull(f, 'vu_tienedashboard'),
+    estadoDesarrollo: ESTADO_DESARROLLO.aTextoONull(numeroONull(f, 'vu_estadodesarrollo')),
+    evolucion: EVOLUCION.aTextoONull(numeroONull(f, 'vu_evolucion')),
+    beneficioAnualPEN: numeroONull(f, 'vu_beneficioanualpen'),
+    capexPEN: numeroONull(f, 'vu_capexpen'),
+    capexUSD: numeroONull(f, 'vu_capexusd'),
+    fechaImplementacion: fechaSolo(f, 'vu_fechaimplementacion'),
+    resultadoVUDeclarado: RESULTADO_VU_DECLARADO.aTextoONull(numeroONull(f, 'vu_resultadovu')),
   };
 }
 
@@ -288,6 +319,18 @@ export function solucionARegistro(c: Cambios<Solucion>, creando = false): Regist
     vu_periodicidadmeses: periodicidad,
     vu_proximavu: c.proximaVU === undefined ? undefined : aFechaSolo(c.proximaVU),
     vu_estadovu: creando ? ESTADO_VU.aNumero(c.estadoVU ?? 'Pendiente') : undefined,
+    vu_tipoproceso: TIPO_PROCESO.aNumeroONull(c.tipoProceso),
+    vu_proveedor: opcionalTexto(c.proveedor),
+    vu_tipodiseno: TIPO_DISENO.aNumeroONull(c.tipoDiseno),
+    vu_basedatos: BASE_DATOS.aNumeroONull(c.baseDatos),
+    vu_tienedashboard: c.tieneDashboard,
+    vu_estadodesarrollo: ESTADO_DESARROLLO.aNumeroONull(c.estadoDesarrollo),
+    vu_evolucion: EVOLUCION.aNumeroONull(c.evolucion),
+    vu_beneficioanualpen: c.beneficioAnualPEN,
+    vu_capexpen: c.capexPEN,
+    vu_capexusd: c.capexUSD,
+    vu_fechaimplementacion: c.fechaImplementacion === undefined ? undefined : aFechaSolo(c.fechaImplementacion),
+    vu_resultadovu: RESULTADO_VU_DECLARADO.aNumeroONull(c.resultadoVUDeclarado),
   });
 }
 
@@ -375,20 +418,21 @@ export function opcionARegistro(c: Cambios<OpcionRespuesta>): Registro {
 // ---------------------------------------------------------------------------
 
 export function verificacionDesdeFila(f: Fila): Verificacion {
-  const dias = numero(f, 'vu_diasanticipacion', 15);
+  const dias = numeroONull(f, 'vu_diasanticipacion');
   return {
     id: idObligatorio(f, 'vu_verificacionid'),
     codigo: texto(f, 'vu_name'),
     solucionId: busqueda(f, 'vu_solucionid'),
     solucionNombre: nombreBusqueda(f, 'vu_solucionid') ?? '',
-    responsable: personaDeBusqueda(f, 'vu_responsableid') ?? { id: null, nombre: '', email: '' },
-    fechaObjetivo: fechaSolo(f, 'vu_fechaobjetivo') ?? '',
-    diasAnticipacion: (DIAS_VALIDOS.includes(dias) ? dias : 15) as DiasAnticipacion,
-    fechaAlerta: fechaSolo(f, 'vu_fechaalerta') ?? '',
+    // Las verificaciones históricas traen estos campos nulos: se conservan como null.
+    responsable: personaDeBusqueda(f, 'vu_responsableid'),
+    fechaObjetivo: fechaSolo(f, 'vu_fechaobjetivo'),
+    diasAnticipacion: dias !== null && DIAS_VALIDOS.includes(dias) ? (dias as DiasAnticipacion) : null,
+    fechaAlerta: fechaSolo(f, 'vu_fechaalerta'),
     alertaEnviada: booleano(f, 'vu_alertaenviada'),
     entrevistasPrevistas: numero(f, 'vu_entrevistasprevistas'),
     entrevistasCompletas: numero(f, 'vu_entrevistascompletas'),
-    modalidad: MODALIDAD.aTexto(numero(f, 'vu_modalidad', MODALIDAD.valores.Teams)),
+    modalidad: MODALIDAD.aTextoONull(numeroONull(f, 'vu_modalidad')),
     objetivo: texto(f, 'vu_objetivo'),
     estado: ESTADO_VERIFICACION.aTexto(numero(f, 'vu_estado', ESTADO_VERIFICACION.valores.Borrador)),
     indiceAdopcion: numeroONull(f, 'vu_indiceadopcion'),
@@ -419,7 +463,7 @@ export function verificacionARegistro(c: Cambios<Verificacion>, creando = false)
     vu_alertaenviada: c.alertaEnviada ?? (creando ? false : undefined),
     vu_entrevistasprevistas: c.entrevistasPrevistas,
     vu_entrevistascompletas: c.entrevistasCompletas ?? (creando ? 0 : undefined),
-    vu_modalidad: c.modalidad === undefined ? undefined : MODALIDAD.aNumero(c.modalidad),
+    vu_modalidad: MODALIDAD.aNumeroONull(c.modalidad),
     vu_objetivo: opcionalTexto(c.objetivo),
     vu_estado:
       c.estado !== undefined

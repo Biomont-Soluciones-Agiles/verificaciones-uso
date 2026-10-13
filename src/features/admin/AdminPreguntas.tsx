@@ -15,6 +15,7 @@ import {
 import { Add24Regular, Delete24Regular, Edit24Regular, Save24Regular } from '@fluentui/react-icons';
 import { useState } from 'react';
 import { useAvisos } from '../../components/avisos';
+import { useConfirmar } from '../../components/Confirmacion';
 import { Acciones, Campos, Cargando, ErrorCarga, Pila, Tarjeta } from '../../components/Estructura';
 import { PuntajeInput } from '../../components/PuntajeInput';
 import {
@@ -32,6 +33,7 @@ type Seleccion = { modo: 'nueva' } | { modo: 'editar'; pregunta: Pregunta } | nu
 
 export function AdminPreguntas() {
   const avisos = useAvisos();
+  const confirmar = useConfirmar();
   const preguntas = usePreguntas();
   const criterios = useCriterios();
   const eliminar = useEliminarPregunta();
@@ -45,7 +47,13 @@ export function AdminPreguntas() {
 
   const nombreCriterio = (id: Id) => listaCriterios.find((c) => c.id === id)?.titulo ?? '—';
   const borrar = async (p: Pregunta) => {
-    if (!window.confirm(`¿Eliminar la pregunta "${p.titulo}" y sus opciones?`)) return;
+    const ok = await confirmar({
+      titulo: '¿Eliminar la pregunta?',
+      mensaje: `Se eliminarán "${p.titulo}" y sus opciones de respuesta.`,
+      confirmar: 'Eliminar pregunta',
+      peligrosa: true,
+    });
+    if (!ok) return;
     try {
       await eliminar.mutateAsync(p.id);
       if (seleccion?.modo === 'editar' && seleccion.pregunta.id === p.id) setSeleccion(null);

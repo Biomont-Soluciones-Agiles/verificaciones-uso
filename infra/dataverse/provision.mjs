@@ -230,6 +230,32 @@ async function reconcilePrimaryNames() {
   }
 }
 
+// Si schema.json cambia el RequiredLevel de una columna que ya existe (p. ej. vu_responsableid
+// pasó a opcional al importar el catálogo), se ajusta con PUT.
+const METADATA_TYPE = {
+  String: 'StringAttributeMetadata', Memo: 'MemoAttributeMetadata', Integer: 'IntegerAttributeMetadata',
+  Decimal: 'DecimalAttributeMetadata', Boolean: 'BooleanAttributeMetadata', DateTime: 'DateTimeAttributeMetadata',
+  Picklist: 'PicklistAttributeMetadata', File: 'FileAttributeMetadata', Lookup: 'LookupAttributeMetadata',
+};
+async function reconcileRequiredLevels() {
+  for (const t of schema.tables) {
+    for (const c of t.columns) {
+      if (!existingAttrs[t.logicalName]?.has(c.logicalName)) continue;
+      const cast = `Microsoft.Dynamics.CRM.${METADATA_TYPE[c.type]}`;
+      const path = `EntityDefinitions(LogicalName='${t.logicalName}')/Attributes(LogicalName='${c.logicalName}')`;
+      const a = await api.get(`${path}/${cast}`);
+      if (a.RequiredLevel?.Value === c.requiredLevel) continue;
+      const what = `RequiredLevel ${t.logicalName}.${c.logicalName}: ${a.RequiredLevel?.Value}→${c.requiredLevel}`;
+      if (DRY) { wouldCreate('ajuste ' + what); continue; }
+      const body = { ...a, RequiredLevel: reqLevel(c.requiredLevel) };
+      delete body['@odata.context'];
+      body['@odata.type'] = cast;
+      await api.request('PUT', path, body, { inSolution: true, headers: { 'MSCRM.MergeLabels': 'true' } });
+      stats.actualizados++; log(`[ajuste]  ${what}`);
+    }
+  }
+}
+
 // ---------------------------------------------------------------- roles
 const RIGHT_ORDER = ['Basic', 'Local', 'Deep', 'Global'];
 function desiredPrivileges(role) {
@@ -329,6 +355,7 @@ async function publish() {
   await reconcilePrimaryNames();
   await ensureColumns();
   await ensureLookups();
+  await reconcileRequiredLevels();
   await ensureKeys();
   await ensureAutoNumberSeed();
   await ensureSolutionMembership(solutionId);

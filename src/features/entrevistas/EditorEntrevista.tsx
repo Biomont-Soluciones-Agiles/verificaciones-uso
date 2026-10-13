@@ -1,9 +1,25 @@
-import { Badge, Button, Field, Input, makeStyles, Text, Textarea, tokens } from '@fluentui/react-components';
-import { Checkmark24Regular, CommentAdd24Regular, Save24Regular } from '@fluentui/react-icons';
+import {
+  Badge,
+  Button,
+  Field,
+  Input,
+  makeStyles,
+  MessageBar,
+  MessageBarActions,
+  MessageBarBody,
+  MessageBarTitle,
+  Spinner,
+  Text,
+  Textarea,
+  tokens,
+} from '@fluentui/react-components';
+import { Checkmark24Regular, CommentAdd24Regular, ErrorCircle20Regular, Save24Regular } from '@fluentui/react-icons';
 import { useIsMutating } from '@tanstack/react-query';
 import { useState } from 'react';
 import { MENSAJES, useAvisos } from '../../components/avisos';
+import { useConfirmar } from '../../components/Confirmacion';
 import { EstadoBadge } from '../../components/EstadoBadge';
+import { iconoOcupado } from '../../components/iconoOcupado';
 import { Acciones, Campos, Cargando, ErrorCarga, ListaMotivos, Tarjeta } from '../../components/Estructura';
 import { CLAVE_AUTOGUARDADO } from '../../data/hooks/claves';
 import {
@@ -34,9 +50,18 @@ import { useGestionEvidencias } from './useGestionEvidencias';
 
 const useStyles = makeStyles({
   cabecera: { display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', gap: tokens.spacingHorizontalM },
-  titulos: { display: 'flex', flexDirection: 'column' },
-  detalle: { color: tokens.colorNeutralForeground3 },
-  estado: { display: 'flex', gap: tokens.spacingHorizontalXS, alignItems: 'flex-start' },
+  titulos: { display: 'flex', flexDirection: 'column', minWidth: 0 },
+  detalle: { color: tokens.colorNeutralForeground2 },
+  estado: { display: 'flex', flexWrap: 'wrap', gap: tokens.spacingHorizontalXS, alignItems: 'flex-start' },
+  seccion: {
+    margin: 0,
+    paddingTop: tokens.spacingVerticalS,
+    color: tokens.colorNeutralForeground2,
+    fontSize: tokens.fontSizeBase200,
+    fontWeight: tokens.fontWeightSemibold,
+    letterSpacing: '0.04em',
+    textTransform: 'uppercase',
+  },
 });
 
 export interface EditorEntrevistaProps {
@@ -66,7 +91,7 @@ export function EditorEntrevista(props: EditorEntrevistaProps) {
 
 const TEXTO_INDICADOR: Record<EstadoAutoguardado, string> = {
   guardado: 'Guardado automático',
-  pendiente: 'Cambios sin guardar…',
+  pendiente: 'Cambios por guardar…',
   guardando: 'Guardando…',
   error: 'Error al guardar',
 };
@@ -78,7 +103,15 @@ function IndicadorGuardado({ estado, mutando, error }: { estado: EstadoAutoguard
       <Badge
         appearance="tint"
         color={efectivo === 'error' ? 'danger' : efectivo === 'guardado' ? 'success' : 'informative'}
-        icon={efectivo === 'guardado' ? <Checkmark24Regular /> : undefined}
+        icon={
+          efectivo === 'guardado' ? (
+            <Checkmark24Regular />
+          ) : efectivo === 'guardando' ? (
+            <Spinner size="extra-tiny" />
+          ) : efectivo === 'error' ? (
+            <ErrorCircle20Regular />
+          ) : undefined
+        }
       >
         {TEXTO_INDICADOR[efectivo]}
       </Badge>
@@ -98,6 +131,7 @@ function FormularioEntrevista({
 }: EditorEntrevistaProps & { respuestasIniciales: Respuesta[] }) {
   const styles = useStyles();
   const avisos = useAvisos();
+  const confirmar = useConfirmar();
   const [borrador, setBorrador] = useState<BorradorEntrevista>(() => borradorDesde(entrevista, respuestasIniciales));
   const [nuevaId, setNuevaId] = useState<Id | null>(null);
   const [intentoCompletar, setIntentoCompletar] = useState(false);
@@ -144,7 +178,13 @@ function FormularioEntrevista({
   };
 
   const quitarPregunta = async (r: Respuesta) => {
-    if (!window.confirm('¿Quitar esta pregunta surgida en la reunión?')) return;
+    const ok = await confirmar({
+      titulo: '¿Quitar la pregunta?',
+      mensaje: 'Se quitará esta pregunta surgida en la reunión y su respuesta.',
+      confirmar: 'Quitar pregunta',
+      peligrosa: true,
+    });
+    if (!ok) return;
     try {
       await eliminarRespuesta.mutateAsync(r.id);
       setBorrador((b) => ({ ...b, respuestas: b.respuestas.filter((x) => x.id !== r.id) }));
@@ -205,6 +245,20 @@ function FormularioEntrevista({
         </div>
       </div>
 
+      {!soloLectura && autoguardado.error && (
+        <MessageBar intent="error" layout="multiline">
+          <MessageBarBody>
+            <MessageBarTitle>No se guardaron los últimos cambios</MessageBarTitle>
+            {autoguardado.error}
+          </MessageBarBody>
+          <MessageBarActions>
+            <Button size="small" disabled={ocupado} onClick={() => void guardarAvance()}>
+              Reintentar
+            </Button>
+          </MessageBarActions>
+        </MessageBar>
+      )}
+
       <Campos>
         <Field label="Grabación de la entrevista" hint="Enlace a la grabación de Teams en SharePoint/OneDrive.">
           <Input
@@ -224,6 +278,11 @@ function FormularioEntrevista({
         />
       </Campos>
 
+      {definidas.length > 0 && (
+        <Text as="h4" className={styles.seccion}>
+          Preguntas definidas ({definidas.length})
+        </Text>
+      )}
       {definidas.map((r) => (
         <RespuestaDefinida
           key={r.id}
@@ -236,6 +295,11 @@ function FormularioEntrevista({
         />
       ))}
 
+      {surgidas.length > 0 && (
+        <Text as="h4" className={styles.seccion}>
+          Preguntas surgidas en la reunión ({surgidas.length})
+        </Text>
+      )}
       {surgidas.map((r) => (
         <PreguntaSurgida
           key={r.id}
@@ -253,12 +317,19 @@ function FormularioEntrevista({
 
       {!soloLectura && (
         <div>
-          <Button icon={<CommentAdd24Regular />} disabled={agregarSurgida.isPending} onClick={nuevaPregunta}>
+          <Button
+            icon={iconoOcupado(agregarSurgida.isPending, <CommentAdd24Regular />)}
+            disabled={agregarSurgida.isPending}
+            onClick={nuevaPregunta}
+          >
             Agregar pregunta surgida en la reunión
           </Button>
         </div>
       )}
 
+      <Text as="h4" className={styles.seccion}>
+        Conclusiones de la entrevista
+      </Text>
       <Campos>
         <Field label="Oportunidades de mejora" hint="Una por línea.">
           <Textarea
@@ -286,12 +357,21 @@ function FormularioEntrevista({
 
       {!soloLectura && (
         <Acciones>
-          <Button icon={<Save24Regular />} disabled={ocupado} onClick={guardarAvance}>
+          <Button
+            icon={iconoOcupado(guardarBorrador.isPending && !completar.isPending, <Save24Regular />)}
+            disabled={ocupado}
+            onClick={guardarAvance}
+          >
             Guardar avance sin notificar
           </Button>
           {entrevista.estado !== 'Completa' && (
-            <Button appearance="primary" icon={<Checkmark24Regular />} disabled={ocupado} onClick={completarEntrevista}>
-              Completar entrevista
+            <Button
+              appearance="primary"
+              icon={iconoOcupado(completar.isPending, <Checkmark24Regular />)}
+              disabled={ocupado}
+              onClick={completarEntrevista}
+            >
+              {completar.isPending ? 'Completando…' : 'Completar entrevista'}
             </Button>
           )}
         </Acciones>

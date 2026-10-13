@@ -1,10 +1,12 @@
 import { useAvisos } from '../../components/avisos';
+import { useConfirmar } from '../../components/Confirmacion';
 import { useActualizarEvidencia, useEliminarEvidencia, useSubirEvidencias } from '../../data/hooks/useEntrevistas';
 import type { Entrevista, Evidencia, Id, Verificacion } from '../../domain/tipos';
 
 /** Acciones sobre la biblioteca de evidencias de una entrevista (con avisos). */
 export function useGestionEvidencias(verificacion: Verificacion, entrevista: Entrevista) {
   const avisos = useAvisos();
+  const confirmar = useConfirmar();
   const subirMut = useSubirEvidencias(verificacion.id);
   const actualizar = useActualizarEvidencia(verificacion.id);
   const eliminarMut = useEliminarEvidencia(verificacion.id);
@@ -43,7 +45,13 @@ export function useGestionEvidencias(verificacion: Verificacion, entrevista: Ent
   };
 
   const eliminar = async (evidencia: Evidencia) => {
-    if (!window.confirm(`¿Quitar la evidencia "${evidencia.nombreArchivo}"?`)) return;
+    const ok = await confirmar({
+      titulo: '¿Quitar la evidencia?',
+      mensaje: `Se quitará el archivo "${evidencia.nombreArchivo}" de esta entrevista.`,
+      confirmar: 'Quitar evidencia',
+      peligrosa: true,
+    });
+    if (!ok) return;
     try {
       await eliminarMut.mutateAsync(evidencia.id);
     } catch (e) {

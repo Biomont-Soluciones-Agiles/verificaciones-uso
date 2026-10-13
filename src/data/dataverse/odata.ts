@@ -91,6 +91,11 @@ export function booleano(fila: Fila, columna: string): boolean {
   return fila[columna] === true;
 }
 
+export function booleanoONull(fila: Fila, columna: string): boolean | null {
+  const v = fila[columna];
+  return typeof v === 'boolean' ? v : null;
+}
+
 /**
  * Columna *DateOnly*: Dataverse la devuelve como `2026-08-15` (sin zona). Por robustez
  * se acepta también un `2026-08-15T00:00:00Z` y se toma solo la fecha.

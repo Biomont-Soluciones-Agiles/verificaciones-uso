@@ -12,6 +12,18 @@ export const Vu_solucionsstatuscode = {
   2: 'Inactivo'
 } as const;
 export type Vu_solucionsstatuscode = keyof typeof Vu_solucionsstatuscode;
+export const Vu_solucionsvu_basedatos = {
+  100000000: 'SharePoint',
+  100000001: 'Dataverse',
+  100000002: 'Otro'
+} as const;
+export type Vu_solucionsvu_basedatos = keyof typeof Vu_solucionsvu_basedatos;
+export const Vu_solucionsvu_estadodesarrollo = {
+  100000000: 'En proceso',
+  100000001: 'Entregado',
+  100000002: 'En uso'
+} as const;
+export type Vu_solucionsvu_estadodesarrollo = keyof typeof Vu_solucionsvu_estadodesarrollo;
 export const Vu_solucionsvu_estadovu = {
   100000000: 'Pendiente',
   100000001: 'Programada',
@@ -20,6 +32,29 @@ export const Vu_solucionsvu_estadovu = {
   100000004: 'Vigente'
 } as const;
 export type Vu_solucionsvu_estadovu = keyof typeof Vu_solucionsvu_estadovu;
+export const Vu_solucionsvu_evolucion = {
+  100000000: 'En proceso',
+  100000001: 'Implementado'
+} as const;
+export type Vu_solucionsvu_evolucion = keyof typeof Vu_solucionsvu_evolucion;
+export const Vu_solucionsvu_resultadovu = {
+  100000000: 'En uso',
+  100000001: 'Uso parcial',
+  100000002: 'No confirmada'
+} as const;
+export type Vu_solucionsvu_resultadovu = keyof typeof Vu_solucionsvu_resultadovu;
+export const Vu_solucionsvu_tipodiseno = {
+  100000000: 'Lienzo',
+  100000001: 'Model Driven',
+  100000002: 'Otro'
+} as const;
+export type Vu_solucionsvu_tipodiseno = keyof typeof Vu_solucionsvu_tipodiseno;
+export const Vu_solucionsvu_tipoproceso = {
+  100000000: 'Estratégico',
+  100000001: 'Operativo',
+  100000002: 'Soporte'
+} as const;
+export type Vu_solucionsvu_tipoproceso = keyof typeof Vu_solucionsvu_tipoproceso;
 export const Vu_solucionsvu_tiposolucion = {
   100000000: 'Power App',
   100000001: 'Flujo',
@@ -35,15 +70,27 @@ export interface Vu_solucionsBase {
   statuscode?: Vu_solucionsstatuscode;
   timezoneruleversionnumber?: number;
   utcconversiontimezonecode?: number;
+  vu_basedatos?: Vu_solucionsvu_basedatos;
+  vu_beneficioanualpen?: number;
+  vu_capexpen?: number;
+  vu_capexusd?: number;
   vu_descripcion?: string;
+  vu_estadodesarrollo?: Vu_solucionsvu_estadodesarrollo;
   vu_estadovu: Vu_solucionsvu_estadovu;
+  vu_evolucion?: Vu_solucionsvu_evolucion;
   vu_fechaactualizacion?: string;
+  vu_fechaimplementacion?: string;
   vu_name: string;
   vu_periodicidadmeses: number;
   "vu_ProcesoId@odata.bind": string;
+  vu_proveedor?: string;
   vu_proximavu?: string;
-  "vu_ResponsableId@odata.bind": string;
+  "vu_ResponsableId@odata.bind"?: string;
+  vu_resultadovu?: Vu_solucionsvu_resultadovu;
   vu_solucionid: string;
+  vu_tienedashboard?: boolean;
+  vu_tipodiseno?: Vu_solucionsvu_tipodiseno;
+  vu_tipoproceso?: Vu_solucionsvu_tipoproceso;
   vu_tiposolucion?: Vu_solucionsvu_tiposolucion;
   "vu_UltimaVerificacionId@odata.bind"?: string;
   vu_usuariosobjetivo?: number;
@@ -55,7 +102,14 @@ export interface Vu_solucions extends Vu_solucionsBase {
   statecodename?: string;
   statuscodename?: string;
   versionnumber?: number;
+  vu_basedatosname?: string;
+  vu_estadodesarrolloname?: string;
   vu_estadovuname?: string;
+  vu_evolucionname?: string;
+  vu_resultadovuname?: string;
+  vu_tienedashboardname?: string;
+  vu_tipodisenoname?: string;
+  vu_tipoprocesoname?: string;
   vu_tiposolucionname?: string;
   createdby?: object;
   _createdby_value?: string;
