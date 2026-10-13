@@ -28,6 +28,7 @@ export interface Vu_preguntasBase {
   utcconversiontimezonecode?: number;
   "vu_CriterioId@odata.bind": string;
   vu_name: string;
+  vu_obligatoria: boolean;
   vu_orden: number;
   vu_preguntaid: string;
   vu_tiporespuesta: Vu_preguntasvu_tiporespuesta;
@@ -39,6 +40,7 @@ export interface Vu_preguntas extends Vu_preguntasBase {
   statecodename?: string;
   statuscodename?: string;
   versionnumber?: number;
+  vu_obligatorianame?: string;
   vu_tiporespuestaname?: string;
   createdby?: object;
   _createdby_value?: string;

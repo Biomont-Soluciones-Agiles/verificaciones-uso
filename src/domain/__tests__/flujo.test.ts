@@ -174,8 +174,8 @@ describe('validaciones de formularios', () => {
 
   it('validarRespuestasDefinidas exige respuesta y puntaje', () => {
     const preguntas = [
-      { id: '1', titulo: 'P1' },
-      { id: '2', titulo: 'P2' },
+      { id: '1', titulo: 'P1', obligatoria: true },
+      { id: '2', titulo: 'P2', obligatoria: true },
     ];
     expect(
       validarRespuestasDefinidas(preguntas, [
@@ -184,6 +184,20 @@ describe('validaciones de formularios', () => {
       ]),
     ).toEqual(['Falta el puntaje de: "P2".']);
     expect(validarRespuestasDefinidas(preguntas, [])).toHaveLength(2);
+  });
+
+  it('validarRespuestasDefinidas no exige las preguntas no obligatorias', () => {
+    const preguntas = [
+      { id: '1', titulo: 'P1', obligatoria: true },
+      { id: '2', titulo: 'Si corresponde', obligatoria: false },
+    ];
+    expect(validarRespuestasDefinidas(preguntas, [{ preguntaId: '1', origen: 'Definida', puntaje: 8 }])).toEqual([]);
+    expect(
+      validarRespuestasDefinidas(preguntas, [
+        { preguntaId: '1', origen: 'Definida', puntaje: 8 },
+        { preguntaId: '2', origen: 'Definida', puntaje: null },
+      ]),
+    ).toEqual([]);
   });
 });
 

@@ -189,6 +189,11 @@ export interface Pregunta {
   criterioId: Id;
   tipoRespuesta: TipoRespuesta;
   orden: number;
+  /**
+   * `false`: puede quedar sin puntaje cuando no aplica ("si corresponde", "de ser aplicable").
+   * Sin puntaje no cuenta en el promedio del criterio (RN-04).
+   */
+  obligatoria: boolean;
   activo: boolean;
 }
 

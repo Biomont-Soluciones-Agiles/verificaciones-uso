@@ -1,24 +1,115 @@
 {
-  "$comment": "§2.6: criterios con sus pesos (suman 100) y la pregunta definida de Frecuencia con sus opciones y puntajes sugeridos.",
+  "$comment": "§2.6: criterios con sus pesos (suman 100) y las 11 preguntas de la hoja \"Criterios (validar)\" del Excel de verificaciones (puntaje 1–10). vu_obligatoria=false: puede no aplicar (queda sin puntaje y no cuenta en el promedio del criterio).",
   "criterios": [
-    { "vu_name": "Frecuencia", "vu_peso": 30, "vu_orden": 1 },
-    { "vu_name": "Cobertura", "vu_peso": 25, "vu_orden": 2 },
-    { "vu_name": "Sustitución", "vu_peso": 30, "vu_orden": 3 },
-    { "vu_name": "Satisfacción", "vu_peso": 15, "vu_orden": 4 }
+    {
+      "vu_name": "Frecuencia",
+      "vu_peso": 30,
+      "vu_orden": 1
+    },
+    {
+      "vu_name": "Cobertura",
+      "vu_peso": 25,
+      "vu_orden": 2
+    },
+    {
+      "vu_name": "Sustitución",
+      "vu_peso": 30,
+      "vu_orden": 3
+    },
+    {
+      "vu_name": "Satisfacción",
+      "vu_peso": 15,
+      "vu_orden": 4
+    }
   ],
   "preguntas": [
     {
-      "vu_name": "¿Con qué frecuencia utiliza la solución?",
+      "vu_name": "Se ha registrado uso frecuente de acuerdo a la frecuencia del proceso.",
       "criterio": "Frecuencia",
-      "vu_tiporespuesta": 100000000,
+      "vu_tiporespuesta": 100000002,
       "vu_orden": 1,
-      "opciones": [
-        { "vu_name": "Diariamente", "vu_puntajesugerido": 9, "vu_orden": 1 },
-        { "vu_name": "Varias veces por semana", "vu_puntajesugerido": 8, "vu_orden": 2 },
-        { "vu_name": "Semanalmente", "vu_puntajesugerido": 6, "vu_orden": 3 },
-        { "vu_name": "Ocasionalmente", "vu_puntajesugerido": 4, "vu_orden": 4 },
-        { "vu_name": "No la utiliza", "vu_puntajesugerido": 1, "vu_orden": 5 }
-      ]
+      "vu_obligatoria": true,
+      "opciones": []
+    },
+    {
+      "vu_name": "El uso ha sido constante desde la implementación, sin grandes interrupciones.",
+      "criterio": "Frecuencia",
+      "vu_tiporespuesta": 100000002,
+      "vu_orden": 2,
+      "vu_obligatoria": true,
+      "opciones": []
+    },
+    {
+      "vu_name": "Existe al menos un usuario activo identificado en alguna verificación realizada.",
+      "criterio": "Frecuencia",
+      "vu_tiporespuesta": 100000002,
+      "vu_orden": 3,
+      "vu_obligatoria": true,
+      "opciones": []
+    },
+    {
+      "vu_name": "El 100% de los usuarios objetivo han utilizado la herramienta al menos una vez.",
+      "criterio": "Cobertura",
+      "vu_tiporespuesta": 100000002,
+      "vu_orden": 4,
+      "vu_obligatoria": true,
+      "opciones": []
+    },
+    {
+      "vu_name": "Se ha capacitado a todos los usuarios involucrados.",
+      "criterio": "Cobertura",
+      "vu_tiporespuesta": 100000002,
+      "vu_orden": 5,
+      "vu_obligatoria": true,
+      "opciones": []
+    },
+    {
+      "vu_name": "El sistema es utilizado por más de un área (si corresponde).",
+      "criterio": "Cobertura",
+      "vu_tiporespuesta": 100000002,
+      "vu_orden": 6,
+      "vu_obligatoria": false,
+      "opciones": []
+    },
+    {
+      "vu_name": "Se ha eliminado el uso de Excel, papel u otro método paralelo.",
+      "criterio": "Sustitución",
+      "vu_tiporespuesta": 100000002,
+      "vu_orden": 7,
+      "vu_obligatoria": true,
+      "opciones": []
+    },
+    {
+      "vu_name": "Los usuarios no están duplicando tareas (no ingresan la misma información en otra parte).",
+      "criterio": "Sustitución",
+      "vu_tiporespuesta": 100000002,
+      "vu_orden": 8,
+      "vu_obligatoria": true,
+      "opciones": []
+    },
+    {
+      "vu_name": "La solución ha sido integrada con aplicaciones o sistemas existentes (de ser aplicable).",
+      "criterio": "Sustitución",
+      "vu_tiporespuesta": 100000002,
+      "vu_orden": 9,
+      "vu_obligatoria": false,
+      "opciones": []
+    },
+    {
+      "vu_name": "¿Cuán satisfecho estás con la solución implementada?",
+      "criterio": "Satisfacción",
+      "vu_tiporespuesta": 100000002,
+      "vu_orden": 10,
+      "vu_obligatoria": true,
+      "opciones": []
+    },
+    {
+      "vu_name": "No se han reportado quejas significativas sobre la funcionalidad o diseño.",
+      "criterio": "Satisfacción",
+      "vu_tiporespuesta": 100000002,
+      "vu_orden": 11,
+      "vu_obligatoria": true,
+      "opciones": []
     }
   ]
 }

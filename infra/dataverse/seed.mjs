@@ -53,7 +53,7 @@ const isDry = (id) => typeof id === 'string' && id.startsWith('dry-');
   for (const p of cp.preguntas) {
     const crit = criterios[p.criterio];
     const pid = await ensure('vu_pregunta', `${eqName(p.vu_name)}${isDry(crit) ? '' : ' and ' + eqLookup('vu_criterioid', crit)}`, {
-      vu_name: p.vu_name, vu_tiporespuesta: p.vu_tiporespuesta, vu_orden: p.vu_orden, ...bind('vu_pregunta', 'vu_criterioid', 'vu_criterio', crit),
+      vu_name: p.vu_name, vu_tiporespuesta: p.vu_tiporespuesta, vu_orden: p.vu_orden, vu_obligatoria: p.vu_obligatoria ?? true, ...bind('vu_pregunta', 'vu_criterioid', 'vu_criterio', crit),
     }, `pregunta "${p.vu_name}"`);
     preguntas[p.vu_name] = pid;
     for (const o of p.opciones) {

@@ -57,7 +57,7 @@ export const SELECT = {
     'vu_vigente',
   ],
   criterio: ['vu_criterioid', 'vu_name', 'vu_peso', 'vu_orden', 'statecode'],
-  pregunta: ['vu_preguntaid', 'vu_name', '_vu_criterioid_value', 'vu_tiporespuesta', 'vu_orden', 'statecode'],
+  pregunta: ['vu_preguntaid', 'vu_name', '_vu_criterioid_value', 'vu_tiporespuesta', 'vu_orden', 'vu_obligatoria', 'statecode'],
   opcion: ['vu_opcionrespuestaid', 'vu_name', '_vu_preguntaid_value', 'vu_puntajesugerido', 'vu_orden'],
   verificacion: [
     'vu_verificacionid',
@@ -244,7 +244,7 @@ async function main() {
   await tabla('Preguntas', 'vu_preguntas', SELECT.pregunta, { orderBy: ['vu_orden asc'] });
   await tabla('Opciones', 'vu_opcionrespuestas', SELECT.opcion, { orderBy: ['vu_orden asc'] });
   const soluciones = await tabla('Soluciones', 'vu_solucions', SELECT.solucion, { orderBy: ['vu_name asc'] });
-  comprobar(soluciones.length === 4, `4 soluciones (hay ${soluciones.length})`);
+  comprobar(soluciones.length > 0, `Hay soluciones en el catálogo (${soluciones.length})`);
   for (const s of soluciones) {
     console.log(
       `      · ${s.vu_name} — proceso ${s[`_vu_procesoid_value${FV}`]}, estado VU ${s[`vu_estadovu${FV}`]}, responsable ${s[`_vu_responsableid_value${FV}`]}`,
@@ -257,10 +257,12 @@ async function main() {
     });
   }
 
-  console.log('\nVerificación demo');
+  console.log('\nVerificación de muestra (la más reciente programada desde la app)');
   const verificaciones = await tabla('Verificaciones', 'vu_verificacions', SELECT.verificacion, { orderBy: ['vu_name desc'] });
-  const demo = verificaciones.find((v) => v.vu_name === 'VU-00001');
-  comprobar(!!demo, 'Existe VU-00001 (autonumeración)');
+  comprobar(verificaciones.every((v) => /^VU-\d{5}$/.test(v.vu_name)), 'Códigos con la autonumeración VU-00000');
+  // Las históricas importadas no tienen fecha objetivo ni entrevistas: se toma una programada desde la app.
+  const demo = verificaciones.find((v) => v.vu_fechaobjetivo);
+  if (!demo) console.log('      (no hay verificaciones programadas desde la app: se omiten sus comprobaciones)');
   if (demo) {
     console.log(
       `      · ${demo.vu_name} — ${demo[`_vu_solucionid_value${FV}`]} · ${demo[`vu_estado${FV}`]} · objetivo ${demo.vu_fechaobjetivo} · alerta ${demo.vu_fechaalerta} · ${demo.vu_entrevistascompletas}/${demo.vu_entrevistasprevistas}`,

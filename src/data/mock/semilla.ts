@@ -198,6 +198,7 @@ export function crearSemilla(): Semilla {
       criterioId: '1',
       tipoRespuesta: 'Selección',
       orden: 1,
+      obligatoria: true,
       activo: true,
     },
   ];

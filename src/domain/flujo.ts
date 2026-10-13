@@ -131,15 +131,16 @@ export function validarProgramacion(d: DatosProgramacionValidables): string[] {
 }
 
 /**
- * Para completar una entrevista, toda pregunta definida activa debe tener una respuesta
- * con puntaje (el puntaje es obligatorio en las definidas, §2.3).
+ * Para completar una entrevista, toda pregunta definida activa y **obligatoria** debe tener
+ * una respuesta con puntaje (§2.3). Las no obligatorias pueden quedar sin puntaje (no aplica).
  */
 export function validarRespuestasDefinidas(
-  preguntasActivas: readonly Pick<Pregunta, 'id' | 'titulo'>[],
+  preguntasActivas: readonly Pick<Pregunta, 'id' | 'titulo' | 'obligatoria'>[],
   respuestasDeEntrevista: readonly Pick<Respuesta, 'preguntaId' | 'origen' | 'puntaje'>[],
 ): string[] {
   const errores: string[] = [];
   for (const pregunta of preguntasActivas) {
+    if (!pregunta.obligatoria) continue;
     const r = respuestasDeEntrevista.find((x) => x.origen === 'Definida' && x.preguntaId === pregunta.id);
     if (!r) errores.push(`Falta responder: "${pregunta.titulo}".`);
     else if (r.puntaje === null) errores.push(`Falta el puntaje de: "${pregunta.titulo}".`);

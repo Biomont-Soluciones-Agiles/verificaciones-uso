@@ -73,6 +73,7 @@ export function AdminPreguntas() {
               <TableHeaderCell>Criterio</TableHeaderCell>
               <TableHeaderCell>Tipo</TableHeaderCell>
               <TableHeaderCell>Orden</TableHeaderCell>
+              <TableHeaderCell>Obligatoria</TableHeaderCell>
               <TableHeaderCell>Activa</TableHeaderCell>
               <TableHeaderCell>
                 <span className="sr-only">Acciones</span>
@@ -86,6 +87,7 @@ export function AdminPreguntas() {
                 <TableCell>{nombreCriterio(p.criterioId)}</TableCell>
                 <TableCell>{p.tipoRespuesta}</TableCell>
                 <TableCell>{p.orden}</TableCell>
+                <TableCell>{p.obligatoria ? 'Sí' : 'No (si corresponde)'}</TableCell>
                 <TableCell>{p.activo ? 'Sí' : 'No'}</TableCell>
                 <TableCell>
                   <Button
@@ -132,7 +134,7 @@ function FormularioPregunta({ pregunta, criterios, ordenSiguiente, onGuardada, o
   const avisos = useAvisos();
   const guardar = useGuardarPregunta();
   const [datos, setDatos] = useState<Omit<Pregunta, 'id'>>(
-    pregunta ?? { titulo: '', criterioId: criterios[0]?.id ?? '', tipoRespuesta: 'Selección', orden: ordenSiguiente, activo: true },
+    pregunta ?? { titulo: '', criterioId: criterios[0]?.id ?? '', tipoRespuesta: 'Selección', orden: ordenSiguiente, obligatoria: true, activo: true },
   );
   const valido = datos.titulo.trim().length > 0 && datos.titulo.length <= 500 && datos.criterioId !== '';
 
@@ -174,6 +176,11 @@ function FormularioPregunta({ pregunta, criterios, ordenSiguiente, onGuardada, o
         <Field label="Orden">
           <Input type="number" value={String(datos.orden)} onChange={(_, d) => setDatos({ ...datos, orden: Number(d.value) })} />
         </Field>
+        <Checkbox
+          label="Obligatoria (desmárcala si puede no aplicar: queda sin puntaje y no cuenta en el promedio)"
+          checked={datos.obligatoria}
+          onChange={(_, d) => setDatos({ ...datos, obligatoria: d.checked === true })}
+        />
         <Checkbox label="Activa" checked={datos.activo} onChange={(_, d) => setDatos({ ...datos, activo: d.checked === true })} />
       </Campos>
       <Acciones>

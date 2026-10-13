@@ -706,6 +706,17 @@
           "minValue": -2147483648,
           "maxValue": 2147483647,
           "requiredLevel": "ApplicationRequired"
+        },
+        {
+          "logicalName": "vu_obligatoria",
+          "schemaName": "vu_Obligatoria",
+          "displayName": "Obligatoria",
+          "description": "No = la pregunta puede quedar sin puntaje si no aplica (p. ej. \"si corresponde\"); no cuenta para el promedio del criterio.",
+          "type": "Boolean",
+          "defaultValue": true,
+          "trueLabel": "Sí",
+          "falseLabel": "No",
+          "requiredLevel": "ApplicationRequired"
         }
       ],
       "keys": []

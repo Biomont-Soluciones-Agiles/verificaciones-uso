@@ -308,6 +308,39 @@
           "required": true,
           "maxLength": 500
         },
+        "vu_obligatoria": {
+          "type": "string",
+          "title": "Obligatoria",
+          "x-ms-dataverse-attribute": "vu_obligatoria",
+          "x-ms-dataverse-type": "BooleanType",
+          "x-ms-schema-name": "vu_Obligatoria",
+          "required": true,
+          "enum": [
+            "No",
+            "Sí"
+          ],
+          "x-ms-enum-values": [
+            0,
+            1
+          ],
+          "Color": [
+            null,
+            null
+          ],
+          "x-ms-optionsetmetadataid": "0451bad9-3fc7-f111-a05c-7ced8da8a834",
+          "x-ms-isGlobal": false,
+          "x-ms-optionsetdisplayname": "Obligatoria",
+          "x-ms-optionSetType": "Boolean"
+        },
+        "vu_obligatorianame": {
+          "type": "string",
+          "title": "vu_obligatorianame",
+          "x-ms-dataverse-attribute": "vu_obligatorianame",
+          "x-ms-dataverse-type": "VirtualType",
+          "x-ms-schema-name": "vu_obligatoriaName",
+          "x-ms-dataverse-attribute-of": "vu_obligatoria",
+          "x-ms-read-only": true
+        },
         "vu_orden": {
           "type": "string",
           "title": "Orden",
@@ -372,6 +405,7 @@
         "statecode",
         "vu_criterioid",
         "vu_name",
+        "vu_obligatoria",
         "vu_orden",
         "vu_preguntaid",
         "vu_tiporespuesta"

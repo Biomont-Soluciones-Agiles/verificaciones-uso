@@ -153,6 +153,7 @@ Leyenda de **Req.**: **Sí** = obligatorio para la empresa (*ApplicationRequired
 | vu_criterioid | Búsqueda → vu_criterio (Restrict) | Sí | |
 | vu_tiporespuesta | Opción local: Selección 100000000 / Texto 100000001 / Numérica 100000002 | Sí | |
 | vu_orden | Entero | Sí | |
+| vu_obligatoria | Sí/No (predeterminado Sí) | Sí | No = puede no aplicar ("si corresponde"): la respuesta queda sin puntaje, no impide completar la entrevista y no cuenta en el promedio del criterio (RN-04) |
 
 **`vu_opcionrespuesta`**: Opción de respuesta
 | Columna lógica | Tipo | Req. | Notas |
@@ -307,7 +308,7 @@ La app solo puede cambiar el estado hasta *En revisión*. Los estados posteriore
 
 ### 2.6 Datos semilla
 - vu_criterio: Frecuencia 30, Cobertura 25, Sustitución 30, Satisfacción 15.
-- vu_pregunta y vu_opcionrespuesta: "¿Con qué frecuencia utiliza la solución?" (Frecuencia) con las opciones Diariamente 9, Varias veces por semana 8, Semanalmente 6, Ocasionalmente 4, No la utiliza 1.
+- vu_pregunta: las 11 preguntas de la hoja "Criterios (validar)" del Excel de verificaciones, de tipo Numérica (puntaje 1–10): 3 de Frecuencia, 3 de Cobertura, 3 de Sustitución y 2 de Satisfacción. Dos no son obligatorias: "El sistema es utilizado por más de un área (si corresponde)" y "La solución ha sido integrada con aplicaciones o sistemas existentes (de ser aplicable)". Detalle en `infra/dataverse/seed/criterios.json`.
 - vu_area: las áreas del prototipo.
 - vu_solucion: no hay datos de ejemplo; el catálogo real se importa desde la lista SharePoint "Apps" (`infra/dataverse/importar-apps.mjs`).
 

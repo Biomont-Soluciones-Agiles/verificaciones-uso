@@ -113,7 +113,7 @@ export const SELECT = {
     'vu_vigente',
   ],
   criterio: ['vu_criterioid', 'vu_name', 'vu_peso', 'vu_orden', 'statecode'],
-  pregunta: ['vu_preguntaid', 'vu_name', '_vu_criterioid_value', 'vu_tiporespuesta', 'vu_orden', 'statecode'],
+  pregunta: ['vu_preguntaid', 'vu_name', '_vu_criterioid_value', 'vu_tiporespuesta', 'vu_orden', 'vu_obligatoria', 'statecode'],
   opcion: ['vu_opcionrespuestaid', 'vu_name', '_vu_preguntaid_value', 'vu_puntajesugerido', 'vu_orden'],
   verificacion: [
     'vu_verificacionid',
@@ -380,6 +380,8 @@ export function preguntaDesdeFila(f: Fila): Pregunta {
     criterioId: busqueda(f, 'vu_criterioid'),
     tipoRespuesta: TIPO_RESPUESTA.aTexto(numero(f, 'vu_tiporespuesta')),
     orden: numero(f, 'vu_orden'),
+    // Las filas anteriores a la columna llegan sin valor: eran todas obligatorias.
+    obligatoria: booleanoONull(f, 'vu_obligatoria') ?? true,
     activo: numero(f, 'statecode') === 0,
   };
 }
@@ -390,6 +392,7 @@ export function preguntaARegistro(c: Cambios<Pregunta>): Registro {
     ...(c.criterioId !== undefined ? bind('vu_CriterioId', CONJUNTOS.criterio, c.criterioId) : {}),
     vu_tiporespuesta: c.tipoRespuesta === undefined ? undefined : TIPO_RESPUESTA.aNumero(c.tipoRespuesta),
     vu_orden: c.orden,
+    vu_obligatoria: c.obligatoria,
     ...estadoActivo(c.activo),
   });
 }
