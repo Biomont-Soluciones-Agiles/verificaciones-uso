@@ -1,0 +1,15 @@
+{
+  "version": "1.0",
+  "appId": null,
+  "appDisplayName": "Verificación de uso",
+  "region": "prod",
+  "appType": "CodeApp",
+  "environmentId": "42eff49b-d50d-e366-9c13-fa86677af7e3",
+  "description": " ",
+  "buildPath": "./dist",
+  "buildEntryPoint": "index.html",
+  "localAppUrl": "http://localhost:3000",
+  "logoPath": "Default",
+  "connectionReferences": {},
+  "databaseReferences": {}
+}

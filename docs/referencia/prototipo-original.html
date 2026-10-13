@@ -1,0 +1,1314 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; style-src 'unsafe-inline' blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; img-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; font-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; media-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; worker-src blob:; connect-src blob: data:; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<title>Prototipo Verificacion Uso Detalle Modal</title>
+<style>:root {
+  color-scheme: light dark;
+  background-color: var(--background) !important;
+
+  /* Agent-facing contract; keep in sync with SKILL.md. */
+  --background: light-dark(rgb(255 255 255), rgb(24 24 24));
+  --foreground: light-dark(rgb(26 28 31), rgb(255 255 255));
+  --card: color-mix(in oklab, var(--foreground) 5%, transparent);
+  --card-foreground: var(--foreground);
+  --popover: light-dark(rgb(255 255 255), rgb(45 45 45));
+  --popover-foreground: var(--foreground);
+  --primary: light-dark(rgb(51 156 255), rgb(131 195 255));
+  --primary-foreground: light-dark(rgb(255 255 255), rgb(13 13 13));
+  --secondary: light-dark(rgb(255 255 255 / 96%), rgb(54 54 54 / 96%));
+  --secondary-foreground: var(--foreground);
+  --muted: color-mix(in srgb, var(--foreground) 10%, transparent);
+  --muted-foreground: light-dark(
+    rgb(26 28 31 / 49.4%),
+    rgb(255 255 255 / 49.8%)
+  );
+  --accent: light-dark(rgb(229 242 255), rgb(13 39 63));
+  --accent-foreground: var(--primary);
+  --destructive: light-dark(rgb(226 85 7), rgb(255 133 73));
+  --border: light-dark(rgb(26 28 31 / 8%), rgb(255 255 255 / 8.2%));
+  --input: light-dark(
+    rgb(26 28 31 / 11.8%),
+    color-mix(in oklab, rgb(0 0 0) 10%, transparent)
+  );
+  --ring: light-dark(rgb(51 156 255), rgb(131 195 255 / 76%));
+  --font-size-base: 14px;
+  --viz-series-1: var(--primary);
+  --viz-series-2: light-dark(rgb(243 136 59), rgb(245 154 86));
+  --viz-series-3: light-dark(rgb(93 201 119), rgb(116 213 139));
+  --viz-series-4: light-dark(rgb(235 119 177), rgb(240 143 192));
+  --viz-series-5: light-dark(rgb(155 121 236), rgb(170 145 239));
+  --viz-series-6: light-dark(rgb(58 185 177), rgb(90 203 194));
+
+  /* Internal implementation variables; not part of the agent contract. */
+  --font-sans: -apple-system, system-ui, "Segoe UI", sans-serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono",
+    monospace;
+  --font-size-normal: max(11px, var(--font-size-base));
+  --font-size-tooltip: calc(var(--font-size-base) - 1px);
+  --font-size-small: max(11px, calc(var(--font-size-base) - 2px));
+  --font-size-h1: calc(var(--font-size-normal) * 1.7142857143);
+  --font-size-h2: calc(var(--font-size-normal) * 1.4285714286);
+  --font-size-h3: calc(var(--font-size-normal) * 1.2857142857);
+  --font-weight-normal: 430;
+  --font-weight-medium: 500;
+  --line-height-normal: calc(var(--font-size-normal) * 1.5);
+  --line-height-tooltip: calc(var(--font-size-tooltip) * 1.4285714286);
+  --line-height-small: calc(var(--font-size-small) + 4px);
+  --radius: 12.5px;
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-2xl: calc(var(--radius) * 1.6);
+  --radius-full: 9999px;
+  --shadow-sm: 0 1px 2px -1px rgb(0 0 0 / 8%);
+  --checkmark-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 17 17'%3E%3Cpath d='M12.8961 3.64101C13.1297 3.41418 13.4984 3.37523 13.7779 3.56581C14.0571 3.75635 14.1554 4.11331 14.0299 4.41347L13.9615 4.53847L7.71151 13.7045C7.59411 13.8767 7.4063 13.9877 7.19881 14.0072C6.99136 14.0267 6.78564 13.9533 6.63826 13.806L2.88826 10.056L2.79842 9.9457C2.6192 9.67407 2.64927 9.30496 2.88826 9.06581C3.12738 8.82669 3.49647 8.79676 3.76815 8.97597L3.8785 9.06581L7.03084 12.2182L12.8053 3.74941L12.8961 3.64101Z'/%3E%3C/svg%3E");
+
+  /* Legacy aliases; not part of the current agent contract. */
+  --viz-bg: transparent;
+  --viz-panel: var(--card);
+  --viz-border: var(--border);
+  --viz-text: var(--foreground);
+  --viz-muted: var(--muted-foreground);
+  --viz-accent: var(--primary);
+  --viz-accent-text: var(--primary-foreground);
+  --viz-accent-bg: var(--accent);
+  --viz-font-size: var(--font-size-base);
+  --viz-warning: var(--destructive);
+  --color-background-primary: var(--background);
+  --color-text-primary: var(--foreground);
+  --color-border-secondary: var(--border);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html > body {
+  margin: 0;
+  padding: 5px;
+  color: var(--foreground);
+  background: transparent !important;
+  font-family: var(--font-sans);
+  font-size: var(--font-size-normal);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-normal);
+}
+
+a {
+  color: color-mix(in srgb, var(--viz-accent) 80%, var(--viz-text) 20%);
+  cursor: pointer;
+  font-weight: var(--viz-font-weight-medium);
+  text-decoration: none;
+  text-underline-offset: 2px;
+}
+
+a:is(:hover, :focus-visible) {
+  text-decoration-line: underline;
+  text-decoration-style: dashed;
+  text-decoration-thickness: 0.5px;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p {
+  margin-block: 0;
+}
+
+h1 {
+  font-size: var(--font-size-h1);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+}
+
+h2 {
+  font-size: var(--font-size-h2);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+}
+
+h3,
+h4,
+h5,
+h6 {
+  font-size: var(--font-size-h3);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.3;
+}
+
+b,
+strong,
+th {
+  font-weight: var(--font-weight-medium);
+}
+
+code:not(pre code) {
+  display: inline;
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  corner-shape: superellipse(1.5);
+  background: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  overflow-wrap: anywhere;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  word-break: break-word;
+}
+
+#widget {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  padding: 0;
+  background: transparent !important;
+}
+
+.card {
+  min-width: 0;
+  padding: 12px;
+  overflow: hidden;
+  overflow-wrap: break-word;
+  border-radius: var(--radius-2xl);
+  corner-shape: superellipse(1.5);
+  color: var(--card-foreground);
+  background: var(--card);
+}
+
+#widget > :not(.card) {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.tooltip {
+  position: fixed;
+  z-index: 50;
+  top: 0;
+  left: 0;
+  width: max-content;
+  max-width: min(
+    20rem,
+    var(--tooltip-available-width, calc(100vw - 10px)),
+    calc(100vw - 10px)
+  );
+  max-height: min(
+    var(--tooltip-available-height, calc(100vh - 10px)),
+    calc(100vh - 10px)
+  );
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  corner-shape: superellipse(1.5);
+  color: var(--popover-foreground);
+  background: var(--popover);
+  box-shadow: none;
+  font-size: var(--font-size-tooltip);
+  line-height: var(--line-height-tooltip);
+  overflow-wrap: break-word;
+  white-space: normal;
+  pointer-events: none;
+  user-select: none;
+}
+
+.viz-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(max(180px, 24%), 1fr));
+  gap: 10px;
+}
+
+.viz-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.viz-stat-value {
+  font-size: var(--font-size-h2);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+}
+
+.viz-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.viz-badge {
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  color: var(--accent-foreground);
+  background: var(--accent);
+  font-weight: var(--font-weight-medium);
+}
+
+small,
+.text-small,
+.viz-badge {
+  font-size: var(--font-size-small);
+  line-height: var(--line-height-small);
+}
+
+.text-muted {
+  color: var(--muted-foreground);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.viz-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.viz-controls > .form-label {
+  display: grid;
+  min-width: min(100%, 260px);
+  flex: 1 1 280px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 2px 12px;
+  margin-bottom: 0;
+}
+
+.viz-controls > .form-label > :is(.form-control, .form-range, .form-select) {
+  grid-column: 1 / -1;
+}
+
+.btn,
+.form-check-input,
+.form-control,
+.form-range,
+.form-select {
+  font: inherit;
+}
+
+.btn {
+  appearance: button;
+  display: inline-flex;
+  inline-size: fit-content;
+  max-inline-size: 100%;
+  min-height: 28px;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin: 0;
+  padding: 0 8px;
+  -webkit-app-region: no-drag;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-lg);
+  corner-shape: superellipse(1.5);
+  color: var(--secondary-foreground);
+  background: var(--secondary);
+  cursor: var(--cursor-interaction, pointer);
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+.btn:is(.btn-block, .viz-tile) {
+  inline-size: 100%;
+}
+
+.btn.viz-tile {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+a.btn {
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.btn:not(:disabled):hover {
+  background: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.btn-primary {
+  border-color: transparent;
+  color: var(--primary-foreground);
+  background: var(--foreground);
+  background-clip: padding-box;
+}
+
+.btn-primary .text-muted {
+  color: color-mix(in srgb, var(--primary-foreground) 50%, transparent);
+}
+
+.btn-primary:not(:disabled):hover {
+  background: color-mix(in srgb, var(--foreground) 80%, transparent);
+  background-clip: padding-box;
+}
+
+.btn-ghost {
+  border-color: transparent;
+  color: var(--muted-foreground);
+  background: transparent;
+}
+
+.btn-ghost:not(:disabled):hover {
+  color: var(--foreground);
+  background: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+[data-lucide] {
+  stroke-width: 1.6;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--foreground);
+}
+
+.form-control {
+  display: block;
+  width: 100%;
+  min-height: 28px;
+  padding: 0 8px;
+  outline: none;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-lg);
+  corner-shape: superellipse(1.5);
+  color: var(--foreground);
+  background: var(--secondary);
+}
+
+.form-control::placeholder {
+  color: var(--muted-foreground);
+}
+
+.form-control[type="file"] {
+  padding: 0;
+  overflow: hidden;
+  cursor: var(--cursor-interaction, pointer);
+}
+
+.form-control[type="file"]::file-selector-button {
+  min-height: 26px;
+  margin-right: 8px;
+  padding: 0 8px;
+  border: 0;
+  border-right: 1px solid var(--input);
+  color: var(--secondary-foreground);
+  background: var(--secondary);
+  cursor: inherit;
+  font: inherit;
+}
+
+.form-control[type="file"]:not(:disabled):hover::file-selector-button {
+  background: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.form-control-color[type="color"] {
+  width: 40px;
+  height: 28px;
+  padding: 3px;
+  cursor: var(--cursor-interaction, pointer);
+}
+
+.form-control-color[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.form-control-color[type="color"]::-webkit-color-swatch {
+  border: 0;
+  border-radius: calc(var(--radius-lg) - 4px);
+  corner-shape: superellipse(1.5);
+}
+
+textarea.form-control {
+  height: auto;
+  min-height: 72px;
+  padding: 8px 10px;
+  resize: vertical;
+}
+
+.form-control:focus-visible {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-control:disabled,
+.form-select:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.form-select {
+  appearance: none;
+  display: block;
+  width: 100%;
+  min-height: 28px;
+  margin: 0;
+  padding: 0 32px 0 8px;
+  outline: none;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-lg);
+  corner-shape: superellipse(1.5);
+  color: var(--foreground);
+  background-color: var(--secondary);
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--muted-foreground) 50%),
+    linear-gradient(135deg, var(--muted-foreground) 50%, transparent 50%);
+  background-position:
+    calc(100% - 14px) 50%,
+    calc(100% - 10px) 50%;
+  background-repeat: no-repeat;
+  background-size: 4px 4px;
+  cursor: var(--cursor-interaction, default);
+}
+
+.form-select:not(:disabled):hover {
+  background-color: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.form-select:focus-visible {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-check {
+  display: flex;
+  min-height: 20px;
+  align-items: center;
+  gap: 6px;
+}
+
+.form-check-input {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  margin: 0;
+  border: 1px solid var(--input);
+  color: var(--primary-foreground);
+  background-color: transparent;
+  cursor: var(--cursor-interaction, default);
+  transition:
+    background-color 150ms,
+    border-color 150ms,
+    box-shadow 150ms;
+}
+
+.form-check:not(.form-switch) .form-check-input[type="checkbox"] {
+  border-color: var(--input);
+  border-radius: var(--radius-sm);
+  corner-shape: superellipse(1.5);
+  background-color: var(--secondary);
+  box-shadow: var(--shadow-sm);
+}
+
+.form-check:not(.form-switch)
+  .form-check-input:not(:disabled):not(:checked):hover {
+  background-color: var(--card);
+}
+
+.form-check:not(.form-switch) .form-check-input[type="checkbox"]:checked {
+  border-color: var(--primary);
+  background-color: var(--primary);
+}
+
+.form-check:not(.form-switch)
+  .form-check-input[type="checkbox"]:checked::before {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--primary-foreground);
+  content: "";
+  mask: var(--checkmark-image) center / 12px 12px no-repeat;
+}
+
+.form-check-input[type="radio"] {
+  width: 14px;
+  height: 14px;
+  border-radius: var(--radius-full);
+}
+
+.form-check-input[type="radio"]:checked {
+  border: 2px solid var(--primary);
+  background:
+    radial-gradient(circle, var(--primary-foreground) 0 2.5px, transparent 3px),
+    var(--primary);
+}
+
+.form-check:not(.form-switch) .form-check-input:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.form-check:not(.form-switch) .form-check-input:disabled {
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.form-check:not(.form-switch) .form-check-input:disabled + .form-check-label {
+  cursor: not-allowed;
+}
+
+.form-switch .form-check-input:disabled,
+.form-switch .form-check-input:disabled + .form-check-label {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.form-check-label {
+  color: var(--foreground);
+  cursor: var(--cursor-interaction, default);
+}
+
+.form-switch .form-check-input {
+  position: relative;
+  width: 32px;
+  height: 20px;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--muted);
+  box-shadow: none;
+  transition: background-color 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.form-switch .form-check-input::before {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 16px;
+  height: 16px;
+  box-sizing: border-box;
+  border: 1px solid light-dark(var(--primary-foreground), var(--foreground));
+  border-radius: var(--radius-full);
+  background: light-dark(var(--primary-foreground), var(--foreground));
+  box-shadow: var(--shadow-sm);
+  content: "";
+  transform: translate(2px, -50%);
+  transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.form-switch .form-check-input:checked {
+  background: var(--primary);
+}
+
+.form-switch .form-check-input:checked::before {
+  transform: translate(14px, -50%);
+}
+
+.form-switch .form-check-input:focus-visible {
+  box-shadow: 0 0 0 2px var(--ring);
+}
+
+.form-range {
+  appearance: none;
+  display: block;
+  width: 100%;
+  height: 28px;
+  flex: 1;
+  margin: 0;
+  padding: 0;
+  outline: none;
+  border: 0;
+  accent-color: var(--primary);
+  background: linear-gradient(
+      color-mix(in srgb, var(--foreground) 7%, transparent),
+      color-mix(in srgb, var(--foreground) 7%, transparent)
+    )
+    center / 100% 2px no-repeat;
+}
+
+.form-range::-webkit-slider-runnable-track {
+  height: 28px;
+  background: transparent;
+}
+
+.form-range::-webkit-slider-thumb {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  margin-top: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: light-dark(var(--primary-foreground), var(--foreground));
+}
+
+.form-range:focus-visible::-webkit-slider-thumb {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-range::-moz-range-track {
+  height: 28px;
+  background: transparent;
+}
+
+.form-range::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: light-dark(var(--primary-foreground), var(--foreground));
+}
+
+.form-range:focus-visible::-moz-range-thumb {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-range:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.btn:not(.btn-primary, .viz-tile):is(
+    [aria-pressed="true"],
+    [aria-selected="true"],
+    .is-selected
+  ) {
+  border-color: var(--primary);
+  color: var(--primary-foreground);
+  background: var(--primary);
+}
+
+.btn.viz-tile:is([aria-pressed="true"], [aria-selected="true"], .is-selected) {
+  border-color: var(--primary);
+  box-shadow: inset 0 0 0 1px var(--primary);
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+#widget > svg {
+  width: 100%;
+}
+
+.text-warning,
+.text-destructive {
+  color: var(--destructive);
+}
+
+html>body{padding:0}</style>
+</head>
+<body>
+<div id="vu-prototype-v3"><div id="vu-prototype-v2">
+  <style>
+    #vu-prototype-v2 { display: grid; gap: 16px; color: var(--foreground); }
+    #vu-prototype-v2 * { box-sizing: border-box; }
+    #vu-prototype-v2 .vu-toolbar, #vu-prototype-v2 .vu-actions, #vu-prototype-v2 .vu-inline { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    #vu-prototype-v2 .vu-toolbar { padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+    #vu-prototype-v2 .vu-spacer { margin-left: auto; }
+    #vu-prototype-v2 .vu-screen { display: none; gap: 16px; }
+    #vu-prototype-v2 .vu-screen.is-active { display: grid; }
+    #vu-prototype-v2 .vu-heading { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; align-items: center; }
+    #vu-prototype-v2 .vu-heading-copy, #vu-prototype-v2 .vu-stack { display: grid; gap: 12px; }
+    #vu-prototype-v2 .vu-heading-copy { gap: 4px; }
+    #vu-prototype-v2 h2, #vu-prototype-v2 h3, #vu-prototype-v2 p { margin: 0; }
+    #vu-prototype-v2 .vu-grid-2 { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(260px, .85fr); gap: 16px; align-items: start; }
+    #vu-prototype-v2 .vu-grid-even { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    #vu-prototype-v2 .vu-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    #vu-prototype-v2 .vu-span-2 { grid-column: 1 / -1; }
+    #vu-prototype-v2 .vu-stepper { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+    #vu-prototype-v2 .vu-step { padding: 8px; border-bottom: 3px solid var(--border); color: var(--muted-foreground); text-align: center; }
+    #vu-prototype-v2 .vu-step.is-current { border-color: var(--primary); color: var(--foreground); font-weight: 500; }
+    #vu-prototype-v2 .vu-table-wrap { overflow-x: auto; }
+    #vu-prototype-v2 table { width: 100%; border-collapse: collapse; min-width: 820px; }
+    #vu-prototype-v2 th, #vu-prototype-v2 td { padding: 10px 8px; text-align: left; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    #vu-prototype-v2 th { color: var(--muted-foreground); font-weight: 500; }
+    #vu-prototype-v2 .vu-doc { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
+    #vu-prototype-v2 .vu-doc:last-child { border-bottom: 0; }
+    #vu-prototype-v2 .vu-icon { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 8px; background: var(--muted); color: var(--primary); }
+    #vu-prototype-v2 .vu-banner { display: flex; gap: 10px; align-items: flex-start; padding: 12px; border-left: 3px solid var(--viz-series-1); background: var(--muted); }
+    #vu-prototype-v2 .vu-progress { height: 10px; background: var(--muted); overflow: hidden; border-radius: 999px; }
+    #vu-prototype-v2 .vu-progress > span { display: block; height: 100%; width: 50%; background: var(--viz-series-1); transition: width .2s ease; }
+    #vu-prototype-v2 .vu-interviews { display: grid; gap: 6px; }
+    #vu-prototype-v2 .vu-interview { width: 100%; display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; padding: 10px; border: 0; border-radius: 8px; background: transparent; color: var(--foreground); text-align: left; cursor: pointer; }
+    #vu-prototype-v2 .vu-interview:hover, #vu-prototype-v2 .vu-interview.is-selected { background: var(--muted); }
+    #vu-prototype-v2 .vu-dot { width: 10px; height: 10px; border-radius: 999px; background: var(--border); }
+    #vu-prototype-v2 .vu-dot.is-done { background: var(--viz-series-2); }
+    #vu-prototype-v2 .vu-dot.is-current { background: var(--viz-series-1); }
+    #vu-prototype-v2 .vu-response { display: grid; gap: 10px; padding: 14px 0; border-bottom: 1px solid var(--border); }
+    #vu-prototype-v2 .vu-response:last-child { border-bottom: 0; }
+    #vu-prototype-v2 .vu-score-grid { display: grid; grid-template-columns: 150px 1fr 76px; gap: 12px; align-items: center; }
+    #vu-prototype-v2 .vu-score-value { text-align: right; font-weight: 500; }
+    #vu-prototype-v2 .vu-summary-line { display: flex; justify-content: space-between; gap: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+    #vu-prototype-v2 .vu-actions { justify-content: flex-end; }
+    #vu-prototype-v2 .vu-toast { display: none; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 8px; background: var(--muted); }
+    #vu-prototype-v2 .vu-toast.is-visible { display: flex; }
+    #vu-prototype-v2 .vu-hidden { display: none; }
+    #vu-prototype-v2 .vu-dialog { width: min(620px, calc(100% - 32px)); max-height: calc(100% - 48px); padding: 0; color: var(--popover-foreground); background: var(--popover); border: 1px solid var(--border); border-radius: 12px; }
+    #vu-prototype-v2 .vu-dialog::backdrop { background: color-mix(in srgb, var(--foreground) 35%, transparent); }
+    #vu-prototype-v2 .vu-dialog-content { display: grid; gap: 14px; padding: 18px; }
+    #vu-prototype-v2 .vu-dialog-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+    #vu-prototype-v2 .vu-dialog-close { flex: 0 0 auto; }
+    @media (max-width: 640px) {
+      #vu-prototype-v2 .vu-grid-2, #vu-prototype-v2 .vu-grid-even, #vu-prototype-v2 .vu-fields { grid-template-columns: 1fr; }
+      #vu-prototype-v2 .vu-span-2 { grid-column: auto; }
+      #vu-prototype-v2 .vu-stepper { grid-template-columns: 1fr; }
+      #vu-prototype-v2 .vu-step { text-align: left; }
+      #vu-prototype-v2 .vu-score-grid { grid-template-columns: 1fr; }
+      #vu-prototype-v2 .vu-score-value { text-align: left; }
+      #vu-prototype-v2 .vu-spacer { margin-left: 0; }
+    }
+  </style>
+
+  <div class="vu-toolbar" role="navigation" aria-label="Pantallas del prototipo">
+    <button class="btn btn-primary" type="button" data-screen="catalogo" aria-pressed="true"><i data-lucide="layout-grid" aria-hidden="true"></i> Catálogo</button>
+    <button class="btn" type="button" data-screen="programacion" aria-pressed="false"><i data-lucide="calendar-clock" aria-hidden="true"></i> Programación</button>
+    <button class="btn" type="button" data-screen="entrevistas" aria-pressed="false"><i data-lucide="messages-square" aria-hidden="true"></i> Entrevistas</button>
+    <button class="btn" type="button" data-screen="evaluacion" aria-pressed="false"><i data-lucide="gauge" aria-hidden="true"></i> Evaluación</button>
+    <button class="btn" type="button" data-screen="revision" aria-pressed="false"><i data-lucide="clipboard-check" aria-hidden="true"></i> Revisión final</button>
+    <span class="viz-badge vu-spacer" id="vu-status-badge">Borrador · sin notificaciones</span>
+  </div>
+  <div class="vu-toast" id="vu-toast" role="status" aria-live="polite"><i data-lucide="check-circle-2" aria-hidden="true"></i><span id="vu-toast-text"></span></div>
+
+  <section class="vu-screen is-active" data-view="catalogo" aria-label="Catálogo de soluciones">
+    <div class="vu-heading">
+      <div class="vu-heading-copy"><h2>Catálogo de soluciones digitales</h2><p class="text-muted">Consulta la información del desarrollo y prepara la verificación antes de reunirte con los usuarios.</p></div>
+      <button class="btn btn-primary" type="button" data-go="programacion"><i data-lucide="plus" aria-hidden="true"></i> Programar verificación</button>
+    </div>
+    <div class="viz-controls">
+      <label class="form-label">Buscar solución<input class="form-control" type="search" value="Plan de entregas" aria-label="Buscar solución"></label>
+      <label class="form-label">Estado<select class="form-select" aria-label="Filtrar por estado"><option>Todos</option><option>Pendiente</option><option>Programada</option><option>En proceso</option><option>Aprobada</option></select></label>
+    </div>
+    <div class="vu-table-wrap">
+      <table>
+        <thead><tr><th>Solución</th><th>Proceso</th><th>Responsable</th><th>Próxima VU</th><th>Estado</th><th><span class="sr-only">Acciones</span></th></tr></thead>
+        <tbody>
+          <tr><td><strong>Plan de entregas</strong></td><td>Operaciones</td><td>María Torres</td><td>15/08/2026</td><td><span class="viz-badge">Programada</span></td><td><button class="btn btn-ghost" type="button" data-view-detail data-name="Plan de entregas" data-description="Power App para programar, consultar y confirmar entregas." data-process="Operaciones" data-owner="María Torres" data-users="18 usuarios" data-updated="08/07/2026">Ver detalle</button></td></tr>
+          <tr><td>Programa de producción semanal</td><td>Producción</td><td>Carlos Ramos</td><td>23/12/2026</td><td><span class="viz-badge">Vigente</span></td><td><button class="btn btn-ghost" type="button" data-view-detail data-name="Programa de producción semanal" data-description="Solución para organizar y comunicar el programa semanal de fabricación." data-process="Producción" data-owner="Carlos Ramos" data-users="12 usuarios" data-updated="02/07/2026">Ver detalle</button></td></tr>
+          <tr><td>Planes de trabajo</td><td>Comercial</td><td>Andrea León</td><td>06/02/2027</td><td><span class="viz-badge">Vigente</span></td><td><button class="btn btn-ghost" type="button" data-view-detail data-name="Planes de trabajo" data-description="Aplicación para registrar y dar seguimiento a los planes de trabajo comercial." data-process="Comercial" data-owner="Andrea León" data-users="24 usuarios" data-updated="18/06/2026">Ver detalle</button></td></tr>
+          <tr><td>Seguimiento de exportaciones</td><td>Comercio exterior</td><td>Rosa Vega</td><td>—</td><td><span class="viz-badge">Pendiente</span></td><td><button class="btn btn-ghost" type="button" data-view-detail data-name="Seguimiento de exportaciones" data-description="Aplicación para controlar hitos y documentos de las exportaciones." data-process="Comercio exterior" data-owner="Rosa Vega" data-users="9 usuarios" data-updated="30/06/2026">Ver detalle</button></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <dialog class="vu-dialog" id="vu-solution-dialog" aria-labelledby="vu-detail-name">
+      <div class="vu-dialog-content">
+        <div class="vu-dialog-head">
+          <div><h3 id="vu-detail-name">Detalle de la solución</h3><p class="text-small text-muted" id="vu-detail-description"></p></div>
+          <button class="btn btn-ghost vu-dialog-close" type="button" id="vu-close-detail"><i data-lucide="x" aria-hidden="true"></i> Cerrar</button>
+        </div>
+        <div class="vu-summary-line"><span>Área propietaria</span><strong id="vu-detail-process"></strong></div>
+        <div class="vu-summary-line"><span>Responsable</span><strong id="vu-detail-owner"></strong></div>
+        <div class="vu-summary-line"><span>Usuarios objetivo</span><strong id="vu-detail-users"></strong></div>
+        <div class="vu-summary-line"><span>Actualización</span><strong id="vu-detail-updated"></strong></div>
+        <div>
+          <div class="vu-doc"><span class="vu-icon"><i data-lucide="book-open" aria-hidden="true"></i></span><span><strong>Manual de usuario</strong><br><small class="text-muted">PDF · versión vigente</small></span><button class="btn btn-ghost" type="button" data-doc="Manual de usuario">Abrir</button></div>
+          <div class="vu-doc"><span class="vu-icon"><i data-lucide="list-checks" aria-hidden="true"></i></span><span><strong>Instructivo operativo</strong><br><small class="text-muted">PDF · pasos del proceso</small></span><button class="btn btn-ghost" type="button" data-doc="Instructivo operativo">Abrir</button></div>
+          <div class="vu-doc"><span class="vu-icon"><i data-lucide="play-circle" aria-hidden="true"></i></span><span><strong>Video demostrativo</strong><br><small class="text-muted">Teams · capacitación</small></span><button class="btn btn-ghost" type="button" data-doc="Video demostrativo">Abrir</button></div>
+          <div class="vu-doc"><span class="vu-icon"><i data-lucide="folder-open" aria-hidden="true"></i></span><span><strong>Documentación funcional</strong><br><small class="text-muted">Carpeta SharePoint</small></span><button class="btn btn-ghost" type="button" data-doc="Documentación funcional">Abrir</button></div>
+        </div>
+        <div class="vu-actions"><button class="btn" type="button" id="vu-close-detail-secondary">Volver al catálogo</button><button class="btn btn-primary" type="button" data-go="programacion" data-use-solution>Programar esta solución</button></div>
+      </div>
+    </dialog>
+  </section>
+
+  <section class="vu-screen" data-view="programacion" aria-label="Programación de verificación">
+    <div class="vu-stepper"><div class="vu-step is-current">1. Programación</div><div class="vu-step">2. Entrevistas</div><div class="vu-step">3. Evaluación</div><div class="vu-step">4. Consolidación</div><div class="vu-step">5. Aprobación</div></div>
+    <div class="vu-heading"><div class="vu-heading-copy"><h2>Programar verificación</h2><p class="text-muted">Define el periodo y recibe un aviso antes de coordinar las sesiones.</p></div><span class="viz-badge" id="vu-schedule-state">Borrador</span></div>
+    <div class="vu-grid-2">
+      <div class="card vu-stack">
+        <div class="vu-fields">
+          <label class="form-label">Solución digital<select class="form-select"><option>Plan de entregas</option><option>Programa de producción semanal</option><option>Planes de trabajo</option></select></label>
+          <label class="form-label">Responsable de la verificación<input class="form-control" value="Alexandra Durand"></label>
+          <label class="form-label">Fecha objetivo<input class="form-control" type="date" value="2026-08-15"></label>
+          <label class="form-label">Avisar con anticipación<select class="form-select"><option>15 días antes</option><option>7 días antes</option><option>30 días antes</option></select></label>
+          <label class="form-label">Entrevistas previstas<input class="form-control" id="vu-target-count" type="number" min="1" max="20" value="4"></label>
+          <label class="form-label">Modalidad preferida<select class="form-select"><option>Teams</option><option>Presencial</option><option>Mixta</option></select></label>
+          <label class="form-label vu-span-2">Objetivo<textarea class="form-control" rows="3">Validar frecuencia, cobertura, sustitución del proceso anterior y satisfacción de los usuarios.</textarea></label>
+        </div>
+        <div class="vu-actions"><button class="btn" type="button" data-save-partial>Guardar borrador</button><button class="btn btn-primary" type="button" id="vu-schedule"><i data-lucide="bell-ring" aria-hidden="true"></i> Programar y activar alerta</button></div>
+      </div>
+      <aside class="vu-stack">
+        <div class="vu-banner"><i data-lucide="bell" aria-hidden="true"></i><div><strong>Alerta prevista: 31/07/2026</strong><p class="text-small text-muted">Se avisará a la responsable para que empiece a coordinar las entrevistas. No se notificará a la aprobadora todavía.</p></div></div>
+        <div class="card vu-stack">
+          <h3>Material para prepararte</h3>
+          <p class="text-small text-muted">Documentos vinculados desde el catálogo de la solución.</p>
+          <div class="vu-inline"><span class="viz-badge">4 documentos</span><span class="viz-badge">1 video</span><span class="viz-badge">Carpeta de evidencias</span></div>
+          <button class="btn" type="button" data-go="catalogo">Volver al catálogo</button>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="vu-screen" data-view="entrevistas" aria-label="Entrevistas">
+    <div class="vu-stepper"><div class="vu-step">1. Programación</div><div class="vu-step is-current">2. Entrevistas</div><div class="vu-step">3. Evaluación</div><div class="vu-step">4. Consolidación</div><div class="vu-step">5. Aprobación</div></div>
+    <div class="vu-heading"><div class="vu-heading-copy"><h2>Entrevistas · Plan de entregas</h2><p class="text-muted">Registra varias respuestas por usuario y guarda cada avance sin notificar.</p></div><span class="viz-badge"><strong id="vu-completed-count">2</strong> de 4 completadas</span></div>
+    <div class="vu-grid-2">
+      <aside class="card vu-stack">
+        <div><div class="vu-progress"><span id="vu-progress-bar"></span></div><p class="text-small text-muted" id="vu-progress-text">50% del levantamiento completado</p></div>
+        <div class="vu-interviews">
+          <button class="vu-interview" type="button"><span class="vu-dot is-done"></span><span><strong>María Torres</strong><br><small class="text-muted">Operaciones · 10/08</small></span><span class="viz-badge">Completa</span></button>
+          <button class="vu-interview" type="button"><span class="vu-dot is-done"></span><span><strong>Jorge Salas</strong><br><small class="text-muted">Despacho · 11/08</small></span><span class="viz-badge">Completa</span></button>
+          <button class="vu-interview is-selected" type="button"><span class="vu-dot is-current" id="vu-current-dot"></span><span><strong>Lucía Campos</strong><br><small class="text-muted">Logística · hoy</small></span><span class="viz-badge" id="vu-current-state">En curso</span></button>
+          <button class="vu-interview" type="button"><span class="vu-dot"></span><span><strong>Pedro Núñez</strong><br><small class="text-muted">Almacén · pendiente</small></span><span class="viz-badge">Pendiente</span></button>
+        </div>
+        <button class="btn" type="button"><i data-lucide="user-plus" aria-hidden="true"></i> Agregar entrevista</button>
+      </aside>
+      <div class="card vu-stack">
+        <div class="vu-heading"><div><h3>Entrevista 3 · Lucía Campos</h3><p class="text-small text-muted">Teams · 12/08/2026, 10:00 a. m.</p></div><span class="viz-badge">Guardado automático</span></div>
+        <div class="vu-grid-even">
+          <label class="form-label">Grabación de la entrevista<input class="form-control" type="url" value="https://biomont.sharepoint.com/grabacion-entrevista-3"></label>
+          <label class="form-label">Evidencias generales<input class="form-control" type="file" multiple></label>
+        </div>
+        <div class="vu-response">
+          <div class="vu-inline"><span class="viz-badge">Pregunta definida</span><span class="viz-badge">Frecuencia</span></div>
+          <strong>¿Con qué frecuencia utiliza la solución?</strong>
+          <div class="vu-grid-even"><label class="form-label">Respuesta<select class="form-select"><option>Diariamente</option><option>Varias veces por semana</option><option>Semanalmente</option><option>Ocasionalmente</option><option>No la utiliza</option></select></label><label class="form-label">Puntaje sugerido<input class="form-control" type="number" min="1" max="10" value="9"></label></div>
+          <label class="form-label">Sustento<textarea class="form-control" rows="2">Consulta y actualiza el plan al inicio y al cierre de cada jornada.</textarea></label>
+        </div>
+        <div id="vu-extra-questions">
+          <div class="vu-response" data-extra-question>
+            <div class="vu-inline"><span class="viz-badge">Pregunta surgida en reunión</span><span class="viz-badge">Impacta: Cobertura</span></div>
+            <label class="form-label">Pregunta<input class="form-control" value="¿Qué ocurre cuando el responsable habitual no está disponible?"></label>
+            <label class="form-label">Respuesta<textarea class="form-control" rows="2">Solo dos personas conocen el flujo completo; el reemplazo consulta una hoja auxiliar.</textarea></label>
+            <div class="vu-grid-even"><label class="form-label">Criterio impactado<select class="form-select"><option>Frecuencia</option><option selected>Cobertura</option><option>Sustitución</option><option>Satisfacción</option></select></label><label class="form-label">Puntaje aportado (opcional)<input class="form-control" type="number" min="1" max="10" value="5"></label></div>
+            <label class="form-label">Sustento del puntaje<textarea class="form-control" rows="2">La cobertura depende de conocimiento concentrado y aún existe un apoyo fuera de la aplicación.</textarea></label>
+            <label class="form-check"><input class="form-check-input" type="checkbox" checked><span class="form-check-label">Vincular una captura específica a esta respuesta</span></label>
+          </div>
+        </div>
+        <button class="btn" type="button" id="vu-add-question"><i data-lucide="message-circle-plus" aria-hidden="true"></i> Agregar pregunta surgida en la reunión</button>
+        <div class="vu-grid-even">
+          <label class="form-label">Oportunidades de mejora<textarea class="form-control" rows="3">Incluir una guía rápida para usuarios reemplazantes y eliminar la hoja auxiliar.</textarea></label>
+          <label class="form-label">Recomendaciones de la entrevista<textarea class="form-control" rows="3">Capacitar a dos usuarios adicionales y revisar permisos por rol.</textarea></label>
+        </div>
+        <div class="vu-actions"><button class="btn" type="button" data-save-partial>Guardar avance sin notificar</button><button class="btn btn-primary" type="button" id="vu-complete-interview"><i data-lucide="check" aria-hidden="true"></i> Completar entrevista</button></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="vu-screen" data-view="evaluacion" aria-label="Evaluación">
+    <div class="vu-stepper"><div class="vu-step">1. Programación</div><div class="vu-step">2. Entrevistas</div><div class="vu-step is-current">3. Evaluación</div><div class="vu-step">4. Consolidación</div><div class="vu-step">5. Aprobación</div></div>
+    <div class="vu-heading"><div class="vu-heading-copy"><h2>Evaluación sugerida</h2><p class="text-muted">Los puntajes consideran preguntas definidas y preguntas surgidas en todas las entrevistas.</p></div><span class="viz-badge">Índice preliminar: <strong id="vu-index">74%</strong></span></div>
+    <div class="card vu-stack">
+      <div class="vu-score-grid"><label for="vu-frecuencia">Frecuencia · 30%</label><input id="vu-frecuencia" class="form-range vu-range" data-weight="30" type="range" min="1" max="10" value="8"><span class="vu-score-value">8 / 10</span></div>
+      <div class="vu-score-grid"><label for="vu-cobertura">Cobertura · 25%</label><input id="vu-cobertura" class="form-range vu-range" data-weight="25" type="range" min="1" max="10" value="6"><span class="vu-score-value">6 / 10</span></div>
+      <div class="vu-score-grid"><label for="vu-sustitucion">Sustitución · 30%</label><input id="vu-sustitucion" class="form-range vu-range" data-weight="30" type="range" min="1" max="10" value="7"><span class="vu-score-value">7 / 10</span></div>
+      <div class="vu-score-grid"><label for="vu-satisfaccion">Satisfacción · 15%</label><input id="vu-satisfaccion" class="form-range vu-range" data-weight="15" type="range" min="1" max="10" value="8"><span class="vu-score-value">8 / 10</span></div>
+      <div class="vu-banner"><i data-lucide="sparkles" aria-hidden="true"></i><div><strong>Sugerencia calculada</strong><p class="text-small text-muted">Cobertura baja por conocimiento concentrado y uso de una hoja auxiliar. Puedes ajustar el puntaje dejando sustento.</p></div></div>
+      <label class="form-label">Sustento global<textarea class="form-control" rows="4">La solución se usa con frecuencia y tiene buena aceptación. La cobertura y sustitución aún son parciales por dependencia de pocos usuarios y un apoyo manual.</textarea></label>
+      <div class="vu-actions"><button class="btn" type="button" data-save-partial>Guardar evaluación en borrador</button><button class="btn btn-primary" type="button" data-go="revision">Ver consolidado</button></div>
+    </div>
+  </section>
+
+  <section class="vu-screen" data-view="revision" aria-label="Revisión final">
+    <div class="vu-stepper"><div class="vu-step">1. Programación</div><div class="vu-step">2. Entrevistas</div><div class="vu-step">3. Evaluación</div><div class="vu-step is-current">4. Consolidación</div><div class="vu-step">5. Aprobación</div></div>
+    <div class="vu-heading"><div class="vu-heading-copy"><h2>Revisión final</h2><p class="text-muted">Consolida resultados y envía una sola notificación cuando termine el levantamiento.</p></div><span class="viz-badge" id="vu-review-status">Pendiente · 2 de 4</span></div>
+    <div class="vu-grid-2">
+      <div class="vu-stack">
+        <div class="card vu-stack">
+          <h3>Resumen de resultados</h3>
+          <div class="vu-summary-line"><span>Solución</span><strong>Plan de entregas</strong></div>
+          <div class="vu-summary-line"><span>Entrevistas completadas</span><strong id="vu-review-count">2 de 4</strong></div>
+          <div class="vu-summary-line"><span>Índice de adopción</span><strong id="vu-index-review">74%</strong></div>
+          <div class="vu-summary-line"><span>Resultado</span><strong>Adopción parcial</strong></div>
+          <div class="vu-summary-line"><span>Evidencias</span><strong>3 grabaciones · 7 capturas</strong></div>
+        </div>
+        <div class="card vu-stack">
+          <h3>Oportunidades de mejora consolidadas</h3>
+          <ul><li>Ampliar el conocimiento operativo a usuarios reemplazantes.</li><li>Eliminar la hoja auxiliar usada cuando falta el responsable habitual.</li><li>Revisar permisos y cobertura por rol.</li></ul>
+          <h3>Recomendaciones</h3>
+          <p>Capacitar a dos usuarios adicionales, publicar una guía rápida y programar una revisión de seguimiento en 60 días.</p>
+        </div>
+      </div>
+      <aside class="card vu-stack">
+        <h3>Control del envío</h3>
+        <div class="vu-banner" id="vu-final-warning"><i data-lucide="clock-3" aria-hidden="true"></i><div><strong>El levantamiento aún está incompleto</strong><p class="text-small text-muted">Completa las entrevistas pendientes. Hasta entonces, todo se guarda sin avisar a la aprobadora.</p></div></div>
+        <div><span class="text-muted">Aprobadora del piloto</span><br><strong>Alexandra Durand</strong></div>
+        <div><span class="text-muted">Aprobadora productiva posterior</span><br><strong>Denis Alayo Mergildo</strong></div>
+        <label class="form-check form-switch"><input class="form-check-input" id="vu-notifications" type="checkbox" disabled><span class="form-check-label">Notificar al finalizar</span></label>
+        <button class="btn" type="button" data-save-partial>Guardar borrador sin notificar</button>
+        <button class="btn btn-primary btn-block" id="vu-finalize" type="button" disabled><i data-lucide="send" aria-hidden="true"></i> Finalizar y enviar a revisión</button>
+        <button class="btn btn-ghost" id="vu-demo-complete" type="button">Simular todas las entrevistas completas</button>
+      </aside>
+    </div>
+  </section>
+
+  <script>
+    (() => {
+      const root = document.getElementById('vu-prototype-v3');
+      const tabs = Array.from(root.querySelectorAll('[data-screen]'));
+      const views = Array.from(root.querySelectorAll('[data-view]'));
+      let completed = 2;
+      let toastTimer;
+      const toast = (message) => {
+        root.querySelector('#vu-toast-text').textContent = message;
+        root.querySelector('#vu-toast').classList.add('is-visible');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => root.querySelector('#vu-toast').classList.remove('is-visible'), 3200);
+      };
+      const show = (name) => {
+        views.forEach((view) => view.classList.toggle('is-active', view.dataset.view === name));
+        tabs.forEach((tab) => {
+          const active = tab.dataset.screen === name;
+          tab.setAttribute('aria-pressed', String(active));
+          tab.classList.toggle('btn-primary', active);
+        });
+      };
+      const updateProgress = () => {
+        const percent = Math.round(completed / 4 * 100);
+        root.querySelector('#vu-completed-count').textContent = completed;
+        root.querySelector('#vu-progress-bar').style.width = percent + '%';
+        root.querySelector('#vu-progress-text').textContent = percent + '% del levantamiento completado';
+        root.querySelector('#vu-review-count').textContent = completed + ' de 4';
+        root.querySelector('#vu-review-status').textContent = completed === 4 ? 'Listo para revisión' : 'Pendiente · ' + completed + ' de 4';
+        const ready = completed === 4;
+        root.querySelector('#vu-finalize').disabled = !ready;
+        root.querySelector('#vu-notifications').disabled = !ready;
+        root.querySelector('#vu-notifications').checked = ready;
+        if (ready) root.querySelector('#vu-final-warning').innerHTML = '<i data-lucide="circle-check" aria-hidden="true"></i><div><strong>Levantamiento completo</strong><p class="text-small text-muted">Ya puedes enviar el consolidado. Esta será la primera notificación a la aprobadora.</p></div>';
+        if (window.lucide) window.lucide.createIcons({ nodes: [root] });
+      };
+      tabs.forEach((tab) => tab.addEventListener('click', () => show(tab.dataset.screen)));
+      root.querySelectorAll('[data-go]').forEach((button) => button.addEventListener('click', () => show(button.dataset.go)));
+      const detailDialog = root.querySelector('#vu-solution-dialog');
+      root.querySelectorAll('[data-view-detail]').forEach((button) => button.addEventListener('click', () => {
+        root.querySelector('#vu-detail-name').textContent = button.dataset.name;
+        root.querySelector('#vu-detail-description').textContent = button.dataset.description;
+        root.querySelector('#vu-detail-process').textContent = button.dataset.process;
+        root.querySelector('#vu-detail-owner').textContent = button.dataset.owner;
+        root.querySelector('#vu-detail-users').textContent = button.dataset.users;
+        root.querySelector('#vu-detail-updated').textContent = button.dataset.updated;
+        detailDialog.showModal();
+      }));
+      const closeDetail = () => detailDialog.close();
+      root.querySelector('#vu-close-detail').addEventListener('click', closeDetail);
+      root.querySelector('#vu-close-detail-secondary').addEventListener('click', closeDetail);
+      root.querySelector('[data-use-solution]').addEventListener('click', closeDetail);
+      detailDialog.addEventListener('click', (event) => { if (event.target === detailDialog) closeDetail(); });
+      root.querySelectorAll('[data-save-partial]').forEach((button) => button.addEventListener('click', () => toast('Borrador guardado. No se enviaron notificaciones.')));
+      root.querySelectorAll('[data-doc]').forEach((button) => button.addEventListener('click', () => toast(button.dataset.doc + ': vista previa disponible desde el catálogo.')));
+      root.querySelector('#vu-schedule').addEventListener('click', () => {
+        root.querySelector('#vu-schedule-state').textContent = 'Programada';
+        toast('Verificación programada. La alerta se activará el 31/07/2026.');
+      });
+      root.querySelector('#vu-add-question').addEventListener('click', () => {
+        const item = document.createElement('div');
+        item.className = 'vu-response';
+        item.setAttribute('data-extra-question', '');
+        item.innerHTML = '<div class="vu-inline"><span class="viz-badge">Nueva pregunta</span></div><label class="form-label">Pregunta<input class="form-control" placeholder="Escribe la pregunta que surgió en la reunión"></label><label class="form-label">Respuesta<textarea class="form-control" rows="2" placeholder="Registra la respuesta del entrevistado"></textarea></label><div class="vu-grid-even"><label class="form-label">Criterio impactado<select class="form-select"><option>Frecuencia</option><option>Cobertura</option><option>Sustitución</option><option>Satisfacción</option></select></label><label class="form-label">Puntaje aportado (opcional)<input class="form-control" type="number" min="1" max="10" placeholder="1 a 10"></label></div><label class="form-label">Sustento<textarea class="form-control" rows="2"></textarea></label><label class="form-check"><input class="form-check-input" type="checkbox"><span class="form-check-label">Vincular evidencia específica a esta respuesta</span></label>';
+        root.querySelector('#vu-extra-questions').appendChild(item);
+        item.querySelector('input').focus();
+        toast('Pregunta adicional agregada a esta entrevista.');
+      });
+      root.querySelector('#vu-complete-interview').addEventListener('click', () => {
+        if (completed < 3) completed = 3;
+        root.querySelector('#vu-current-dot').classList.remove('is-current');
+        root.querySelector('#vu-current-dot').classList.add('is-done');
+        root.querySelector('#vu-current-state').textContent = 'Completa';
+        updateProgress();
+        toast('Entrevista completada. El avance quedó guardado sin notificar.');
+      });
+      root.querySelector('#vu-demo-complete').addEventListener('click', () => {
+        completed = 4;
+        updateProgress();
+        toast('Simulación: las 4 entrevistas están completas.');
+      });
+      root.querySelector('#vu-finalize').addEventListener('click', () => {
+        root.querySelector('#vu-status-badge').textContent = 'Enviado a revisión';
+        root.querySelector('#vu-review-status').textContent = 'En revisión';
+        root.querySelector('#vu-finalize').disabled = true;
+        toast('Consolidado enviado a la aprobadora del piloto.');
+      });
+      const updateIndex = () => {
+        const ranges = Array.from(root.querySelectorAll('.vu-range'));
+        const weighted = ranges.reduce((sum, range) => sum + Number(range.value) * Number(range.dataset.weight), 0) / 10;
+        const index = Math.round(weighted) + '%';
+        root.querySelector('#vu-index').textContent = index;
+        root.querySelector('#vu-index-review').textContent = index;
+        ranges.forEach((range) => { range.nextElementSibling.textContent = range.value + ' / 10'; });
+      };
+      root.querySelectorAll('.vu-range').forEach((range) => range.addEventListener('input', updateIndex));
+      updateIndex();
+      updateProgress();
+    })();
+  </script>
+</div></div>
+
+<script src="https://unpkg.com/@floating-ui/core@1.7.3/dist/floating-ui.core.umd.min.js"></script>
+<script src="https://unpkg.com/@floating-ui/dom@1.7.4/dist/floating-ui.dom.umd.min.js"></script>
+<script>
+(() => {
+  if (window.FloatingUIDOM == null) {
+    return;
+  }
+  const { autoUpdate, computePosition, flip, offset, shift, size } =
+    window.FloatingUIDOM;
+  const tooltipPlacements = new Set(["top", "right", "bottom", "left"]);
+  const tooltipId = `codex-visualization-tooltip-${
+    window.crypto?.randomUUID?.() ?? Date.now().toString(36)
+  }`;
+  const tooltipGap = 5;
+  const hoverDelay = 700;
+  const skipDelay = 300;
+  let activeTrigger = null;
+  let pendingTrigger = null;
+  let tooltip = null;
+  let openTimeout = null;
+  let autoUpdateCleanup = null;
+  let positionRequest = 0;
+  let skipDelayUntil = 0;
+
+  const getTrigger = (target) =>
+    target?.nodeType === Node.ELEMENT_NODE
+      ? target.closest("[data-tooltip]")
+      : null;
+  const containsTarget = (trigger, target) =>
+    target?.nodeType != null && trigger.contains(target);
+  const getContent = (trigger) =>
+    trigger.getAttribute("data-tooltip")?.trim() ?? "";
+  const getPlacement = (trigger) => {
+    const placement = trigger.getAttribute("data-tooltip-placement");
+    return tooltipPlacements.has(placement) ? placement : "top";
+  };
+  const getTooltip = () => {
+    if (tooltip == null) {
+      tooltip = document.createElement("div");
+      tooltip.id = tooltipId;
+      tooltip.className = "tooltip";
+      tooltip.setAttribute("role", "tooltip");
+    }
+    return tooltip;
+  };
+  const setDescribedBy = (trigger, described) => {
+    const ids = new Set(
+      (trigger.getAttribute("aria-describedby") ?? "")
+        .split(/\s+/)
+        .filter(Boolean),
+    );
+    if (described) {
+      ids.add(tooltipId);
+    } else {
+      ids.delete(tooltipId);
+    }
+    if (ids.size === 0) {
+      trigger.removeAttribute("aria-describedby");
+    } else {
+      trigger.setAttribute("aria-describedby", [...ids].join(" "));
+    }
+  };
+  const clearOpenTimeout = () => {
+    if (openTimeout != null) {
+      window.clearTimeout(openTimeout);
+      openTimeout = null;
+    }
+    pendingTrigger = null;
+  };
+  const closeTooltip = (activateSkipDelay = true) => {
+    clearOpenTimeout();
+    positionRequest += 1;
+    autoUpdateCleanup?.();
+    autoUpdateCleanup = null;
+    if (activeTrigger == null) {
+      return;
+    }
+    setDescribedBy(activeTrigger, false);
+    activeTrigger = null;
+    tooltip?.remove();
+    if (activateSkipDelay) {
+      skipDelayUntil = Date.now() + skipDelay;
+    }
+  };
+  const updatePosition = (trigger, floating) => {
+    const request = ++positionRequest;
+    void computePosition(trigger, floating, {
+      middleware: [
+        offset(tooltipGap),
+        flip({ padding: tooltipGap }),
+        shift({ padding: tooltipGap }),
+        size({
+          padding: tooltipGap,
+          apply({ availableHeight, availableWidth, elements }) {
+            elements.floating.style.setProperty(
+              "--tooltip-available-width",
+              `${Math.max(0, availableWidth)}px`,
+            );
+            elements.floating.style.setProperty(
+              "--tooltip-available-height",
+              `${Math.max(0, availableHeight)}px`,
+            );
+          },
+        }),
+      ],
+      placement: getPlacement(trigger),
+      strategy: "fixed",
+    })
+      .then(({ x, y }) => {
+        if (activeTrigger !== trigger || request !== positionRequest) {
+          return;
+        }
+        const scale = window.devicePixelRatio || 1;
+        floating.style.transform = `translate(${Math.round(x * scale) / scale}px, ${Math.round(y * scale) / scale}px)`;
+        floating.style.visibility = "visible";
+      })
+      .catch(() => {
+        if (activeTrigger === trigger && request === positionRequest) {
+          closeTooltip(false);
+        }
+      });
+  };
+  const openTooltip = (trigger) => {
+    const content = getContent(trigger);
+    if (!trigger.isConnected || content.length === 0) {
+      return;
+    }
+    clearOpenTimeout();
+    if (activeTrigger === trigger) {
+      return;
+    }
+    closeTooltip();
+    const floating = getTooltip();
+    floating.textContent = content;
+    floating.style.visibility = "hidden";
+    floating.style.transform = "translate(0, 0)";
+    document.body.appendChild(floating);
+    activeTrigger = trigger;
+    setDescribedBy(trigger, true);
+    autoUpdateCleanup = autoUpdate(trigger, floating, () => {
+      updatePosition(trigger, floating);
+    });
+  };
+  const requestOpen = (trigger, immediate = false) => {
+    if (
+      getContent(trigger).length === 0 ||
+      activeTrigger === trigger ||
+      pendingTrigger === trigger
+    ) {
+      return;
+    }
+    clearOpenTimeout();
+    pendingTrigger = trigger;
+    const delay =
+      immediate || activeTrigger != null || Date.now() < skipDelayUntil
+        ? 0
+        : hoverDelay;
+    if (delay === 0) {
+      openTooltip(trigger);
+      return;
+    }
+    openTimeout = window.setTimeout(() => {
+      openTimeout = null;
+      pendingTrigger = null;
+      openTooltip(trigger);
+    }, delay);
+  };
+  const handlePointerOpen = (event) => {
+    if (event.pointerType === "touch") {
+      return;
+    }
+    const trigger = getTrigger(event.target);
+    if (trigger == null || containsTarget(trigger, event.relatedTarget)) {
+      return;
+    }
+    requestOpen(trigger);
+  };
+  const handleLeave = (event) => {
+    const trigger = getTrigger(event.target);
+    if (trigger == null || containsTarget(trigger, event.relatedTarget)) {
+      return;
+    }
+    if (activeTrigger === trigger || pendingTrigger === trigger) {
+      closeTooltip();
+    }
+  };
+  const handleFocusIn = (event) => {
+    const trigger = getTrigger(event.target);
+    if (trigger?.matches(":focus-visible")) {
+      requestOpen(trigger, true);
+    }
+  };
+  const handleKeyDown = (event) => {
+    if (event.key === "Escape") {
+      closeTooltip();
+    }
+  };
+  const handleContextMenu = (event) => {
+    const trigger = getTrigger(event.target);
+    if (activeTrigger === trigger || pendingTrigger === trigger) {
+      closeTooltip();
+    }
+  };
+  const destroy = () => {
+    closeTooltip(false);
+    document.removeEventListener("pointerover", handlePointerOpen);
+    document.removeEventListener("pointerout", handleLeave);
+    document.removeEventListener("focusin", handleFocusIn);
+    document.removeEventListener("focusout", handleLeave);
+    document.removeEventListener("keydown", handleKeyDown);
+    document.removeEventListener("contextmenu", handleContextMenu);
+    tooltip = null;
+  };
+
+  document.addEventListener("pointerover", handlePointerOpen);
+  document.addEventListener("pointerout", handleLeave);
+  document.addEventListener("focusin", handleFocusIn);
+  document.addEventListener("focusout", handleLeave);
+  document.addEventListener("keydown", handleKeyDown);
+  document.addEventListener("contextmenu", handleContextMenu);
+  window.addEventListener("pagehide", destroy, { once: true });
+})();
+</script>
+<script id="codex-visualization-lucide" async src="https://unpkg.com/lucide@1.17.0/dist/umd/lucide.js"></script>
+<script>
+(() => {
+  const initialize = () => {
+    globalThis.lucide?.createIcons({ attrs: { width: 16, height: 16 } });
+  };
+  if (globalThis.lucide != null) {
+    initialize();
+    return;
+  }
+  document
+    .getElementById("codex-visualization-lucide")
+    ?.addEventListener("load", initialize, { once: true });
+})();
+</script>
+
+</body>
+</html>
