@@ -268,6 +268,8 @@ export function crearRepositoriosMock(opciones: OpcionesMock = {}): Repositorios
           (p) => !t || p.nombre.toLocaleLowerCase('es').includes(t) || p.email.toLocaleLowerCase().includes(t),
         );
       }),
+      // El directorio de ejemplo no tiene roles: todas las personas pueden ser responsables.
+      listarResponsables: op(() => personas.map((p) => ({ ...p }))),
     },
   };
 }

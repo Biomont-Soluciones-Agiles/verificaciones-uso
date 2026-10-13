@@ -38,11 +38,15 @@ export function useOpciones() {
   });
 }
 
-export function usePersonas() {
+/** `directorio`: todos los usuarios habilitados; `responsables`: solo los del rol "VU Responsable". */
+export type OrigenPersonas = 'directorio' | 'responsables';
+
+export function usePersonas(origen: OrigenPersonas = 'directorio') {
   const repos = useRepositorios();
   return useQuery({
-    queryKey: claves.personas,
-    queryFn: () => repos.directorio.buscarPersonas(''),
+    queryKey: origen === 'responsables' ? claves.responsables : claves.personas,
+    queryFn: () =>
+      origen === 'responsables' ? repos.directorio.listarResponsables() : repos.directorio.buscarPersonas(''),
     staleTime: CATALOGO_STALE,
     retry: false,
   });

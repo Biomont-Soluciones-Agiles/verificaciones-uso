@@ -170,6 +170,9 @@ function tabla<T>(
 /** Tamaño máximo de `vu_evidencia.vu_archivo` (32 768 KB). */
 export const TAMANO_MAXIMO_EVIDENCIA = 32 * 1024 * 1024;
 
+/** Rol de seguridad de quienes pueden ser responsables de una verificación (§3.6). */
+const ROL_RESPONSABLE = 'VU Responsable';
+
 function crearDirectorioPersonas() {
   const cache = new Map<Id, Persona>();
 
@@ -234,16 +237,31 @@ function crearDirectorioPersonas() {
     return { id: null, email, nombre: user.fullName || email };
   };
 
+  // Usuarios humanos habilitados (accessmode 0 = lectura y escritura; excluye aplicaciones).
+  const USUARIOS_HABILITADOS = 'isdisabled eq false and accessmode eq 0 and internalemailaddress ne null';
+
   const buscar = async (textoBuscado: string): Promise<Persona[]> => {
     const t = textoBuscado.trim().replace(/'/g, "''");
-    // Usuarios humanos habilitados (accessmode 0 = lectura y escritura; excluye aplicaciones).
-    const base = 'isdisabled eq false and accessmode eq 0 and internalemailaddress ne null';
-    const filtro = t ? `${base} and (contains(fullname,'${t}') or contains(internalemailaddress,'${t}'))` : base;
+    const filtro = t
+      ? `${USUARIOS_HABILITADOS} and (contains(fullname,'${t}') or contains(internalemailaddress,'${t}'))`
+      : USUARIOS_HABILITADOS;
     // Sin texto: el selector carga el directorio una vez y filtra en el cliente.
     return consultarUsuarios(filtro, t ? 25 : 500);
   };
 
-  return { completar, resolverId, conId, usuarioActual, buscar };
+  /**
+   * Por nombre de rol: hay una copia del rol por unidad de negocio. Incluye el rol heredado de
+   * un equipo (`teamroles_association`), que es como se suele asignar en producción.
+   */
+  const responsables = async (): Promise<Persona[]> => {
+    const rol = `r:r/name eq ${literal(ROL_RESPONSABLE)}`;
+    const filtro =
+      `${USUARIOS_HABILITADOS} and (systemuserroles_association/any(${rol})` +
+      ` or teammembership_association/any(t:t/teamroles_association/any(${rol})))`;
+    return consultarUsuarios(filtro, 500);
+  };
+
+  return { completar, resolverId, conId, usuarioActual, buscar, responsables };
 }
 
 // ---------------------------------------------------------------------------
@@ -474,6 +492,7 @@ export function crearRepositoriosDataverse(): Repositorios {
     directorio: {
       usuarioActual: () => personas.usuarioActual(),
       buscarPersonas: (texto) => personas.buscar(texto),
+      listarResponsables: () => personas.responsables(),
     },
   };
 }

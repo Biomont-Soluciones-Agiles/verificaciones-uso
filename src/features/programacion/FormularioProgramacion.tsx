@@ -179,6 +179,7 @@ export function FormularioProgramacion({ verificacion, soluciones, inicial }: Fo
                 valor={valores.responsable}
                 onChange={(p) => cambiar('responsable', p)}
                 deshabilitado={!editable}
+                origen="responsables"
               />
             </Field>
             <Field label="Fecha objetivo" required>

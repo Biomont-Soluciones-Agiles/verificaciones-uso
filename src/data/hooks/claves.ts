@@ -19,6 +19,7 @@ export const claves = {
   opciones: ['catalogo', 'opciones'] as const,
   usuarioActual: ['directorio', 'usuario-actual'] as const,
   personas: ['directorio', 'personas'] as const,
+  responsables: ['directorio', 'responsables'] as const,
 };
 
 /** Clave de mutación compartida por el autoguardado (indicador "Guardando…"). */

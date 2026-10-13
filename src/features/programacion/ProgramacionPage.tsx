@@ -2,7 +2,7 @@ import { useSearchParams } from 'react-router-dom';
 import { Stepper } from '../../app/Stepper';
 import { useVerificacionDeRuta } from '../../app/useVerificacionDeRuta';
 import { Cargando, ErrorCarga, Pila } from '../../components/Estructura';
-import { useUsuarioActual } from '../../data/hooks/useCatalogo';
+import { usePersonas, useUsuarioActual } from '../../data/hooks/useCatalogo';
 import { useSoluciones } from '../../data/hooks/useSoluciones';
 import { useVerificaciones } from '../../data/hooks/useVerificaciones';
 import { idDeTexto } from '../../domain/codigo';
@@ -64,10 +64,15 @@ export function NuevaProgramacionPage() {
   const soluciones = useSoluciones();
   const verificaciones = useVerificaciones();
   const usuario = useUsuarioActual();
+  const responsables = usePersonas('responsables');
 
   const error = soluciones.error ?? verificaciones.error;
   if (error) return <ErrorCarga error={error} />;
-  if (!soluciones.data || !verificaciones.data || usuario.isPending) return <Cargando />;
+  if (!soluciones.data || !verificaciones.data || usuario.isPending || responsables.isPending) return <Cargando />;
+  // Por defecto, quien programa, pero solo si tiene el rol "VU Responsable".
+  const responsableInicial =
+    responsables.data?.find((p) => (usuario.data?.id && p.id === usuario.data.id) || p.email === usuario.data?.email) ??
+    null;
   const listaSoluciones = soluciones.data;
 
   const solicitada = idDeTexto(params.get('solucion'));
@@ -83,7 +88,7 @@ export function NuevaProgramacionPage() {
       <FormularioProgramacion
         key={solucionId ?? 'nueva'}
         soluciones={listaSoluciones}
-        inicial={valoresIniciales(listaSoluciones, solucionId, usuario.data ?? null)}
+        inicial={valoresIniciales(listaSoluciones, solucionId, responsableInicial)}
       />
     </Pila>
   );

@@ -118,6 +118,8 @@ export interface AprobacionesRepo {
 export interface DirectorioRepo {
   usuarioActual(): Promise<Persona>;
   buscarPersonas(texto: string): Promise<Persona[]>;
+  /** Usuarios con el rol "VU Responsable" (asignado directamente o por equipo). */
+  listarResponsables(): Promise<Persona[]>;
 }
 
 export interface Repositorios {
