@@ -34,6 +34,7 @@ import {
   TIPOS_SOLUCION,
   type Area,
   type Documento,
+  type Id,
   type Persona,
   type Solucion,
   type TipoDocumento,
@@ -144,7 +145,7 @@ function FormularioSolucion({
       titulo: '',
       descripcion: '',
       tipoSolucion: 'Power App',
-      procesoId: procesos[0]?.id ?? 0,
+      procesoId: procesos[0]?.id ?? '',
       procesoNombre: procesos[0]?.titulo ?? '',
       responsable: null,
       usuariosObjetivo: null,
@@ -155,7 +156,7 @@ function FormularioSolucion({
       ultimaVerificacionId: null,
     },
   );
-  const valido = datos.titulo.trim() !== '' && datos.procesoId > 0 && datos.responsable !== null && datos.periodicidadMeses > 0;
+  const valido = datos.titulo.trim() !== '' && datos.procesoId !== '' && datos.responsable !== null && datos.periodicidadMeses > 0;
 
   const enviar = async () => {
     if (!datos.responsable) return;
@@ -188,7 +189,7 @@ function FormularioSolucion({
           </Select>
         </Field>
         <Field label="Proceso" required>
-          <Select value={String(datos.procesoId)} onChange={(_, d) => setDatos({ ...datos, procesoId: Number(d.value) })}>
+          <Select value={String(datos.procesoId)} onChange={(_, d) => setDatos({ ...datos, procesoId: d.value })}>
             {procesos.map((a) => (
               <option key={a.id} value={a.id}>
                 {a.titulo}
@@ -237,7 +238,7 @@ function FormularioSolucion({
   );
 }
 
-const DOCUMENTO_VACIO = (solucionId: number): Omit<Documento, 'id'> => ({
+const DOCUMENTO_VACIO = (solucionId: Id): Omit<Documento, 'id'> => ({
   titulo: '',
   solucionId,
   tipo: 'Manual',
@@ -247,7 +248,7 @@ const DOCUMENTO_VACIO = (solucionId: number): Omit<Documento, 'id'> => ({
   vigente: true,
 });
 
-function DocumentosSolucion({ solucionId }: { solucionId: number }) {
+function DocumentosSolucion({ solucionId }: { solucionId: Id }) {
   const avisos = useAvisos();
   const { data: documentos = [] } = useDocumentos(solucionId);
   const guardar = useGuardarDocumento();

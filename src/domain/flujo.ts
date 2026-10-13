@@ -6,6 +6,7 @@ import {
   type EstadoVerificacion,
   type EstadoVU,
   type FechaISO,
+  type Id,
   type Pregunta,
   type PuntajeCriterio,
   type Respuesta,
@@ -108,7 +109,7 @@ export function validarEnvio(
 // ---------------------------------------------------------------------------
 
 export interface DatosProgramacionValidables {
-  solucionId: number | null;
+  solucionId: Id | null;
   responsable: { email: string } | null;
   fechaObjetivo: string;
   diasAnticipacion: number;

@@ -27,13 +27,13 @@ export function useVerificaciones() {
   return useQuery({ queryKey: claves.verificaciones, queryFn: () => repos.verificaciones.listar() });
 }
 
-/** Lee la verificación reparando, si faltan, el código y los puntajes (§3.4, idempotente). */
+/** Lee la verificación reparando, si faltan, los puntajes por criterio (§3.4, idempotente). */
 export function useVerificacion(id: Id | null) {
   const repos = useRepositorios();
   return useQuery({
-    queryKey: claves.verificacion(id ?? 0),
-    queryFn: () => abrirVerificacion(repos, id ?? 0),
-    enabled: id !== null && id > 0,
+    queryKey: claves.verificacion(id ?? ''),
+    queryFn: () => abrirVerificacion(repos, id ?? ''),
+    enabled: !!id,
   });
 }
 

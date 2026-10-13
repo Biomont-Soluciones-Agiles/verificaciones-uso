@@ -1,0 +1,785 @@
+{
+  "name": "vu_verificacion",
+  "title": "Verificaciones de uso",
+  "schema": {
+    "type": "array",
+    "items": {
+      "type": "object",
+      "x-ms-dataverse-entity": true,
+      "x-ms-dataverse-entityset": "vu_verificacions",
+      "x-ms-dataverse-primary-id": "vu_verificacionid",
+      "x-ms-dataverse-primary-name": "vu_name",
+      "properties": {
+        "createdby": {
+          "type": "string",
+          "title": "Autor",
+          "x-ms-dataverse-attribute": "createdby",
+          "x-ms-dataverse-type": "LookupType",
+          "x-ms-schema-name": "CreatedBy",
+          "x-ms-dataverse-navigation-properties": [
+            "createdby"
+          ],
+          "x-ms-read-only": true
+        },
+        "createdbyname": {
+          "type": "string",
+          "title": "createdbyname",
+          "x-ms-dataverse-attribute": "createdbyname",
+          "x-ms-dataverse-type": "StringType",
+          "x-ms-schema-name": "CreatedByName",
+          "x-ms-dataverse-attribute-of": "createdby",
+          "x-ms-read-only": true,
+          "maxLength": 100
+        },
+        "createdbyyominame": {
+          "type": "string",
+          "title": "createdbyyominame",
+          "x-ms-dataverse-attribute": "createdbyyominame",
+          "x-ms-dataverse-type": "StringType",
+          "x-ms-schema-name": "CreatedByYomiName",
+          "x-ms-dataverse-attribute-of": "createdby",
+          "x-ms-read-only": true,
+          "required": true,
+          "maxLength": 100
+        },
+        "createdon": {
+          "type": "string",
+          "title": "Fecha de creación",
+          "x-ms-dataverse-attribute": "createdon",
+          "x-ms-dataverse-type": "DateTimeType",
+          "x-ms-schema-name": "CreatedOn",
+          "x-ms-read-only": true
+        },
+        "createdonbehalfby": {
+          "type": "string",
+          "title": "Autor (delegado)",
+          "x-ms-dataverse-attribute": "createdonbehalfby",
+          "x-ms-dataverse-type": "LookupType",
+          "x-ms-schema-name": "CreatedOnBehalfBy",
+          "x-ms-dataverse-navigation-properties": [
+            "createdonbehalfby"
+          ],
+          "x-ms-read-only": true
+        },
+        "createdonbehalfbyname": {
+          "type": "string",
+          "title": "createdonbehalfbyname",
+          "x-ms-dataverse-attribute": "createdonbehalfbyname",
+          "x-ms-dataverse-type": "StringType",
+          "x-ms-schema-name": "CreatedOnBehalfByName",
+          "x-ms-dataverse-attribute-of": "createdonbehalfby",
+          "x-ms-read-only": true,
+          "maxLength": 100
+        },
+        "createdonbehalfbyyominame": {
+          "type": "string",
+          "title": "createdonbehalfbyyominame",
+          "x-ms-dataverse-attribute": "createdonbehalfbyyominame",
+          "x-ms-dataverse-type": "StringType",
+          "x-ms-schema-name": "CreatedOnBehalfByYomiName",
+          "x-ms-dataverse-attribute-of": "createdonbehalfby",
+          "x-ms-read-only": true,
+          "required": true,
+          "maxLength": 100
+        },
+        "importsequencenumber": {
+          "type": "string",
+          "title": "Número de secuencia de importación",
+          "x-ms-dataverse-attribute": "importsequencenumber",
+          "x-ms-dataverse-type": "IntegerType",
+          "x-ms-schema-name": "ImportSequenceNumber"
+        },
+        "modifiedby": {
+          "type": "string",
+          "title": "Modificado por",
+          "x-ms-dataverse-attribute": "modifiedby",
+          "x-ms-dataverse-type": "LookupType",
+          "x-ms-schema-name": "ModifiedBy",
+          "x-ms-dataverse-navigation-properties": [
+            "modifiedby"
+          ],
+          "x-ms-read-only": true
+        },
+        "modifiedbyname": {
+          "type": "string",
+          "title": "modifiedbyname",
+          "x-ms-dataverse-attribute": "modifiedbyname",
+          "x-ms-dataverse-type": "StringType",
+          "x-ms-schema-name": "ModifiedByName",
+          "x-ms-dataverse-attribute-of": "modifiedby",
+          "x-ms-read-only": true,
+          "maxLength": 100
+        },
+        "modifiedbyyominame": {
+          "type": "string",
+          "title": "modifiedbyyominame",
+          "x-ms-dataverse-attribute": "modifiedbyyominame",
+          "x-ms-dataverse-type": "StringType",
+          "x-ms-schema-name": "ModifiedByYomiName",
+          "x-ms-dataverse-attribute-of": "modifiedby",
+          "x-ms-read-only": true,
+          "required": true,
+          "maxLength": 100
+        },
+        "modifiedon": {
+          "type": "string",
+          "title": "Fecha de modificación",
+          "x-ms-dataverse-attribute": "modifiedon",
+          "x-ms-dataverse-type": "DateTimeType",
+          "x-ms-schema-name": "ModifiedOn",
+          "x-ms-read-only": true
+        },
+        "modifiedonbehalfby": {
+          "type": "string",
+          "title": "Modificado por (delegado)",
+          "x-ms-dataverse-attribute": "modifiedonbehalfby",
+          "x-ms-dataverse-type": "LookupType",
+          "x-ms-schema-name": "ModifiedOnBehalfBy",
+          "x-ms-dataverse-navigation-properties": [
+            "modifiedonbehalfby"
+          ],
+          "x-ms-read-only": true
+        },
+        "modifiedonbehalfbyname": {
+          "type": "string",
+          "title": "modifiedonbehalfbyname",
+          "x-ms-dataverse-attribute": "modifiedonbehalfbyname",
+          "x-ms-dataverse-type": "StringType",
+          "x-ms-schema-name": "ModifiedOnBehalfByName",
+          "x-ms-dataverse-attribute-of": "modifiedonbehalfby",
+          "x-ms-read-only": true,
+          "maxLength": 100
+        },
+        "modifiedonbehalfbyyominame": {
+          "type": "string",
+          "title": "modifiedonbehalfbyyominame",
+          "x-ms-dataverse-attribute": "modifiedonbehalfbyyominame",
+          "x-ms-dataverse-type": "StringType",
+          "x-ms-schema-name": "ModifiedOnBehalfByYomiName",
+          "x-ms-dataverse-attribute-of": "modifiedonbehalfby",
+          "x-ms-read-only": true,
+          "required": true,
+          "maxLength": 100
+        },
+        "overriddencreatedon": {
+          "type": "string",
+          "title": "Fecha de creación del registro",
+          "x-ms-dataverse-attribute": "overriddencreatedon",
+          "x-ms-dataverse-type": "DateTimeType",
+          "x-ms-schema-name": "OverriddenCreatedOn"
+        },
+        "ownerid": {
+          "type": "string",
+          "title": "Propietario",
+          "x-ms-dataverse-attribute": "ownerid",
+          "x-ms-dataverse-type": "OwnerType",
+          "x-ms-schema-name": "OwnerId",
+          "required": true
+        },
+        "owneridname": {
+          "type": "string",
+          "title": "owneridname",
+          "x-ms-dataverse-attribute": "owneridname",
+          "x-ms-dataverse-type": "StringType",
+          "x-ms-schema-name": "OwnerIdName",
+          "x-ms-dataverse-attribute-of": "ownerid",
+          "x-ms-read-only": true,
+          "required": true,
+          "maxLength": 100
+        },
+        "owneridtype": {
+          "type": "string",
+          "title": "owneridtype",
+          "x-ms-dataverse-attribute": "owneridtype",
+          "x-ms-dataverse-type": "EntityNameType",
+          "x-ms-schema-name": "OwnerIdType",
+          "x-ms-dataverse-attribute-of": "ownerid",
+          "required": true
+        },
+        "owneridyominame": {
+          "type": "string",
+          "title": "owneridyominame",
+          "x-ms-dataverse-attribute": "owneridyominame",
+          "x-ms-dataverse-type": "StringType",
+          "x-ms-schema-name": "OwnerIdYomiName",
+          "x-ms-dataverse-attribute-of": "ownerid",
+          "x-ms-read-only": true,
+          "required": true,
+          "maxLength": 100
+        },
+        "owningbusinessunit": {
+          "type": "string",
+          "title": "Unidad de negocio propietaria",
+          "x-ms-dataverse-attribute": "owningbusinessunit",
+          "x-ms-dataverse-type": "LookupType",
+          "x-ms-schema-name": "OwningBusinessUnit",
+          "x-ms-dataverse-navigation-properties": [
+            "owningbusinessunit"
+          ],
+          "x-ms-read-only": true
+        },
+        "owningbusinessunitname": {
+          "type": "string",
+          "title": "owningbusinessunitname",
+          "x-ms-dataverse-attribute": "owningbusinessunitname",
+          "x-ms-dataverse-type": "StringType",
+          "x-ms-schema-name": "OwningBusinessUnitName",
+          "x-ms-dataverse-attribute-of": "owningbusinessunit",
+          "x-ms-read-only": true,
+          "required": true,
+          "maxLength": 100
+        },
+        "owningteam": {
+          "type": "string",
+          "title": "Equipo propietario",
+          "x-ms-dataverse-attribute": "owningteam",
+          "x-ms-dataverse-type": "LookupType",
+          "x-ms-schema-name": "OwningTeam",
+          "x-ms-dataverse-navigation-properties": [
+            "owningteam"
+          ],
+          "x-ms-read-only": true
+        },
+        "owninguser": {
+          "type": "string",
+          "title": "Usuario propietario",
+          "x-ms-dataverse-attribute": "owninguser",
+          "x-ms-dataverse-type": "LookupType",
+          "x-ms-schema-name": "OwningUser",
+          "x-ms-dataverse-navigation-properties": [
+            "owninguser"
+          ],
+          "x-ms-read-only": true
+        },
+        "statecode": {
+          "type": "string",
+          "title": "Estado",
+          "x-ms-dataverse-attribute": "statecode",
+          "x-ms-dataverse-type": "StateType",
+          "x-ms-schema-name": "statecode",
+          "required": true,
+          "enum": [
+            "Activo",
+            "Inactivo"
+          ],
+          "x-ms-enum-values": [
+            0,
+            1
+          ],
+          "Color": [
+            null,
+            null
+          ],
+          "x-ms-optionsetmetadataid": "d337e39f-1fc7-f111-a05c-7ced8da8a834",
+          "x-ms-isGlobal": false,
+          "x-ms-optionsetdisplayname": "Estado",
+          "x-ms-optionSetType": "State"
+        },
+        "statecodename": {
+          "type": "string",
+          "title": "statecodename",
+          "x-ms-dataverse-attribute": "statecodename",
+          "x-ms-dataverse-type": "VirtualType",
+          "x-ms-schema-name": "statecodeName",
+          "x-ms-dataverse-attribute-of": "statecode",
+          "x-ms-read-only": true
+        },
+        "statuscode": {
+          "type": "string",
+          "title": "Razón para el estado",
+          "x-ms-dataverse-attribute": "statuscode",
+          "x-ms-dataverse-type": "StatusType",
+          "x-ms-schema-name": "statuscode",
+          "enum": [
+            "Activo",
+            "Inactivo"
+          ],
+          "x-ms-enum-values": [
+            1,
+            2
+          ],
+          "Color": [
+            null,
+            null
+          ],
+          "x-ms-optionsetmetadataid": "dd37e39f-1fc7-f111-a05c-7ced8da8a834",
+          "x-ms-isGlobal": false,
+          "x-ms-optionsetdisplayname": "Razón para el estado",
+          "x-ms-optionSetType": "Status"
+        },
+        "statuscodename": {
+          "type": "string",
+          "title": "statuscodename",
+          "x-ms-dataverse-attribute": "statuscodename",
+          "x-ms-dataverse-type": "VirtualType",
+          "x-ms-schema-name": "statuscodeName",
+          "x-ms-dataverse-attribute-of": "statuscode",
+          "x-ms-read-only": true
+        },
+        "timezoneruleversionnumber": {
+          "type": "string",
+          "title": "Número de versión de regla de zona horaria",
+          "x-ms-dataverse-attribute": "timezoneruleversionnumber",
+          "x-ms-dataverse-type": "IntegerType",
+          "x-ms-schema-name": "TimeZoneRuleVersionNumber"
+        },
+        "utcconversiontimezonecode": {
+          "type": "string",
+          "title": "Código de zona horaria de conversión UTC",
+          "x-ms-dataverse-attribute": "utcconversiontimezonecode",
+          "x-ms-dataverse-type": "IntegerType",
+          "x-ms-schema-name": "UTCConversionTimeZoneCode"
+        },
+        "versionnumber": {
+          "type": "string",
+          "title": "Número de versión",
+          "x-ms-dataverse-attribute": "versionnumber",
+          "x-ms-dataverse-type": "BigIntType",
+          "x-ms-schema-name": "VersionNumber",
+          "x-ms-read-only": true
+        },
+        "vu_alertaenviada": {
+          "type": "string",
+          "title": "Alerta enviada",
+          "x-ms-dataverse-attribute": "vu_alertaenviada",
+          "x-ms-dataverse-type": "BooleanType",
+          "x-ms-schema-name": "vu_AlertaEnviada",
+          "required": true,
+          "enum": [
+            "No",
+            "Sí"
+          ],
+          "x-ms-enum-values": [
+            0,
+            1
+          ],
+          "Color": [
+            null,
+            null
+          ],
+          "x-ms-optionsetmetadataid": "964a2320-20c7-f111-a05c-7ced8da8a834",
+          "x-ms-isGlobal": false,
+          "x-ms-optionsetdisplayname": "Alerta enviada",
+          "x-ms-optionSetType": "Boolean"
+        },
+        "vu_alertaenviadaname": {
+          "type": "string",
+          "title": "vu_alertaenviadaname",
+          "x-ms-dataverse-attribute": "vu_alertaenviadaname",
+          "x-ms-dataverse-type": "VirtualType",
+          "x-ms-schema-name": "vu_alertaenviadaName",
+          "x-ms-dataverse-attribute-of": "vu_alertaenviada",
+          "x-ms-read-only": true
+        },
+        "vu_aprobadorpilotoid": {
+          "type": "string",
+          "title": "Aprobador del piloto",
+          "x-ms-dataverse-attribute": "vu_aprobadorpilotoid",
+          "x-ms-dataverse-type": "LookupType",
+          "x-ms-schema-name": "vu_AprobadorPilotoId",
+          "x-ms-dataverse-navigation-properties": [
+            "vu_AprobadorPilotoId"
+          ]
+        },
+        "vu_aprobadorpilotoidname": {
+          "type": "string",
+          "title": "vu_aprobadorpilotoidname",
+          "x-ms-dataverse-attribute": "vu_aprobadorpilotoidname",
+          "x-ms-dataverse-type": "StringType",
+          "x-ms-schema-name": "vu_AprobadorPilotoIdName",
+          "x-ms-dataverse-attribute-of": "vu_aprobadorpilotoid",
+          "x-ms-read-only": true,
+          "maxLength": 200
+        },
+        "vu_aprobadorpilotoidyominame": {
+          "type": "string",
+          "title": "vu_aprobadorpilotoidyominame",
+          "x-ms-dataverse-attribute": "vu_aprobadorpilotoidyominame",
+          "x-ms-dataverse-type": "StringType",
+          "x-ms-schema-name": "vu_AprobadorPilotoIdYomiName",
+          "x-ms-dataverse-attribute-of": "vu_aprobadorpilotoid",
+          "x-ms-read-only": true,
+          "maxLength": 200
+        },
+        "vu_aprobadorproductivoid": {
+          "type": "string",
+          "title": "Aprobador productivo",
+          "x-ms-dataverse-attribute": "vu_aprobadorproductivoid",
+          "x-ms-dataverse-type": "LookupType",
+          "x-ms-schema-name": "vu_AprobadorProductivoId",
+          "x-ms-dataverse-navigation-properties": [
+            "vu_AprobadorProductivoId"
+          ]
+        },
+        "vu_aprobadorproductivoidname": {
+          "type": "string",
+          "title": "vu_aprobadorproductivoidname",
+          "x-ms-dataverse-attribute": "vu_aprobadorproductivoidname",
+          "x-ms-dataverse-type": "StringType",
+          "x-ms-schema-name": "vu_AprobadorProductivoIdName",
+          "x-ms-dataverse-attribute-of": "vu_aprobadorproductivoid",
+          "x-ms-read-only": true,
+          "maxLength": 200
+        },
+        "vu_aprobadorproductivoidyominame": {
+          "type": "string",
+          "title": "vu_aprobadorproductivoidyominame",
+          "x-ms-dataverse-attribute": "vu_aprobadorproductivoidyominame",
+          "x-ms-dataverse-type": "StringType",
+          "x-ms-schema-name": "vu_AprobadorProductivoIdYomiName",
+          "x-ms-dataverse-attribute-of": "vu_aprobadorproductivoid",
+          "x-ms-read-only": true,
+          "maxLength": 200
+        },
+        "vu_diasanticipacion": {
+          "type": "string",
+          "title": "Días de anticipación",
+          "x-ms-dataverse-attribute": "vu_diasanticipacion",
+          "x-ms-dataverse-type": "IntegerType",
+          "x-ms-schema-name": "vu_DiasAnticipacion",
+          "required": true
+        },
+        "vu_entrevistascompletas": {
+          "type": "string",
+          "title": "Entrevistas completas",
+          "x-ms-dataverse-attribute": "vu_entrevistascompletas",
+          "x-ms-dataverse-type": "IntegerType",
+          "x-ms-schema-name": "vu_EntrevistasCompletas",
+          "required": true
+        },
+        "vu_entrevistasprevistas": {
+          "type": "string",
+          "title": "Entrevistas previstas",
+          "x-ms-dataverse-attribute": "vu_entrevistasprevistas",
+          "x-ms-dataverse-type": "IntegerType",
+          "x-ms-schema-name": "vu_EntrevistasPrevistas",
+          "required": true
+        },
+        "vu_estado": {
+          "type": "string",
+          "title": "Estado",
+          "x-ms-dataverse-attribute": "vu_estado",
+          "x-ms-dataverse-type": "PicklistType",
+          "x-ms-schema-name": "vu_Estado",
+          "required": true,
+          "enum": [
+            "Borrador",
+            "Programada",
+            "En levantamiento",
+            "En evaluación",
+            "En revisión",
+            "Observada",
+            "Aprobada piloto",
+            "Aprobada",
+            "Cancelada"
+          ],
+          "x-ms-enum-values": [
+            100000000,
+            100000001,
+            100000002,
+            100000003,
+            100000004,
+            100000005,
+            100000006,
+            100000007,
+            100000008
+          ],
+          "Color": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "x-ms-optionsetmetadataid": "3ecc4549-1fc7-f111-a05c-7ced8da8a834",
+          "x-ms-isGlobal": true,
+          "x-ms-optionsetdisplayname": "Estado de la verificación",
+          "x-ms-optionSetType": "Picklist"
+        },
+        "vu_estadoname": {
+          "type": "string",
+          "title": "vu_estadoname",
+          "x-ms-dataverse-attribute": "vu_estadoname",
+          "x-ms-dataverse-type": "VirtualType",
+          "x-ms-schema-name": "vu_estadoName",
+          "x-ms-dataverse-attribute-of": "vu_estado",
+          "x-ms-read-only": true
+        },
+        "vu_fechaalerta": {
+          "type": "string",
+          "title": "Fecha de alerta",
+          "x-ms-dataverse-attribute": "vu_fechaalerta",
+          "x-ms-dataverse-type": "DateTimeType",
+          "x-ms-schema-name": "vu_FechaAlerta",
+          "required": true
+        },
+        "vu_fechaaprobacion": {
+          "type": "string",
+          "title": "Fecha de aprobación",
+          "x-ms-dataverse-attribute": "vu_fechaaprobacion",
+          "x-ms-dataverse-type": "DateTimeType",
+          "x-ms-schema-name": "vu_FechaAprobacion"
+        },
+        "vu_fechaenvio": {
+          "type": "string",
+          "title": "Fecha de envío",
+          "x-ms-dataverse-attribute": "vu_fechaenvio",
+          "x-ms-dataverse-type": "DateTimeType",
+          "x-ms-schema-name": "vu_FechaEnvio"
+        },
+        "vu_fechaobjetivo": {
+          "type": "string",
+          "title": "Fecha objetivo",
+          "x-ms-dataverse-attribute": "vu_fechaobjetivo",
+          "x-ms-dataverse-type": "DateTimeType",
+          "x-ms-schema-name": "vu_FechaObjetivo",
+          "required": true
+        },
+        "vu_indiceadopcion": {
+          "type": "string",
+          "title": "Índice de adopción (%)",
+          "x-ms-dataverse-attribute": "vu_indiceadopcion",
+          "x-ms-dataverse-type": "DecimalType",
+          "x-ms-schema-name": "vu_IndiceAdopcion"
+        },
+        "vu_modalidad": {
+          "type": "string",
+          "title": "Modalidad",
+          "x-ms-dataverse-attribute": "vu_modalidad",
+          "x-ms-dataverse-type": "PicklistType",
+          "x-ms-schema-name": "vu_Modalidad",
+          "required": true,
+          "enum": [
+            "Teams",
+            "Presencial",
+            "Mixta"
+          ],
+          "x-ms-enum-values": [
+            100000000,
+            100000001,
+            100000002
+          ],
+          "Color": [
+            null,
+            null,
+            null
+          ],
+          "x-ms-optionsetmetadataid": "26cc4549-1fc7-f111-a05c-7ced8da8a834",
+          "x-ms-isGlobal": true,
+          "x-ms-optionsetdisplayname": "Modalidad",
+          "x-ms-optionSetType": "Picklist"
+        },
+        "vu_modalidadname": {
+          "type": "string",
+          "title": "vu_modalidadname",
+          "x-ms-dataverse-attribute": "vu_modalidadname",
+          "x-ms-dataverse-type": "VirtualType",
+          "x-ms-schema-name": "vu_modalidadName",
+          "x-ms-dataverse-attribute-of": "vu_modalidad",
+          "x-ms-read-only": true
+        },
+        "vu_name": {
+          "type": "string",
+          "title": "Código",
+          "x-ms-dataverse-attribute": "vu_name",
+          "x-ms-dataverse-type": "StringType",
+          "x-ms-schema-name": "vu_Name",
+          "x-ms-dataverse-primary-name": true,
+          "required": true,
+          "maxLength": 20
+        },
+        "vu_notificaralfinalizar": {
+          "type": "string",
+          "title": "Notificar al finalizar",
+          "x-ms-dataverse-attribute": "vu_notificaralfinalizar",
+          "x-ms-dataverse-type": "BooleanType",
+          "x-ms-schema-name": "vu_NotificarAlFinalizar",
+          "required": true,
+          "enum": [
+            "No",
+            "Sí"
+          ],
+          "x-ms-enum-values": [
+            0,
+            1
+          ],
+          "Color": [
+            null,
+            null
+          ],
+          "x-ms-optionsetmetadataid": "656e442c-20c7-f111-a05c-7ced8da8a834",
+          "x-ms-isGlobal": false,
+          "x-ms-optionsetdisplayname": "Notificar al finalizar",
+          "x-ms-optionSetType": "Boolean"
+        },
+        "vu_notificaralfinalizarname": {
+          "type": "string",
+          "title": "vu_notificaralfinalizarname",
+          "x-ms-dataverse-attribute": "vu_notificaralfinalizarname",
+          "x-ms-dataverse-type": "VirtualType",
+          "x-ms-schema-name": "vu_notificaralfinalizarName",
+          "x-ms-dataverse-attribute-of": "vu_notificaralfinalizar",
+          "x-ms-read-only": true
+        },
+        "vu_objetivo": {
+          "type": "string",
+          "title": "Objetivo",
+          "x-ms-dataverse-attribute": "vu_objetivo",
+          "x-ms-dataverse-type": "MemoType",
+          "x-ms-schema-name": "vu_Objetivo",
+          "maxLength": 2000
+        },
+        "vu_oportunidadesconsolidadas": {
+          "type": "string",
+          "title": "Oportunidades de mejora consolidadas",
+          "x-ms-dataverse-attribute": "vu_oportunidadesconsolidadas",
+          "x-ms-dataverse-type": "MemoType",
+          "x-ms-schema-name": "vu_OportunidadesConsolidadas",
+          "maxLength": 4000
+        },
+        "vu_recomendacionesconsolidadas": {
+          "type": "string",
+          "title": "Recomendaciones consolidadas",
+          "x-ms-dataverse-attribute": "vu_recomendacionesconsolidadas",
+          "x-ms-dataverse-type": "MemoType",
+          "x-ms-schema-name": "vu_RecomendacionesConsolidadas",
+          "maxLength": 4000
+        },
+        "vu_responsableid": {
+          "type": "string",
+          "title": "Responsable",
+          "x-ms-dataverse-attribute": "vu_responsableid",
+          "x-ms-dataverse-type": "LookupType",
+          "x-ms-schema-name": "vu_ResponsableId",
+          "x-ms-dataverse-navigation-properties": [
+            "vu_ResponsableId"
+          ],
+          "required": true
+        },
+        "vu_responsableidname": {
+          "type": "string",
+          "title": "vu_responsableidname",
+          "x-ms-dataverse-attribute": "vu_responsableidname",
+          "x-ms-dataverse-type": "StringType",
+          "x-ms-schema-name": "vu_ResponsableIdName",
+          "x-ms-dataverse-attribute-of": "vu_responsableid",
+          "x-ms-read-only": true,
+          "maxLength": 200
+        },
+        "vu_responsableidyominame": {
+          "type": "string",
+          "title": "vu_responsableidyominame",
+          "x-ms-dataverse-attribute": "vu_responsableidyominame",
+          "x-ms-dataverse-type": "StringType",
+          "x-ms-schema-name": "vu_ResponsableIdYomiName",
+          "x-ms-dataverse-attribute-of": "vu_responsableid",
+          "x-ms-read-only": true,
+          "maxLength": 200
+        },
+        "vu_resultado": {
+          "type": "string",
+          "title": "Resultado",
+          "x-ms-dataverse-attribute": "vu_resultado",
+          "x-ms-dataverse-type": "PicklistType",
+          "x-ms-schema-name": "vu_Resultado",
+          "enum": [
+            "Adopción plena",
+            "Adopción parcial",
+            "Adopción baja"
+          ],
+          "x-ms-enum-values": [
+            100000000,
+            100000001,
+            100000002
+          ],
+          "Color": [
+            null,
+            null,
+            null
+          ],
+          "x-ms-optionsetmetadataid": "67993326-20c7-f111-a05c-7ced8da8a834",
+          "x-ms-isGlobal": false,
+          "x-ms-optionsetdisplayname": "Resultado",
+          "x-ms-optionSetType": "Picklist"
+        },
+        "vu_resultadoname": {
+          "type": "string",
+          "title": "vu_resultadoname",
+          "x-ms-dataverse-attribute": "vu_resultadoname",
+          "x-ms-dataverse-type": "VirtualType",
+          "x-ms-schema-name": "vu_resultadoName",
+          "x-ms-dataverse-attribute-of": "vu_resultado",
+          "x-ms-read-only": true
+        },
+        "vu_solucionid": {
+          "type": "string",
+          "title": "Solución",
+          "x-ms-dataverse-attribute": "vu_solucionid",
+          "x-ms-dataverse-type": "LookupType",
+          "x-ms-schema-name": "vu_SolucionId",
+          "x-ms-dataverse-navigation-properties": [
+            "vu_SolucionId"
+          ],
+          "required": true
+        },
+        "vu_solucionidname": {
+          "type": "string",
+          "title": "vu_solucionidname",
+          "x-ms-dataverse-attribute": "vu_solucionidname",
+          "x-ms-dataverse-type": "StringType",
+          "x-ms-schema-name": "vu_SolucionIdName",
+          "x-ms-dataverse-attribute-of": "vu_solucionid",
+          "x-ms-read-only": true,
+          "maxLength": 850
+        },
+        "vu_sustentoglobal": {
+          "type": "string",
+          "title": "Sustento global",
+          "x-ms-dataverse-attribute": "vu_sustentoglobal",
+          "x-ms-dataverse-type": "MemoType",
+          "x-ms-schema-name": "vu_SustentoGlobal",
+          "maxLength": 4000
+        },
+        "vu_verificacionid": {
+          "type": "string",
+          "title": "Verificación de uso",
+          "x-ms-dataverse-attribute": "vu_verificacionid",
+          "x-ms-dataverse-type": "UniqueidentifierType",
+          "x-ms-schema-name": "vu_VerificacionId",
+          "x-ms-dataverse-primary-id": true,
+          "required": true,
+          "x-ms-keyType": "primary"
+        }
+      },
+      "required": [
+        "createdbyyominame",
+        "createdonbehalfbyyominame",
+        "modifiedbyyominame",
+        "modifiedonbehalfbyyominame",
+        "ownerid",
+        "owneridname",
+        "owneridtype",
+        "owneridyominame",
+        "owningbusinessunitname",
+        "statecode",
+        "vu_alertaenviada",
+        "vu_diasanticipacion",
+        "vu_entrevistascompletas",
+        "vu_entrevistasprevistas",
+        "vu_estado",
+        "vu_fechaalerta",
+        "vu_fechaobjetivo",
+        "vu_modalidad",
+        "vu_name",
+        "vu_notificaralfinalizar",
+        "vu_responsableid",
+        "vu_solucionid",
+        "vu_verificacionid"
+      ]
+    }
+  }
+}

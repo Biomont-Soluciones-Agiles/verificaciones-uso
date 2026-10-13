@@ -1,0 +1,24 @@
+{
+  "$comment": "§2.6: criterios con sus pesos (suman 100) y la pregunta definida de Frecuencia con sus opciones y puntajes sugeridos.",
+  "criterios": [
+    { "vu_name": "Frecuencia", "vu_peso": 30, "vu_orden": 1 },
+    { "vu_name": "Cobertura", "vu_peso": 25, "vu_orden": 2 },
+    { "vu_name": "Sustitución", "vu_peso": 30, "vu_orden": 3 },
+    { "vu_name": "Satisfacción", "vu_peso": 15, "vu_orden": 4 }
+  ],
+  "preguntas": [
+    {
+      "vu_name": "¿Con qué frecuencia utiliza la solución?",
+      "criterio": "Frecuencia",
+      "vu_tiporespuesta": 100000000,
+      "vu_orden": 1,
+      "opciones": [
+        { "vu_name": "Diariamente", "vu_puntajesugerido": 9, "vu_orden": 1 },
+        { "vu_name": "Varias veces por semana", "vu_puntajesugerido": 8, "vu_orden": 2 },
+        { "vu_name": "Semanalmente", "vu_puntajesugerido": 6, "vu_orden": 3 },
+        { "vu_name": "Ocasionalmente", "vu_puntajesugerido": 4, "vu_orden": 4 },
+        { "vu_name": "No la utiliza", "vu_puntajesugerido": 1, "vu_orden": 5 }
+      ]
+    }
+  ]
+}

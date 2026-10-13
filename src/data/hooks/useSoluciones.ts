@@ -12,8 +12,8 @@ export function useSoluciones() {
 export function useDocumentos(solucionId: Id | null) {
   const repos = useRepositorios();
   return useQuery({
-    queryKey: claves.documentos(solucionId ?? 0),
-    queryFn: () => repos.soluciones.listarDocumentos(solucionId ?? 0),
+    queryKey: claves.documentos(solucionId ?? ''),
+    queryFn: () => repos.soluciones.listarDocumentos(solucionId ?? ''),
     enabled: solucionId !== null,
   });
 }

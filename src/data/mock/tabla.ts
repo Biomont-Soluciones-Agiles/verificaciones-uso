@@ -2,7 +2,7 @@ import type { Id } from '../../domain/tipos';
 import { ErrorNoEncontrado } from '../errores';
 import type { Cambios, SinId } from '../repositorios';
 
-/** Tabla en memoria con IDs autoincrementales; devuelve siempre copias. */
+/** Tabla en memoria con IDs autoincrementales (como texto, igual que los GUID); devuelve siempre copias. */
 export interface Tabla<T extends { id: Id }> {
   todos(): T[];
   donde(predicado: (fila: T) => boolean): T[];
@@ -24,7 +24,7 @@ function sinIndefinidos<T extends object>(objeto: T): Partial<T> {
 
 export function crearTabla<T extends { id: Id }>(entidad: string, filasIniciales: readonly T[]): Tabla<T> {
   let filas: T[] = filasIniciales.map(copiar);
-  let siguienteId = filas.reduce((max, f) => Math.max(max, f.id), 0) + 1;
+  let siguienteId = filas.reduce((max, f) => Math.max(max, Number(f.id) || 0), 0) + 1;
 
   const obtener = (id: Id): T => {
     const fila = filas.find((f) => f.id === id);
@@ -41,7 +41,7 @@ export function crearTabla<T extends { id: Id }>(entidad: string, filasIniciales
     },
     obtener: (id) => copiar(obtener(id)),
     insertar: (datos) => {
-      const fila = { ...copiar(datos), id: siguienteId++ } as T;
+      const fila = { ...copiar(datos), id: String(siguienteId++) } as T;
       filas.push(fila);
       return copiar(fila);
     },

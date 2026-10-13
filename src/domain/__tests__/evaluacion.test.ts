@@ -61,40 +61,40 @@ describe('resultado (RN-09)', () => {
 
 describe('puntajeSugerido (RN-04)', () => {
   const entrevistas: Pick<Entrevista, 'id' | 'estado'>[] = [
-    { id: 1, estado: 'Completa' },
-    { id: 2, estado: 'Completa' },
-    { id: 3, estado: 'En curso' },
-    { id: 4, estado: 'Pendiente' },
+    { id: '1', estado: 'Completa' },
+    { id: '2', estado: 'Completa' },
+    { id: '3', estado: 'En curso' },
+    { id: '4', estado: 'Pendiente' },
   ];
   const respuestas: Pick<Respuesta, 'entrevistaId' | 'criterioId' | 'puntaje'>[] = [
-    { entrevistaId: 1, criterioId: 10, puntaje: 8 },
-    { entrevistaId: 2, criterioId: 10, puntaje: 9 },
-    { entrevistaId: 2, criterioId: 10, puntaje: null }, // surgida sin puntaje: se ignora
-    { entrevistaId: 3, criterioId: 10, puntaje: 1 }, // entrevista no completa: se ignora
-    { entrevistaId: 4, criterioId: 10, puntaje: 1 }, // entrevista no completa: se ignora
-    { entrevistaId: 1, criterioId: 20, puntaje: 5 }, // otro criterio
+    { entrevistaId: '1', criterioId: '10', puntaje: 8 },
+    { entrevistaId: '2', criterioId: '10', puntaje: 9 },
+    { entrevistaId: '2', criterioId: '10', puntaje: null }, // surgida sin puntaje: se ignora
+    { entrevistaId: '3', criterioId: '10', puntaje: 1 }, // entrevista no completa: se ignora
+    { entrevistaId: '4', criterioId: '10', puntaje: 1 }, // entrevista no completa: se ignora
+    { entrevistaId: '1', criterioId: '20', puntaje: 5 }, // otro criterio
   ];
 
   it('promedia solo puntajes no nulos de entrevistas completas', () => {
-    expect(puntajeSugerido(10, respuestas, entrevistas)).toBe(8.5);
+    expect(puntajeSugerido('10', respuestas, entrevistas)).toBe(8.5);
   });
 
   it('filtra por criterio', () => {
-    expect(puntajeSugerido(20, respuestas, entrevistas)).toBe(5);
+    expect(puntajeSugerido('20', respuestas, entrevistas)).toBe(5);
   });
 
   it('null si no hay datos', () => {
-    expect(puntajeSugerido(30, respuestas, entrevistas)).toBeNull();
-    expect(puntajeSugerido(10, respuestas, [{ id: 1, estado: 'En curso' }])).toBeNull();
+    expect(puntajeSugerido('30', respuestas, entrevistas)).toBeNull();
+    expect(puntajeSugerido('10', respuestas, [{ id: '1', estado: 'En curso' }])).toBeNull();
   });
 
   it('redondea a 1 decimal', () => {
     const r = [
-      { entrevistaId: 1, criterioId: 1, puntaje: 8 },
-      { entrevistaId: 1, criterioId: 1, puntaje: 8 },
-      { entrevistaId: 2, criterioId: 1, puntaje: 9 },
+      { entrevistaId: '1', criterioId: '1', puntaje: 8 },
+      { entrevistaId: '1', criterioId: '1', puntaje: 8 },
+      { entrevistaId: '2', criterioId: '1', puntaje: 9 },
     ];
-    expect(puntajeSugerido(1, r, entrevistas)).toBe(8.3);
+    expect(puntajeSugerido('1', r, entrevistas)).toBe(8.3);
   });
 });
 
@@ -119,10 +119,10 @@ describe('requiereSustento (RN-05)', () => {
 
 describe('aplicarSugerido', () => {
   const base: PuntajeCriterio = {
-    id: 1,
+    id: '1',
     titulo: 'Cobertura',
-    verificacionId: 1,
-    criterioId: 2,
+    verificacionId: '1',
+    criterioId: '2',
     peso: 25,
     puntajeSugerido: 6,
     puntajeFinal: 6,

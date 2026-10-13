@@ -10,7 +10,7 @@ export class ErrorValidacion extends Error {
 }
 
 export class ErrorNoEncontrado extends Error {
-  constructor(entidad: string, id: number) {
+  constructor(entidad: string, id: string) {
     super(`No se encontró ${entidad} con ID ${id}.`);
     this.name = 'ErrorNoEncontrado';
   }

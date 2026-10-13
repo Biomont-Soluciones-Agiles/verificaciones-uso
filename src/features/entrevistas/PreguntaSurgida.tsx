@@ -80,7 +80,7 @@ export function PreguntaSurgida({
           <Select
             value={String(respuesta.criterioId)}
             disabled={soloLectura}
-            onChange={(_, d) => onChange({ criterioId: Number(d.value) })}
+            onChange={(_, d) => onChange({ criterioId: d.value })}
           >
             {criterios.map((c) => (
               <option key={c.id} value={c.id}>
@@ -116,9 +116,9 @@ export function PreguntaSurgida({
         <Campos>
           <Field label="Evidencia vinculada">
             <Select
-              value={vinculada?.id.toString() ?? ''}
+              value={vinculada?.id ?? ''}
               disabled={soloLectura}
-              onChange={(_, d) => onVincular(d.value ? Number(d.value) : null)}
+              onChange={(_, d) => onVincular(d.value || null)}
             >
               <option value="">Ninguna</option>
               {evidencias.map((e) => (

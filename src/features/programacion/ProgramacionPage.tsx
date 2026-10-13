@@ -5,9 +5,10 @@ import { Cargando, ErrorCarga, Pila } from '../../components/Estructura';
 import { useUsuarioActual } from '../../data/hooks/useCatalogo';
 import { useSoluciones } from '../../data/hooks/useSoluciones';
 import { useVerificaciones } from '../../data/hooks/useVerificaciones';
+import { idDeTexto } from '../../domain/codigo';
 import { sumarDias, hoyISO } from '../../domain/fechas';
 import { esVerificacionActiva } from '../../domain/flujo';
-import type { Solucion } from '../../domain/tipos';
+import type { Id, Solucion } from '../../domain/tipos';
 import { FormularioProgramacion, OBJETIVO_PREDETERMINADO, type ValoresProgramacion } from './FormularioProgramacion';
 
 /** `/verificaciones/:id/programacion`: programación de una verificación existente. */
@@ -36,7 +37,7 @@ export function ProgramacionPage() {
 
 function valoresIniciales(
   soluciones: Solucion[],
-  solucionId: number | null,
+  solucionId: Id | null,
   responsable: ValoresProgramacion['responsable'],
 ): ValoresProgramacion {
   const solucion = soluciones.find((s) => s.id === solucionId) ?? null;
@@ -65,7 +66,7 @@ export function NuevaProgramacionPage() {
   if (!soluciones.data || !verificaciones.data || usuario.isPending) return <Cargando />;
   const listaSoluciones = soluciones.data;
 
-  const solicitada = Number(params.get('solucion')) || null;
+  const solicitada = idDeTexto(params.get('solucion'));
   const conActiva = new Set(verificaciones.data.filter((v) => esVerificacionActiva(v.estado)).map((v) => v.solucionId));
   const solucionId =
     solicitada && !conActiva.has(solicitada)

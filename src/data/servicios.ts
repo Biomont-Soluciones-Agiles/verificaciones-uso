@@ -1,4 +1,4 @@
-import { formatearCodigoVU, tituloEntrevista } from '../domain/codigo';
+import { tituloEntrevista } from '../domain/codigo';
 import { ahoraISO, calcularFechaAlerta } from '../domain/fechas';
 import {
   aplicarSugerido,
@@ -83,12 +83,13 @@ export interface DatosProgramacion {
 }
 
 /**
- * Pasos 2 y 3 de "Programar verificación", reintentables al abrirla:
- * escribe `Title = VU-{ID}` y crea las filas de puntaje por criterio activo con el peso copiado.
+ * Paso 2 de "Programar verificación" (§3.4), reintentable al abrirla: crea las filas de
+ * puntaje por criterio activo con el peso copiado. El código `VU-xxxxx` lo pone la
+ * autonumeración de Dataverse al crear la fila; la clave alternativa (verificación, criterio)
+ * impide duplicados.
  */
 export async function asegurarIntegridad(repos: Repositorios, verificacion: Verificacion): Promise<Verificacion> {
-  let v = verificacion;
-  if (!v.codigo) v = await repos.verificaciones.actualizar(v.id, { codigo: formatearCodigoVU(v.id) });
+  const v = verificacion;
   if (!esEditableDesdeApp(v.estado)) return v;
 
   const [criterios, puntajes] = await Promise.all([
@@ -117,7 +118,9 @@ export async function abrirVerificacion(repos: Repositorios, id: Id): Promise<Ve
 
 /**
  * "Guardar borrador" (activar = false) o "Programar y activar alerta" (activar = true).
- * Crea o actualiza la verificación, calcula la fecha de alerta (RN-01) y asegura código y puntajes.
+ * Crea o actualiza la verificación, calcula la fecha de alerta (RN-01) y asegura los puntajes.
+ * Al crear, la app no escribe el código (autonumeración) y envía siempre los enteros que en
+ * Dataverse no tienen valor predeterminado (`vu_entrevistascompletas = 0`).
  */
 export async function programarVerificacion(
   repos: Repositorios,
@@ -148,7 +151,7 @@ export async function programarVerificacion(
     }
     v = await repos.verificaciones.crear({
       ...datos,
-      codigo: '',
+      codigo: '', // Lo asigna la autonumeración; el repositorio no lo envía.
       solucionNombre: '',
       fechaAlerta,
       alertaEnviada: false,
@@ -252,7 +255,7 @@ export async function agregarEntrevista(
   return nueva;
 }
 
-/** `Title` es obligatorio en SharePoint: texto de respaldo para preguntas surgidas sin redactar. */
+/** `vu_name` es obligatorio en `vu_respuesta`: texto de respaldo para preguntas surgidas sin redactar. */
 export const TITULO_SURGIDA_PREDETERMINADO = 'Pregunta surgida en la reunión';
 
 function normalizarRespuesta(cambios: Cambios<Respuesta>): Cambios<Respuesta> {
@@ -264,7 +267,7 @@ function normalizarRespuesta(cambios: Cambios<Respuesta>): Cambios<Respuesta> {
 
 function ordenarRespuestas(respuestas: Respuesta[]): Respuesta[] {
   const peso = (r: Respuesta) => (r.origen === 'Definida' ? 0 : 1);
-  return [...respuestas].sort((a, b) => peso(a) - peso(b) || a.orden - b.orden || a.id - b.id);
+  return [...respuestas].sort((a, b) => peso(a) - peso(b) || a.orden - b.orden || a.id.localeCompare(b.id));
 }
 
 /**

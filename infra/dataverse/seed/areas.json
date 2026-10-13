@@ -1,0 +1,12 @@
+{
+  "$comment": "Áreas y procesos del prototipo (docs/referencia/prototipo-original.html). vu_tipoarea: Proceso 100000000 / Área 100000001. 'padre' es el vu_name del área padre (debe aparecer antes).",
+  "areas": [
+    { "vu_name": "Operaciones", "vu_tipoarea": 100000000 },
+    { "vu_name": "Producción", "vu_tipoarea": 100000000 },
+    { "vu_name": "Comercial", "vu_tipoarea": 100000000 },
+    { "vu_name": "Comercio exterior", "vu_tipoarea": 100000000 },
+    { "vu_name": "Despacho", "vu_tipoarea": 100000001, "padre": "Operaciones" },
+    { "vu_name": "Logística", "vu_tipoarea": 100000001, "padre": "Operaciones" },
+    { "vu_name": "Almacén", "vu_tipoarea": 100000001, "padre": "Operaciones" }
+  ]
+}

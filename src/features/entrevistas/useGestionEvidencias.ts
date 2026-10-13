@@ -16,9 +16,7 @@ export function useGestionEvidencias(verificacion: Verificacion, entrevista: Ent
       await subirMut.mutateAsync(
         lista.map((archivo) => ({
           verificacionId: verificacion.id,
-          verificacionCodigo: verificacion.codigo,
           entrevistaId: entrevista.id,
-          entrevistaNumero: entrevista.numero,
           respuestaId,
           tipo: archivo.type.startsWith('image/') ? 'Captura' : 'Documento',
           archivo,

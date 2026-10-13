@@ -154,7 +154,7 @@ describe('validaciones de formularios', () => {
   it('validarProgramacion', () => {
     expect(
       validarProgramacion({
-        solucionId: 1,
+        solucionId: '1',
         responsable: { email: 'x@y.z' },
         fechaObjetivo: '2026-08-15',
         diasAnticipacion: 15,
@@ -174,13 +174,13 @@ describe('validaciones de formularios', () => {
 
   it('validarRespuestasDefinidas exige respuesta y puntaje', () => {
     const preguntas = [
-      { id: 1, titulo: 'P1' },
-      { id: 2, titulo: 'P2' },
+      { id: '1', titulo: 'P1' },
+      { id: '2', titulo: 'P2' },
     ];
     expect(
       validarRespuestasDefinidas(preguntas, [
-        { preguntaId: 1, origen: 'Definida', puntaje: 9 },
-        { preguntaId: 2, origen: 'Definida', puntaje: null },
+        { preguntaId: '1', origen: 'Definida', puntaje: 9 },
+        { preguntaId: '2', origen: 'Definida', puntaje: null },
       ]),
     ).toEqual(['Falta el puntaje de: "P2".']);
     expect(validarRespuestasDefinidas(preguntas, [])).toHaveLength(2);

@@ -1,0 +1,1725 @@
+{
+  "$comment": "Fuente de verdad: docs/diseno-verificacion-uso.md §2 y §3.6. Lo consumen provision.mjs, seed.mjs y verify.mjs.",
+  "environment": {
+    "id": "42eff49b-d50d-e366-9c13-fa86677af7e3",
+    "url": "https://org4d363b5e.crm2.dynamics.com",
+    "languageCode": 3082
+  },
+  "publisher": {
+    "uniqueName": "VerificacionUso",
+    "friendlyName": "Verificación de uso",
+    "customizationPrefix": "vu",
+    "customizationOptionValuePrefix": 10000,
+    "description": "Publicador de la solución Verificación de uso."
+  },
+  "solution": {
+    "uniqueName": "VerificacionUso",
+    "friendlyName": "Verificación de uso",
+    "version": "1.0.0.0",
+    "description": "Tablas, opciones y roles de la app Verificación de uso."
+  },
+  "globalOptionSets": [
+    {
+      "name": "vu_modalidad",
+      "displayName": "Modalidad",
+      "options": [
+        {
+          "value": 100000000,
+          "label": "Teams"
+        },
+        {
+          "value": 100000001,
+          "label": "Presencial"
+        },
+        {
+          "value": 100000002,
+          "label": "Mixta"
+        }
+      ]
+    },
+    {
+      "name": "vu_estadoverificacion",
+      "displayName": "Estado de la verificación",
+      "options": [
+        {
+          "value": 100000000,
+          "label": "Borrador"
+        },
+        {
+          "value": 100000001,
+          "label": "Programada"
+        },
+        {
+          "value": 100000002,
+          "label": "En levantamiento"
+        },
+        {
+          "value": 100000003,
+          "label": "En evaluación"
+        },
+        {
+          "value": 100000004,
+          "label": "En revisión"
+        },
+        {
+          "value": 100000005,
+          "label": "Observada"
+        },
+        {
+          "value": 100000006,
+          "label": "Aprobada piloto"
+        },
+        {
+          "value": 100000007,
+          "label": "Aprobada"
+        },
+        {
+          "value": 100000008,
+          "label": "Cancelada"
+        }
+      ]
+    },
+    {
+      "name": "vu_estadovu",
+      "displayName": "Estado de la VU",
+      "options": [
+        {
+          "value": 100000000,
+          "label": "Pendiente"
+        },
+        {
+          "value": 100000001,
+          "label": "Programada"
+        },
+        {
+          "value": 100000002,
+          "label": "En proceso"
+        },
+        {
+          "value": 100000003,
+          "label": "En revisión"
+        },
+        {
+          "value": 100000004,
+          "label": "Vigente"
+        }
+      ]
+    }
+  ],
+  "cascadeTemplates": {
+    "Parental": {
+      "Assign": "Cascade",
+      "Delete": "Cascade",
+      "Merge": "NoCascade",
+      "Reparent": "Cascade",
+      "Share": "Cascade",
+      "Unshare": "Cascade",
+      "RollupView": "NoCascade"
+    },
+    "Restrict": {
+      "Assign": "NoCascade",
+      "Delete": "Restrict",
+      "Merge": "NoCascade",
+      "Reparent": "NoCascade",
+      "Share": "NoCascade",
+      "Unshare": "NoCascade",
+      "RollupView": "NoCascade"
+    },
+    "RemoveLink": {
+      "Assign": "NoCascade",
+      "Delete": "RemoveLink",
+      "Merge": "NoCascade",
+      "Reparent": "NoCascade",
+      "Share": "NoCascade",
+      "Unshare": "NoCascade",
+      "RollupView": "NoCascade"
+    },
+    "$comment": "Merge=Cascade solo lo admiten account/contact/lead/incident; en tablas personalizadas Dataverse lo guarda como NoCascade."
+  },
+  "tables": [
+    {
+      "schemaName": "vu_Area",
+      "logicalName": "vu_area",
+      "entitySetName": "vu_areas",
+      "primaryIdAttribute": "vu_areaid",
+      "displayName": "Área",
+      "displayCollectionName": "Áreas",
+      "description": "Procesos y áreas de la organización.",
+      "ownershipType": "OrganizationOwned",
+      "isAuditEnabled": false,
+      "primaryName": {
+        "logicalName": "vu_name",
+        "schemaName": "vu_Name",
+        "displayName": "Nombre",
+        "maxLength": 100,
+        "requiredLevel": "ApplicationRequired"
+      },
+      "columns": [
+        {
+          "logicalName": "vu_tipoarea",
+          "schemaName": "vu_TipoArea",
+          "displayName": "Tipo de área",
+          "type": "Picklist",
+          "requiredLevel": "ApplicationRequired",
+          "options": [
+            {
+              "value": 100000000,
+              "label": "Proceso"
+            },
+            {
+              "value": 100000001,
+              "label": "Área"
+            }
+          ]
+        },
+        {
+          "logicalName": "vu_areapadreid",
+          "schemaName": "vu_AreaPadreId",
+          "displayName": "Área padre",
+          "type": "Lookup",
+          "target": "vu_area",
+          "cascade": "RemoveLink",
+          "requiredLevel": "None",
+          "relationshipSchemaName": "vu_area_area_areapadreid",
+          "navigationProperty": "vu_AreaPadreId",
+          "odataBind": "vu_AreaPadreId@odata.bind",
+          "readProperty": "_vu_areapadreid_value"
+        }
+      ],
+      "keys": []
+    },
+    {
+      "schemaName": "vu_Solucion",
+      "logicalName": "vu_solucion",
+      "entitySetName": "vu_solucions",
+      "primaryIdAttribute": "vu_solucionid",
+      "displayName": "Solución digital",
+      "displayCollectionName": "Soluciones digitales",
+      "description": "Catálogo de soluciones digitales sujetas a verificación de uso.",
+      "ownershipType": "OrganizationOwned",
+      "isAuditEnabled": false,
+      "primaryName": {
+        "logicalName": "vu_name",
+        "schemaName": "vu_Name",
+        "displayName": "Nombre",
+        "maxLength": 200,
+        "requiredLevel": "ApplicationRequired"
+      },
+      "columns": [
+        {
+          "logicalName": "vu_descripcion",
+          "schemaName": "vu_Descripcion",
+          "displayName": "Descripción",
+          "type": "Memo",
+          "maxLength": 2000,
+          "requiredLevel": "None"
+        },
+        {
+          "logicalName": "vu_tiposolucion",
+          "schemaName": "vu_TipoSolucion",
+          "displayName": "Tipo de solución",
+          "type": "Picklist",
+          "requiredLevel": "None",
+          "options": [
+            {
+              "value": 100000000,
+              "label": "Power App"
+            },
+            {
+              "value": 100000001,
+              "label": "Flujo"
+            },
+            {
+              "value": 100000002,
+              "label": "Reporte"
+            },
+            {
+              "value": 100000003,
+              "label": "Otro"
+            }
+          ]
+        },
+        {
+          "logicalName": "vu_procesoid",
+          "schemaName": "vu_ProcesoId",
+          "displayName": "Proceso",
+          "type": "Lookup",
+          "target": "vu_area",
+          "cascade": "Restrict",
+          "requiredLevel": "ApplicationRequired",
+          "relationshipSchemaName": "vu_area_solucion_procesoid",
+          "navigationProperty": "vu_ProcesoId",
+          "odataBind": "vu_ProcesoId@odata.bind",
+          "readProperty": "_vu_procesoid_value"
+        },
+        {
+          "logicalName": "vu_responsableid",
+          "schemaName": "vu_ResponsableId",
+          "displayName": "Responsable",
+          "type": "Lookup",
+          "target": "systemuser",
+          "cascade": "RemoveLink",
+          "requiredLevel": "ApplicationRequired",
+          "relationshipSchemaName": "vu_systemuser_solucion_responsableid",
+          "navigationProperty": "vu_ResponsableId",
+          "odataBind": "vu_ResponsableId@odata.bind",
+          "readProperty": "_vu_responsableid_value"
+        },
+        {
+          "logicalName": "vu_usuariosobjetivo",
+          "schemaName": "vu_UsuariosObjetivo",
+          "displayName": "Usuarios objetivo",
+          "type": "Integer",
+          "minValue": 0,
+          "maxValue": 2147483647,
+          "requiredLevel": "None"
+        },
+        {
+          "logicalName": "vu_fechaactualizacion",
+          "schemaName": "vu_FechaActualizacion",
+          "displayName": "Fecha de actualización",
+          "type": "DateTime",
+          "format": "DateOnly",
+          "dateTimeBehavior": "DateOnly",
+          "requiredLevel": "None"
+        },
+        {
+          "logicalName": "vu_periodicidadmeses",
+          "schemaName": "vu_PeriodicidadMeses",
+          "displayName": "Periodicidad (meses)",
+          "type": "Integer",
+          "minValue": 1,
+          "maxValue": 36,
+          "requiredLevel": "ApplicationRequired",
+          "defaultValue": 6
+        },
+        {
+          "logicalName": "vu_proximavu",
+          "schemaName": "vu_ProximaVu",
+          "displayName": "Próxima VU",
+          "type": "DateTime",
+          "format": "DateOnly",
+          "dateTimeBehavior": "DateOnly",
+          "requiredLevel": "None"
+        },
+        {
+          "logicalName": "vu_estadovu",
+          "schemaName": "vu_EstadoVu",
+          "displayName": "Estado de la VU",
+          "type": "Picklist",
+          "requiredLevel": "ApplicationRequired",
+          "globalOptionSet": "vu_estadovu"
+        },
+        {
+          "logicalName": "vu_ultimaverificacionid",
+          "schemaName": "vu_UltimaVerificacionId",
+          "displayName": "Última verificación",
+          "type": "Lookup",
+          "target": "vu_verificacion",
+          "cascade": "RemoveLink",
+          "requiredLevel": "None",
+          "relationshipSchemaName": "vu_verificacion_solucion_ultimaverificacionid",
+          "navigationProperty": "vu_UltimaVerificacionId",
+          "odataBind": "vu_UltimaVerificacionId@odata.bind",
+          "readProperty": "_vu_ultimaverificacionid_value"
+        }
+      ],
+      "keys": []
+    },
+    {
+      "schemaName": "vu_DocumentoSolucion",
+      "logicalName": "vu_documentosolucion",
+      "entitySetName": "vu_documentosolucions",
+      "primaryIdAttribute": "vu_documentosolucionid",
+      "displayName": "Documento de la solución",
+      "displayCollectionName": "Documentos de la solución",
+      "description": "Documento de la solución",
+      "ownershipType": "OrganizationOwned",
+      "isAuditEnabled": false,
+      "primaryName": {
+        "logicalName": "vu_name",
+        "schemaName": "vu_Name",
+        "displayName": "Nombre",
+        "maxLength": 200,
+        "requiredLevel": "ApplicationRequired"
+      },
+      "columns": [
+        {
+          "logicalName": "vu_solucionid",
+          "schemaName": "vu_SolucionId",
+          "displayName": "Solución",
+          "type": "Lookup",
+          "target": "vu_solucion",
+          "cascade": "Parental",
+          "requiredLevel": "ApplicationRequired",
+          "relationshipSchemaName": "vu_solucion_documentosolucion_solucionid",
+          "navigationProperty": "vu_SolucionId",
+          "odataBind": "vu_SolucionId@odata.bind",
+          "readProperty": "_vu_solucionid_value"
+        },
+        {
+          "logicalName": "vu_tipodocumento",
+          "schemaName": "vu_TipoDocumento",
+          "displayName": "Tipo de documento",
+          "type": "Picklist",
+          "requiredLevel": "ApplicationRequired",
+          "options": [
+            {
+              "value": 100000000,
+              "label": "Manual"
+            },
+            {
+              "value": 100000001,
+              "label": "Instructivo"
+            },
+            {
+              "value": 100000002,
+              "label": "Video"
+            },
+            {
+              "value": 100000003,
+              "label": "Carpeta"
+            },
+            {
+              "value": 100000004,
+              "label": "Otro"
+            }
+          ]
+        },
+        {
+          "logicalName": "vu_formato",
+          "schemaName": "vu_Formato",
+          "displayName": "Formato",
+          "type": "String",
+          "format": "Text",
+          "maxLength": 50,
+          "requiredLevel": "None"
+        },
+        {
+          "logicalName": "vu_enlace",
+          "schemaName": "vu_Enlace",
+          "displayName": "Enlace",
+          "type": "String",
+          "format": "Url",
+          "maxLength": 1000,
+          "requiredLevel": "ApplicationRequired"
+        },
+        {
+          "logicalName": "vu_version",
+          "schemaName": "vu_Version",
+          "displayName": "Versión",
+          "type": "String",
+          "format": "Text",
+          "maxLength": 50,
+          "requiredLevel": "None"
+        },
+        {
+          "logicalName": "vu_vigente",
+          "schemaName": "vu_Vigente",
+          "displayName": "Vigente",
+          "type": "Boolean",
+          "defaultValue": true,
+          "trueLabel": "Sí",
+          "falseLabel": "No",
+          "requiredLevel": "ApplicationRequired"
+        }
+      ],
+      "keys": []
+    },
+    {
+      "schemaName": "vu_Criterio",
+      "logicalName": "vu_criterio",
+      "entitySetName": "vu_criterios",
+      "primaryIdAttribute": "vu_criterioid",
+      "displayName": "Criterio de evaluación",
+      "displayCollectionName": "Criterios de evaluación",
+      "description": "Criterio de evaluación",
+      "ownershipType": "OrganizationOwned",
+      "isAuditEnabled": false,
+      "primaryName": {
+        "logicalName": "vu_name",
+        "schemaName": "vu_Name",
+        "displayName": "Nombre",
+        "maxLength": 100,
+        "requiredLevel": "ApplicationRequired"
+      },
+      "columns": [
+        {
+          "logicalName": "vu_peso",
+          "schemaName": "vu_Peso",
+          "displayName": "Peso (%)",
+          "type": "Decimal",
+          "minValue": 0,
+          "maxValue": 100,
+          "precision": 2,
+          "requiredLevel": "ApplicationRequired"
+        },
+        {
+          "logicalName": "vu_orden",
+          "schemaName": "vu_Orden",
+          "displayName": "Orden",
+          "type": "Integer",
+          "minValue": -2147483648,
+          "maxValue": 2147483647,
+          "requiredLevel": "ApplicationRequired"
+        }
+      ],
+      "keys": []
+    },
+    {
+      "schemaName": "vu_Pregunta",
+      "logicalName": "vu_pregunta",
+      "entitySetName": "vu_preguntas",
+      "primaryIdAttribute": "vu_preguntaid",
+      "displayName": "Pregunta",
+      "displayCollectionName": "Preguntas",
+      "description": "Pregunta",
+      "ownershipType": "OrganizationOwned",
+      "isAuditEnabled": false,
+      "primaryName": {
+        "logicalName": "vu_name",
+        "schemaName": "vu_Name",
+        "displayName": "Texto de la pregunta",
+        "maxLength": 500,
+        "requiredLevel": "ApplicationRequired"
+      },
+      "columns": [
+        {
+          "logicalName": "vu_criterioid",
+          "schemaName": "vu_CriterioId",
+          "displayName": "Criterio",
+          "type": "Lookup",
+          "target": "vu_criterio",
+          "cascade": "Restrict",
+          "requiredLevel": "ApplicationRequired",
+          "relationshipSchemaName": "vu_criterio_pregunta_criterioid",
+          "navigationProperty": "vu_CriterioId",
+          "odataBind": "vu_CriterioId@odata.bind",
+          "readProperty": "_vu_criterioid_value"
+        },
+        {
+          "logicalName": "vu_tiporespuesta",
+          "schemaName": "vu_TipoRespuesta",
+          "displayName": "Tipo de respuesta",
+          "type": "Picklist",
+          "requiredLevel": "ApplicationRequired",
+          "options": [
+            {
+              "value": 100000000,
+              "label": "Selección"
+            },
+            {
+              "value": 100000001,
+              "label": "Texto"
+            },
+            {
+              "value": 100000002,
+              "label": "Numérica"
+            }
+          ]
+        },
+        {
+          "logicalName": "vu_orden",
+          "schemaName": "vu_Orden",
+          "displayName": "Orden",
+          "type": "Integer",
+          "minValue": -2147483648,
+          "maxValue": 2147483647,
+          "requiredLevel": "ApplicationRequired"
+        }
+      ],
+      "keys": []
+    },
+    {
+      "schemaName": "vu_OpcionRespuesta",
+      "logicalName": "vu_opcionrespuesta",
+      "entitySetName": "vu_opcionrespuestas",
+      "primaryIdAttribute": "vu_opcionrespuestaid",
+      "displayName": "Opción de respuesta",
+      "displayCollectionName": "Opciones de respuesta",
+      "description": "Opción de respuesta",
+      "ownershipType": "OrganizationOwned",
+      "isAuditEnabled": false,
+      "primaryName": {
+        "logicalName": "vu_name",
+        "schemaName": "vu_Name",
+        "displayName": "Nombre",
+        "maxLength": 200,
+        "requiredLevel": "ApplicationRequired"
+      },
+      "columns": [
+        {
+          "logicalName": "vu_preguntaid",
+          "schemaName": "vu_PreguntaId",
+          "displayName": "Pregunta",
+          "type": "Lookup",
+          "target": "vu_pregunta",
+          "cascade": "Parental",
+          "requiredLevel": "ApplicationRequired",
+          "relationshipSchemaName": "vu_pregunta_opcionrespuesta_preguntaid",
+          "navigationProperty": "vu_PreguntaId",
+          "odataBind": "vu_PreguntaId@odata.bind",
+          "readProperty": "_vu_preguntaid_value"
+        },
+        {
+          "logicalName": "vu_puntajesugerido",
+          "schemaName": "vu_PuntajeSugerido",
+          "displayName": "Puntaje sugerido",
+          "type": "Integer",
+          "minValue": 1,
+          "maxValue": 10,
+          "requiredLevel": "ApplicationRequired"
+        },
+        {
+          "logicalName": "vu_orden",
+          "schemaName": "vu_Orden",
+          "displayName": "Orden",
+          "type": "Integer",
+          "minValue": -2147483648,
+          "maxValue": 2147483647,
+          "requiredLevel": "ApplicationRequired"
+        }
+      ],
+      "keys": []
+    },
+    {
+      "schemaName": "vu_Verificacion",
+      "logicalName": "vu_verificacion",
+      "entitySetName": "vu_verificacions",
+      "primaryIdAttribute": "vu_verificacionid",
+      "displayName": "Verificación de uso",
+      "displayCollectionName": "Verificaciones de uso",
+      "description": "Verificación de uso de una solución digital.",
+      "ownershipType": "UserOwned",
+      "isAuditEnabled": true,
+      "primaryName": {
+        "logicalName": "vu_name",
+        "schemaName": "vu_Name",
+        "displayName": "Código",
+        "maxLength": 20,
+        "requiredLevel": "ApplicationRequired",
+        "autoNumberFormat": "VU-{SEQNUM:5}",
+        "autoNumberSeed": 1
+      },
+      "columns": [
+        {
+          "logicalName": "vu_solucionid",
+          "schemaName": "vu_SolucionId",
+          "displayName": "Solución",
+          "type": "Lookup",
+          "target": "vu_solucion",
+          "cascade": "Restrict",
+          "requiredLevel": "ApplicationRequired",
+          "relationshipSchemaName": "vu_solucion_verificacion_solucionid",
+          "navigationProperty": "vu_SolucionId",
+          "odataBind": "vu_SolucionId@odata.bind",
+          "readProperty": "_vu_solucionid_value"
+        },
+        {
+          "logicalName": "vu_responsableid",
+          "schemaName": "vu_ResponsableId",
+          "displayName": "Responsable",
+          "type": "Lookup",
+          "target": "systemuser",
+          "cascade": "RemoveLink",
+          "requiredLevel": "ApplicationRequired",
+          "relationshipSchemaName": "vu_systemuser_verificacion_responsableid",
+          "navigationProperty": "vu_ResponsableId",
+          "odataBind": "vu_ResponsableId@odata.bind",
+          "readProperty": "_vu_responsableid_value"
+        },
+        {
+          "logicalName": "vu_fechaobjetivo",
+          "schemaName": "vu_FechaObjetivo",
+          "displayName": "Fecha objetivo",
+          "type": "DateTime",
+          "format": "DateOnly",
+          "dateTimeBehavior": "DateOnly",
+          "requiredLevel": "ApplicationRequired"
+        },
+        {
+          "logicalName": "vu_diasanticipacion",
+          "schemaName": "vu_DiasAnticipacion",
+          "displayName": "Días de anticipación",
+          "type": "Integer",
+          "minValue": 7,
+          "maxValue": 30,
+          "requiredLevel": "ApplicationRequired"
+        },
+        {
+          "logicalName": "vu_fechaalerta",
+          "schemaName": "vu_FechaAlerta",
+          "displayName": "Fecha de alerta",
+          "type": "DateTime",
+          "format": "DateOnly",
+          "dateTimeBehavior": "DateOnly",
+          "requiredLevel": "ApplicationRequired"
+        },
+        {
+          "logicalName": "vu_alertaenviada",
+          "schemaName": "vu_AlertaEnviada",
+          "displayName": "Alerta enviada",
+          "type": "Boolean",
+          "defaultValue": false,
+          "trueLabel": "Sí",
+          "falseLabel": "No",
+          "requiredLevel": "ApplicationRequired"
+        },
+        {
+          "logicalName": "vu_entrevistasprevistas",
+          "schemaName": "vu_EntrevistasPrevistas",
+          "displayName": "Entrevistas previstas",
+          "type": "Integer",
+          "minValue": 1,
+          "maxValue": 20,
+          "requiredLevel": "ApplicationRequired"
+        },
+        {
+          "logicalName": "vu_entrevistascompletas",
+          "schemaName": "vu_EntrevistasCompletas",
+          "displayName": "Entrevistas completas",
+          "type": "Integer",
+          "minValue": 0,
+          "maxValue": 2147483647,
+          "requiredLevel": "ApplicationRequired",
+          "defaultValue": 0
+        },
+        {
+          "logicalName": "vu_modalidad",
+          "schemaName": "vu_Modalidad",
+          "displayName": "Modalidad",
+          "type": "Picklist",
+          "requiredLevel": "ApplicationRequired",
+          "globalOptionSet": "vu_modalidad"
+        },
+        {
+          "logicalName": "vu_objetivo",
+          "schemaName": "vu_Objetivo",
+          "displayName": "Objetivo",
+          "type": "Memo",
+          "maxLength": 2000,
+          "requiredLevel": "None"
+        },
+        {
+          "logicalName": "vu_estado",
+          "schemaName": "vu_Estado",
+          "displayName": "Estado",
+          "type": "Picklist",
+          "requiredLevel": "ApplicationRequired",
+          "globalOptionSet": "vu_estadoverificacion",
+          "defaultValue": 100000000
+        },
+        {
+          "logicalName": "vu_indiceadopcion",
+          "schemaName": "vu_IndiceAdopcion",
+          "displayName": "Índice de adopción (%)",
+          "type": "Decimal",
+          "minValue": 0,
+          "maxValue": 100,
+          "precision": 1,
+          "requiredLevel": "None"
+        },
+        {
+          "logicalName": "vu_resultado",
+          "schemaName": "vu_Resultado",
+          "displayName": "Resultado",
+          "type": "Picklist",
+          "requiredLevel": "None",
+          "options": [
+            {
+              "value": 100000000,
+              "label": "Adopción plena"
+            },
+            {
+              "value": 100000001,
+              "label": "Adopción parcial"
+            },
+            {
+              "value": 100000002,
+              "label": "Adopción baja"
+            }
+          ]
+        },
+        {
+          "logicalName": "vu_sustentoglobal",
+          "schemaName": "vu_SustentoGlobal",
+          "displayName": "Sustento global",
+          "type": "Memo",
+          "maxLength": 4000,
+          "requiredLevel": "None"
+        },
+        {
+          "logicalName": "vu_oportunidadesconsolidadas",
+          "schemaName": "vu_OportunidadesConsolidadas",
+          "displayName": "Oportunidades de mejora consolidadas",
+          "type": "Memo",
+          "maxLength": 4000,
+          "requiredLevel": "None"
+        },
+        {
+          "logicalName": "vu_recomendacionesconsolidadas",
+          "schemaName": "vu_RecomendacionesConsolidadas",
+          "displayName": "Recomendaciones consolidadas",
+          "type": "Memo",
+          "maxLength": 4000,
+          "requiredLevel": "None"
+        },
+        {
+          "logicalName": "vu_aprobadorpilotoid",
+          "schemaName": "vu_AprobadorPilotoId",
+          "displayName": "Aprobador del piloto",
+          "type": "Lookup",
+          "target": "systemuser",
+          "cascade": "RemoveLink",
+          "requiredLevel": "None",
+          "relationshipSchemaName": "vu_systemuser_verificacion_aprobadorpilotoid",
+          "navigationProperty": "vu_AprobadorPilotoId",
+          "odataBind": "vu_AprobadorPilotoId@odata.bind",
+          "readProperty": "_vu_aprobadorpilotoid_value"
+        },
+        {
+          "logicalName": "vu_aprobadorproductivoid",
+          "schemaName": "vu_AprobadorProductivoId",
+          "displayName": "Aprobador productivo",
+          "type": "Lookup",
+          "target": "systemuser",
+          "cascade": "RemoveLink",
+          "requiredLevel": "None",
+          "relationshipSchemaName": "vu_systemuser_verificacion_aprobadorproductivoid",
+          "navigationProperty": "vu_AprobadorProductivoId",
+          "odataBind": "vu_AprobadorProductivoId@odata.bind",
+          "readProperty": "_vu_aprobadorproductivoid_value"
+        },
+        {
+          "logicalName": "vu_notificaralfinalizar",
+          "schemaName": "vu_NotificarAlFinalizar",
+          "displayName": "Notificar al finalizar",
+          "type": "Boolean",
+          "defaultValue": false,
+          "trueLabel": "Sí",
+          "falseLabel": "No",
+          "requiredLevel": "ApplicationRequired"
+        },
+        {
+          "logicalName": "vu_fechaenvio",
+          "schemaName": "vu_FechaEnvio",
+          "displayName": "Fecha de envío",
+          "type": "DateTime",
+          "format": "DateAndTime",
+          "dateTimeBehavior": "UserLocal",
+          "requiredLevel": "None"
+        },
+        {
+          "logicalName": "vu_fechaaprobacion",
+          "schemaName": "vu_FechaAprobacion",
+          "displayName": "Fecha de aprobación",
+          "type": "DateTime",
+          "format": "DateAndTime",
+          "dateTimeBehavior": "UserLocal",
+          "requiredLevel": "None"
+        }
+      ],
+      "keys": []
+    },
+    {
+      "schemaName": "vu_Entrevista",
+      "logicalName": "vu_entrevista",
+      "entitySetName": "vu_entrevistas",
+      "primaryIdAttribute": "vu_entrevistaid",
+      "displayName": "Entrevista",
+      "displayCollectionName": "Entrevistas",
+      "description": "Entrevista",
+      "ownershipType": "UserOwned",
+      "isAuditEnabled": false,
+      "primaryName": {
+        "logicalName": "vu_name",
+        "schemaName": "vu_Name",
+        "displayName": "Nombre",
+        "maxLength": 200,
+        "requiredLevel": "ApplicationRequired"
+      },
+      "columns": [
+        {
+          "logicalName": "vu_verificacionid",
+          "schemaName": "vu_VerificacionId",
+          "displayName": "Verificación",
+          "type": "Lookup",
+          "target": "vu_verificacion",
+          "cascade": "Parental",
+          "requiredLevel": "ApplicationRequired",
+          "relationshipSchemaName": "vu_verificacion_entrevista_verificacionid",
+          "navigationProperty": "vu_VerificacionId",
+          "odataBind": "vu_VerificacionId@odata.bind",
+          "readProperty": "_vu_verificacionid_value"
+        },
+        {
+          "logicalName": "vu_numero",
+          "schemaName": "vu_Numero",
+          "displayName": "Número",
+          "type": "Integer",
+          "minValue": -2147483648,
+          "maxValue": 2147483647,
+          "requiredLevel": "ApplicationRequired"
+        },
+        {
+          "logicalName": "vu_entrevistadoid",
+          "schemaName": "vu_EntrevistadoId",
+          "displayName": "Entrevistado (usuario)",
+          "type": "Lookup",
+          "target": "systemuser",
+          "cascade": "RemoveLink",
+          "requiredLevel": "None",
+          "relationshipSchemaName": "vu_systemuser_entrevista_entrevistadoid",
+          "navigationProperty": "vu_EntrevistadoId",
+          "odataBind": "vu_EntrevistadoId@odata.bind",
+          "readProperty": "_vu_entrevistadoid_value"
+        },
+        {
+          "logicalName": "vu_entrevistadonombre",
+          "schemaName": "vu_EntrevistadoNombre",
+          "displayName": "Nombre del entrevistado",
+          "type": "String",
+          "format": "Text",
+          "maxLength": 200,
+          "requiredLevel": "ApplicationRequired"
+        },
+        {
+          "logicalName": "vu_entrevistadocorreo",
+          "schemaName": "vu_EntrevistadoCorreo",
+          "displayName": "Correo del entrevistado",
+          "type": "String",
+          "format": "Email",
+          "maxLength": 100,
+          "requiredLevel": "None"
+        },
+        {
+          "logicalName": "vu_areaid",
+          "schemaName": "vu_AreaId",
+          "displayName": "Área",
+          "type": "Lookup",
+          "target": "vu_area",
+          "cascade": "RemoveLink",
+          "requiredLevel": "None",
+          "relationshipSchemaName": "vu_area_entrevista_areaid",
+          "navigationProperty": "vu_AreaId",
+          "odataBind": "vu_AreaId@odata.bind",
+          "readProperty": "_vu_areaid_value"
+        },
+        {
+          "logicalName": "vu_fechahora",
+          "schemaName": "vu_FechaHora",
+          "displayName": "Fecha y hora",
+          "type": "DateTime",
+          "format": "DateAndTime",
+          "dateTimeBehavior": "UserLocal",
+          "requiredLevel": "None"
+        },
+        {
+          "logicalName": "vu_modalidad",
+          "schemaName": "vu_Modalidad",
+          "displayName": "Modalidad",
+          "type": "Picklist",
+          "requiredLevel": "None",
+          "globalOptionSet": "vu_modalidad"
+        },
+        {
+          "logicalName": "vu_estadoentrevista",
+          "schemaName": "vu_EstadoEntrevista",
+          "displayName": "Estado de la entrevista",
+          "type": "Picklist",
+          "requiredLevel": "ApplicationRequired",
+          "options": [
+            {
+              "value": 100000000,
+              "label": "Pendiente"
+            },
+            {
+              "value": 100000001,
+              "label": "En curso"
+            },
+            {
+              "value": 100000002,
+              "label": "Completa"
+            }
+          ]
+        },
+        {
+          "logicalName": "vu_urlgrabacion",
+          "schemaName": "vu_UrlGrabacion",
+          "displayName": "URL de la grabación",
+          "type": "String",
+          "format": "Url",
+          "maxLength": 1000,
+          "requiredLevel": "None"
+        },
+        {
+          "logicalName": "vu_oportunidadesmejora",
+          "schemaName": "vu_OportunidadesMejora",
+          "displayName": "Oportunidades de mejora",
+          "type": "Memo",
+          "maxLength": 4000,
+          "requiredLevel": "None"
+        },
+        {
+          "logicalName": "vu_recomendaciones",
+          "schemaName": "vu_Recomendaciones",
+          "displayName": "Recomendaciones",
+          "type": "Memo",
+          "maxLength": 4000,
+          "requiredLevel": "None"
+        },
+        {
+          "logicalName": "vu_fechacompletada",
+          "schemaName": "vu_FechaCompletada",
+          "displayName": "Fecha de completado",
+          "type": "DateTime",
+          "format": "DateAndTime",
+          "dateTimeBehavior": "UserLocal",
+          "requiredLevel": "None"
+        }
+      ],
+      "keys": []
+    },
+    {
+      "schemaName": "vu_Respuesta",
+      "logicalName": "vu_respuesta",
+      "entitySetName": "vu_respuestas",
+      "primaryIdAttribute": "vu_respuestaid",
+      "displayName": "Respuesta",
+      "displayCollectionName": "Respuestas",
+      "description": "Respuesta",
+      "ownershipType": "UserOwned",
+      "isAuditEnabled": false,
+      "primaryName": {
+        "logicalName": "vu_name",
+        "schemaName": "vu_Name",
+        "displayName": "Pregunta",
+        "maxLength": 500,
+        "requiredLevel": "ApplicationRequired"
+      },
+      "columns": [
+        {
+          "logicalName": "vu_entrevistaid",
+          "schemaName": "vu_EntrevistaId",
+          "displayName": "Entrevista",
+          "type": "Lookup",
+          "target": "vu_entrevista",
+          "cascade": "Parental",
+          "requiredLevel": "ApplicationRequired",
+          "relationshipSchemaName": "vu_entrevista_respuesta_entrevistaid",
+          "navigationProperty": "vu_EntrevistaId",
+          "odataBind": "vu_EntrevistaId@odata.bind",
+          "readProperty": "_vu_entrevistaid_value"
+        },
+        {
+          "logicalName": "vu_verificacionid",
+          "schemaName": "vu_VerificacionId",
+          "displayName": "Verificación",
+          "type": "Lookup",
+          "target": "vu_verificacion",
+          "cascade": "RemoveLink",
+          "requiredLevel": "ApplicationRequired",
+          "relationshipSchemaName": "vu_verificacion_respuesta_verificacionid",
+          "navigationProperty": "vu_VerificacionId",
+          "odataBind": "vu_VerificacionId@odata.bind",
+          "readProperty": "_vu_verificacionid_value"
+        },
+        {
+          "logicalName": "vu_origen",
+          "schemaName": "vu_Origen",
+          "displayName": "Origen",
+          "type": "Picklist",
+          "requiredLevel": "ApplicationRequired",
+          "options": [
+            {
+              "value": 100000000,
+              "label": "Definida"
+            },
+            {
+              "value": 100000001,
+              "label": "Surgida en reunión"
+            }
+          ]
+        },
+        {
+          "logicalName": "vu_preguntaid",
+          "schemaName": "vu_PreguntaId",
+          "displayName": "Pregunta definida",
+          "type": "Lookup",
+          "target": "vu_pregunta",
+          "cascade": "RemoveLink",
+          "requiredLevel": "None",
+          "relationshipSchemaName": "vu_pregunta_respuesta_preguntaid",
+          "navigationProperty": "vu_PreguntaId",
+          "odataBind": "vu_PreguntaId@odata.bind",
+          "readProperty": "_vu_preguntaid_value"
+        },
+        {
+          "logicalName": "vu_criterioid",
+          "schemaName": "vu_CriterioId",
+          "displayName": "Criterio",
+          "type": "Lookup",
+          "target": "vu_criterio",
+          "cascade": "Restrict",
+          "requiredLevel": "ApplicationRequired",
+          "relationshipSchemaName": "vu_criterio_respuesta_criterioid",
+          "navigationProperty": "vu_CriterioId",
+          "odataBind": "vu_CriterioId@odata.bind",
+          "readProperty": "_vu_criterioid_value"
+        },
+        {
+          "logicalName": "vu_opcionid",
+          "schemaName": "vu_OpcionId",
+          "displayName": "Opción elegida",
+          "type": "Lookup",
+          "target": "vu_opcionrespuesta",
+          "cascade": "RemoveLink",
+          "requiredLevel": "None",
+          "relationshipSchemaName": "vu_opcionrespuesta_respuesta_opcionid",
+          "navigationProperty": "vu_OpcionId",
+          "odataBind": "vu_OpcionId@odata.bind",
+          "readProperty": "_vu_opcionid_value"
+        },
+        {
+          "logicalName": "vu_respuestatexto",
+          "schemaName": "vu_RespuestaTexto",
+          "displayName": "Respuesta",
+          "type": "Memo",
+          "maxLength": 4000,
+          "requiredLevel": "None"
+        },
+        {
+          "logicalName": "vu_puntaje",
+          "schemaName": "vu_Puntaje",
+          "displayName": "Puntaje",
+          "type": "Integer",
+          "minValue": 1,
+          "maxValue": 10,
+          "requiredLevel": "None"
+        },
+        {
+          "logicalName": "vu_sustento",
+          "schemaName": "vu_Sustento",
+          "displayName": "Sustento",
+          "type": "Memo",
+          "maxLength": 4000,
+          "requiredLevel": "None"
+        },
+        {
+          "logicalName": "vu_orden",
+          "schemaName": "vu_Orden",
+          "displayName": "Orden",
+          "type": "Integer",
+          "minValue": -2147483648,
+          "maxValue": 2147483647,
+          "requiredLevel": "ApplicationRequired"
+        }
+      ],
+      "keys": []
+    },
+    {
+      "schemaName": "vu_Evidencia",
+      "logicalName": "vu_evidencia",
+      "entitySetName": "vu_evidencias",
+      "primaryIdAttribute": "vu_evidenciaid",
+      "displayName": "Evidencia",
+      "displayCollectionName": "Evidencias",
+      "description": "Evidencia",
+      "ownershipType": "UserOwned",
+      "isAuditEnabled": false,
+      "primaryName": {
+        "logicalName": "vu_name",
+        "schemaName": "vu_Name",
+        "displayName": "Nombre del archivo",
+        "maxLength": 200,
+        "requiredLevel": "ApplicationRequired"
+      },
+      "columns": [
+        {
+          "logicalName": "vu_entrevistaid",
+          "schemaName": "vu_EntrevistaId",
+          "displayName": "Entrevista",
+          "type": "Lookup",
+          "target": "vu_entrevista",
+          "cascade": "Parental",
+          "requiredLevel": "ApplicationRequired",
+          "relationshipSchemaName": "vu_entrevista_evidencia_entrevistaid",
+          "navigationProperty": "vu_EntrevistaId",
+          "odataBind": "vu_EntrevistaId@odata.bind",
+          "readProperty": "_vu_entrevistaid_value"
+        },
+        {
+          "logicalName": "vu_verificacionid",
+          "schemaName": "vu_VerificacionId",
+          "displayName": "Verificación",
+          "type": "Lookup",
+          "target": "vu_verificacion",
+          "cascade": "RemoveLink",
+          "requiredLevel": "ApplicationRequired",
+          "relationshipSchemaName": "vu_verificacion_evidencia_verificacionid",
+          "navigationProperty": "vu_VerificacionId",
+          "odataBind": "vu_VerificacionId@odata.bind",
+          "readProperty": "_vu_verificacionid_value"
+        },
+        {
+          "logicalName": "vu_respuestaid",
+          "schemaName": "vu_RespuestaId",
+          "displayName": "Respuesta",
+          "type": "Lookup",
+          "target": "vu_respuesta",
+          "cascade": "RemoveLink",
+          "requiredLevel": "None",
+          "relationshipSchemaName": "vu_respuesta_evidencia_respuestaid",
+          "navigationProperty": "vu_RespuestaId",
+          "odataBind": "vu_RespuestaId@odata.bind",
+          "readProperty": "_vu_respuestaid_value"
+        },
+        {
+          "logicalName": "vu_tipoevidencia",
+          "schemaName": "vu_TipoEvidencia",
+          "displayName": "Tipo de evidencia",
+          "type": "Picklist",
+          "requiredLevel": "ApplicationRequired",
+          "options": [
+            {
+              "value": 100000000,
+              "label": "Captura"
+            },
+            {
+              "value": 100000001,
+              "label": "Documento"
+            }
+          ]
+        },
+        {
+          "logicalName": "vu_archivo",
+          "schemaName": "vu_Archivo",
+          "displayName": "Archivo",
+          "type": "File",
+          "maxSizeInKB": 32768,
+          "requiredLevel": "ApplicationRequired"
+        }
+      ],
+      "keys": []
+    },
+    {
+      "schemaName": "vu_PuntajeCriterio",
+      "logicalName": "vu_puntajecriterio",
+      "entitySetName": "vu_puntajecriterios",
+      "primaryIdAttribute": "vu_puntajecriterioid",
+      "displayName": "Puntaje por criterio",
+      "displayCollectionName": "Puntajes por criterio",
+      "description": "Puntaje por criterio",
+      "ownershipType": "UserOwned",
+      "isAuditEnabled": true,
+      "primaryName": {
+        "logicalName": "vu_name",
+        "schemaName": "vu_Name",
+        "displayName": "Criterio",
+        "maxLength": 100,
+        "requiredLevel": "ApplicationRequired"
+      },
+      "columns": [
+        {
+          "logicalName": "vu_verificacionid",
+          "schemaName": "vu_VerificacionId",
+          "displayName": "Verificación",
+          "type": "Lookup",
+          "target": "vu_verificacion",
+          "cascade": "Parental",
+          "requiredLevel": "ApplicationRequired",
+          "relationshipSchemaName": "vu_verificacion_puntajecriterio_verificacionid",
+          "navigationProperty": "vu_VerificacionId",
+          "odataBind": "vu_VerificacionId@odata.bind",
+          "readProperty": "_vu_verificacionid_value"
+        },
+        {
+          "logicalName": "vu_criterioid",
+          "schemaName": "vu_CriterioId",
+          "displayName": "Criterio",
+          "type": "Lookup",
+          "target": "vu_criterio",
+          "cascade": "Restrict",
+          "requiredLevel": "ApplicationRequired",
+          "relationshipSchemaName": "vu_criterio_puntajecriterio_criterioid",
+          "navigationProperty": "vu_CriterioId",
+          "odataBind": "vu_CriterioId@odata.bind",
+          "readProperty": "_vu_criterioid_value"
+        },
+        {
+          "logicalName": "vu_peso",
+          "schemaName": "vu_Peso",
+          "displayName": "Peso (%)",
+          "type": "Decimal",
+          "minValue": 0,
+          "maxValue": 100,
+          "precision": 2,
+          "requiredLevel": "ApplicationRequired"
+        },
+        {
+          "logicalName": "vu_puntajesugerido",
+          "schemaName": "vu_PuntajeSugerido",
+          "displayName": "Puntaje sugerido",
+          "type": "Decimal",
+          "minValue": 1,
+          "maxValue": 10,
+          "precision": 1,
+          "requiredLevel": "None"
+        },
+        {
+          "logicalName": "vu_puntajefinal",
+          "schemaName": "vu_PuntajeFinal",
+          "displayName": "Puntaje final",
+          "type": "Decimal",
+          "minValue": 1,
+          "maxValue": 10,
+          "precision": 1,
+          "requiredLevel": "ApplicationRequired"
+        },
+        {
+          "logicalName": "vu_sustentoajuste",
+          "schemaName": "vu_SustentoAjuste",
+          "displayName": "Sustento del ajuste",
+          "type": "Memo",
+          "maxLength": 4000,
+          "requiredLevel": "None"
+        }
+      ],
+      "keys": [
+        {
+          "schemaName": "vu_ak_verificacion_criterio",
+          "logicalName": "vu_ak_verificacion_criterio",
+          "displayName": "Verificación y criterio",
+          "keyAttributes": [
+            "vu_verificacionid",
+            "vu_criterioid"
+          ]
+        }
+      ]
+    },
+    {
+      "schemaName": "vu_Aprobacion",
+      "logicalName": "vu_aprobacion",
+      "entitySetName": "vu_aprobacions",
+      "primaryIdAttribute": "vu_aprobacionid",
+      "displayName": "Aprobación",
+      "displayCollectionName": "Aprobaciones",
+      "description": "Aprobación",
+      "ownershipType": "UserOwned",
+      "isAuditEnabled": true,
+      "primaryName": {
+        "logicalName": "vu_name",
+        "schemaName": "vu_Name",
+        "displayName": "Nombre",
+        "maxLength": 100,
+        "requiredLevel": "ApplicationRequired"
+      },
+      "columns": [
+        {
+          "logicalName": "vu_verificacionid",
+          "schemaName": "vu_VerificacionId",
+          "displayName": "Verificación",
+          "type": "Lookup",
+          "target": "vu_verificacion",
+          "cascade": "Parental",
+          "requiredLevel": "ApplicationRequired",
+          "relationshipSchemaName": "vu_verificacion_aprobacion_verificacionid",
+          "navigationProperty": "vu_VerificacionId",
+          "odataBind": "vu_VerificacionId@odata.bind",
+          "readProperty": "_vu_verificacionid_value"
+        },
+        {
+          "logicalName": "vu_nivel",
+          "schemaName": "vu_Nivel",
+          "displayName": "Nivel",
+          "type": "Picklist",
+          "requiredLevel": "ApplicationRequired",
+          "options": [
+            {
+              "value": 100000000,
+              "label": "Piloto"
+            },
+            {
+              "value": 100000001,
+              "label": "Productiva"
+            }
+          ]
+        },
+        {
+          "logicalName": "vu_aprobadorid",
+          "schemaName": "vu_AprobadorId",
+          "displayName": "Aprobador",
+          "type": "Lookup",
+          "target": "systemuser",
+          "cascade": "RemoveLink",
+          "requiredLevel": "ApplicationRequired",
+          "relationshipSchemaName": "vu_systemuser_aprobacion_aprobadorid",
+          "navigationProperty": "vu_AprobadorId",
+          "odataBind": "vu_AprobadorId@odata.bind",
+          "readProperty": "_vu_aprobadorid_value"
+        },
+        {
+          "logicalName": "vu_decision",
+          "schemaName": "vu_Decision",
+          "displayName": "Decisión",
+          "type": "Picklist",
+          "requiredLevel": "ApplicationRequired",
+          "options": [
+            {
+              "value": 100000000,
+              "label": "Pendiente"
+            },
+            {
+              "value": 100000001,
+              "label": "Aprobada"
+            },
+            {
+              "value": 100000002,
+              "label": "Observada"
+            },
+            {
+              "value": 100000003,
+              "label": "Rechazada"
+            }
+          ]
+        },
+        {
+          "logicalName": "vu_comentario",
+          "schemaName": "vu_Comentario",
+          "displayName": "Comentario",
+          "type": "Memo",
+          "maxLength": 4000,
+          "requiredLevel": "None"
+        },
+        {
+          "logicalName": "vu_fechasolicitud",
+          "schemaName": "vu_FechaSolicitud",
+          "displayName": "Fecha de solicitud",
+          "type": "DateTime",
+          "format": "DateAndTime",
+          "dateTimeBehavior": "UserLocal",
+          "requiredLevel": "ApplicationRequired"
+        },
+        {
+          "logicalName": "vu_fechadecision",
+          "schemaName": "vu_FechaDecision",
+          "displayName": "Fecha de decisión",
+          "type": "DateTime",
+          "format": "DateAndTime",
+          "dateTimeBehavior": "UserLocal",
+          "requiredLevel": "None"
+        },
+        {
+          "logicalName": "vu_approvalid",
+          "schemaName": "vu_ApprovalId",
+          "displayName": "ID de Approvals",
+          "type": "String",
+          "format": "Text",
+          "maxLength": 100,
+          "requiredLevel": "None"
+        }
+      ],
+      "keys": []
+    },
+    {
+      "schemaName": "vu_Notificacion",
+      "logicalName": "vu_notificacion",
+      "entitySetName": "vu_notificacions",
+      "primaryIdAttribute": "vu_notificacionid",
+      "displayName": "Notificación",
+      "displayCollectionName": "Notificaciones",
+      "description": "Bitácora de notificaciones (RN-06).",
+      "ownershipType": "UserOwned",
+      "isAuditEnabled": false,
+      "primaryName": {
+        "logicalName": "vu_name",
+        "schemaName": "vu_Name",
+        "displayName": "Asunto",
+        "maxLength": 300,
+        "requiredLevel": "ApplicationRequired"
+      },
+      "columns": [
+        {
+          "logicalName": "vu_verificacionid",
+          "schemaName": "vu_VerificacionId",
+          "displayName": "Verificación",
+          "type": "Lookup",
+          "target": "vu_verificacion",
+          "cascade": "Parental",
+          "requiredLevel": "None",
+          "relationshipSchemaName": "vu_verificacion_notificacion_verificacionid",
+          "navigationProperty": "vu_VerificacionId",
+          "odataBind": "vu_VerificacionId@odata.bind",
+          "readProperty": "_vu_verificacionid_value"
+        },
+        {
+          "logicalName": "vu_solucionid",
+          "schemaName": "vu_SolucionId",
+          "displayName": "Solución",
+          "type": "Lookup",
+          "target": "vu_solucion",
+          "cascade": "RemoveLink",
+          "requiredLevel": "None",
+          "relationshipSchemaName": "vu_solucion_notificacion_solucionid",
+          "navigationProperty": "vu_SolucionId",
+          "odataBind": "vu_SolucionId@odata.bind",
+          "readProperty": "_vu_solucionid_value"
+        },
+        {
+          "logicalName": "vu_tiponotificacion",
+          "schemaName": "vu_TipoNotificacion",
+          "displayName": "Tipo de notificación",
+          "type": "Picklist",
+          "requiredLevel": "ApplicationRequired",
+          "options": [
+            {
+              "value": 100000000,
+              "label": "Alerta anticipada"
+            },
+            {
+              "value": 100000001,
+              "label": "Envío a revisión"
+            },
+            {
+              "value": 100000002,
+              "label": "Decisión"
+            },
+            {
+              "value": 100000003,
+              "label": "Recordatorio de vencimiento"
+            }
+          ]
+        },
+        {
+          "logicalName": "vu_destinatarioid",
+          "schemaName": "vu_DestinatarioId",
+          "displayName": "Destinatario",
+          "type": "Lookup",
+          "target": "systemuser",
+          "cascade": "RemoveLink",
+          "requiredLevel": "ApplicationRequired",
+          "relationshipSchemaName": "vu_systemuser_notificacion_destinatarioid",
+          "navigationProperty": "vu_DestinatarioId",
+          "odataBind": "vu_DestinatarioId@odata.bind",
+          "readProperty": "_vu_destinatarioid_value"
+        },
+        {
+          "logicalName": "vu_canal",
+          "schemaName": "vu_Canal",
+          "displayName": "Canal",
+          "type": "Picklist",
+          "requiredLevel": "ApplicationRequired",
+          "options": [
+            {
+              "value": 100000000,
+              "label": "Correo"
+            },
+            {
+              "value": 100000001,
+              "label": "Teams"
+            }
+          ]
+        },
+        {
+          "logicalName": "vu_fechaenvio",
+          "schemaName": "vu_FechaEnvio",
+          "displayName": "Fecha de envío",
+          "type": "DateTime",
+          "format": "DateAndTime",
+          "dateTimeBehavior": "UserLocal",
+          "requiredLevel": "ApplicationRequired"
+        },
+        {
+          "logicalName": "vu_estadoenvio",
+          "schemaName": "vu_EstadoEnvio",
+          "displayName": "Estado del envío",
+          "type": "Picklist",
+          "requiredLevel": "ApplicationRequired",
+          "options": [
+            {
+              "value": 100000000,
+              "label": "Enviada"
+            },
+            {
+              "value": 100000001,
+              "label": "Error"
+            }
+          ]
+        }
+      ],
+      "keys": []
+    }
+  ],
+  "roles": [
+    {
+      "name": "VU Lector",
+      "description": "Consulta los catálogos de Verificación de uso.",
+      "privileges": [
+        {
+          "entities": [
+            "vu_area",
+            "vu_solucion",
+            "vu_documentosolucion",
+            "vu_criterio",
+            "vu_pregunta",
+            "vu_opcionrespuesta"
+          ],
+          "rights": [
+            "Read"
+          ],
+          "depth": "Global"
+        }
+      ]
+    },
+    {
+      "name": "VU Responsable",
+      "description": "Programa y ejecuta verificaciones propias; lee las de su unidad de negocio.",
+      "privileges": [
+        {
+          "entities": [
+            "vu_area",
+            "vu_solucion",
+            "vu_documentosolucion",
+            "vu_criterio",
+            "vu_pregunta",
+            "vu_opcionrespuesta"
+          ],
+          "rights": [
+            "Read"
+          ],
+          "depth": "Global"
+        },
+        {
+          "entities": [
+            "vu_area",
+            "vu_solucion",
+            "vu_documentosolucion",
+            "vu_criterio",
+            "vu_pregunta",
+            "vu_opcionrespuesta"
+          ],
+          "rights": [
+            "AppendTo"
+          ],
+          "depth": "Global",
+          "$comment": "Necesario para enlazar búsquedas a los catálogos (no figura en §3.6)."
+        },
+        {
+          "entities": [
+            "vu_verificacion",
+            "vu_entrevista",
+            "vu_respuesta",
+            "vu_evidencia",
+            "vu_puntajecriterio"
+          ],
+          "rights": [
+            "Create",
+            "Write",
+            "Append",
+            "AppendTo"
+          ],
+          "depth": "Basic"
+        },
+        {
+          "entities": [
+            "vu_verificacion",
+            "vu_entrevista",
+            "vu_respuesta",
+            "vu_evidencia",
+            "vu_puntajecriterio"
+          ],
+          "rights": [
+            "Read"
+          ],
+          "depth": "Local"
+        },
+        {
+          "entities": [
+            "vu_aprobacion",
+            "vu_notificacion"
+          ],
+          "rights": [
+            "Read"
+          ],
+          "depth": "Basic"
+        }
+      ]
+    },
+    {
+      "name": "VU Aprobador",
+      "description": "Lee verificaciones y decide aprobaciones.",
+      "privileges": [
+        {
+          "entities": [
+            "vu_area",
+            "vu_solucion",
+            "vu_documentosolucion",
+            "vu_criterio",
+            "vu_pregunta",
+            "vu_opcionrespuesta"
+          ],
+          "rights": [
+            "Read"
+          ],
+          "depth": "Global"
+        },
+        {
+          "entities": [
+            "vu_verificacion",
+            "vu_entrevista",
+            "vu_respuesta",
+            "vu_evidencia",
+            "vu_puntajecriterio"
+          ],
+          "rights": [
+            "Read"
+          ],
+          "depth": "Global"
+        },
+        {
+          "entities": [
+            "vu_aprobacion",
+            "vu_notificacion"
+          ],
+          "rights": [
+            "Read",
+            "Write"
+          ],
+          "depth": "Global"
+        }
+      ]
+    },
+    {
+      "name": "VU Administrador",
+      "description": "Administra catálogos, pesos y todas las verificaciones.",
+      "privileges": [
+        {
+          "entities": [
+            "vu_area",
+            "vu_solucion",
+            "vu_documentosolucion",
+            "vu_criterio",
+            "vu_pregunta",
+            "vu_opcionrespuesta",
+            "vu_verificacion",
+            "vu_entrevista",
+            "vu_respuesta",
+            "vu_evidencia",
+            "vu_puntajecriterio",
+            "vu_aprobacion",
+            "vu_notificacion"
+          ],
+          "rights": [
+            "Create",
+            "Read",
+            "Write",
+            "Delete",
+            "Append",
+            "AppendTo"
+          ],
+          "depth": "Global"
+        }
+      ]
+    }
+  ]
+}

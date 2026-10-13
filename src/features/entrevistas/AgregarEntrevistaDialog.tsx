@@ -78,7 +78,7 @@ export function AgregarEntrevistaDialog({ verificacion, totalActual, onCerrar, o
                 />
               </Field>
               <Field label="Área">
-                <Select value={areaId?.toString() ?? ''} onChange={(_, d) => setAreaId(d.value ? Number(d.value) : null)}>
+                <Select value={areaId ?? ''} onChange={(_, d) => setAreaId(d.value || null)}>
                   <option value="">Sin área</option>
                   {areas
                     .filter((a) => a.activo)

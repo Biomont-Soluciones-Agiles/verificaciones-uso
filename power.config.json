@@ -11,5 +11,81 @@
   "localAppUrl": "http://localhost:3000",
   "logoPath": "Default",
   "connectionReferences": {},
-  "databaseReferences": {}
+  "databaseReferences": {
+    "default.cds": {
+      "dataSources": {
+        "_reas": {
+          "entitySetName": "vu_areas",
+          "logicalName": "vu_area",
+          "isHidden": false
+        },
+        "solucionesdigitales": {
+          "entitySetName": "vu_solucions",
+          "logicalName": "vu_solucion",
+          "isHidden": false
+        },
+        "documentosdelasoluci_n": {
+          "entitySetName": "vu_documentosolucions",
+          "logicalName": "vu_documentosolucion",
+          "isHidden": false
+        },
+        "criteriosdeevaluaci_n": {
+          "entitySetName": "vu_criterios",
+          "logicalName": "vu_criterio",
+          "isHidden": false
+        },
+        "preguntas": {
+          "entitySetName": "vu_preguntas",
+          "logicalName": "vu_pregunta",
+          "isHidden": false
+        },
+        "opcionesderespuesta": {
+          "entitySetName": "vu_opcionrespuestas",
+          "logicalName": "vu_opcionrespuesta",
+          "isHidden": false
+        },
+        "verificacionesdeuso": {
+          "entitySetName": "vu_verificacions",
+          "logicalName": "vu_verificacion",
+          "isHidden": false
+        },
+        "entrevistas": {
+          "entitySetName": "vu_entrevistas",
+          "logicalName": "vu_entrevista",
+          "isHidden": false
+        },
+        "respuestas": {
+          "entitySetName": "vu_respuestas",
+          "logicalName": "vu_respuesta",
+          "isHidden": false
+        },
+        "evidencias": {
+          "entitySetName": "vu_evidencias",
+          "logicalName": "vu_evidencia",
+          "isHidden": false
+        },
+        "puntajesporcriterio": {
+          "entitySetName": "vu_puntajecriterios",
+          "logicalName": "vu_puntajecriterio",
+          "isHidden": false
+        },
+        "aprobaciones": {
+          "entitySetName": "vu_aprobacions",
+          "logicalName": "vu_aprobacion",
+          "isHidden": false
+        },
+        "notificaciones": {
+          "entitySetName": "vu_notificacions",
+          "logicalName": "vu_notificacion",
+          "isHidden": false
+        },
+        "usuarios": {
+          "entitySetName": "systemusers",
+          "logicalName": "systemuser",
+          "isHidden": false
+        }
+      },
+      "environmentVariableName": ""
+    }
+  }
 }

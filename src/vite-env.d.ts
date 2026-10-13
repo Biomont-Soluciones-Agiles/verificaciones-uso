@@ -1,8 +1,8 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
-  /** Origen de datos: `mock` (por defecto) o `sharepoint`. */
-  readonly VITE_DATA_SOURCE?: 'mock' | 'sharepoint';
+  /** Origen de datos: `dataverse` (por defecto) o `mock`. */
+  readonly VITE_DATA_SOURCE?: 'dataverse' | 'mock';
 }
 
 interface ImportMeta {

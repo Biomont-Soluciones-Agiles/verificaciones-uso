@@ -29,10 +29,10 @@ export function RespuestaDefinida({ respuesta, pregunta, opciones, criterioNombr
         {esSeleccion ? (
           <Field label="Respuesta">
             <Select
-              value={respuesta.opcionId?.toString() ?? ''}
+              value={respuesta.opcionId ?? ''}
               disabled={soloLectura}
               onChange={(_, d) => {
-                const opcion = opciones.find((o) => o.id === Number(d.value));
+                const opcion = opciones.find((o) => o.id === d.value);
                 onChange(
                   opcion
                     ? { opcionId: opcion.id, respuestaTexto: opcion.titulo, puntaje: opcion.puntajeSugerido }

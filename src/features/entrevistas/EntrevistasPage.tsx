@@ -5,7 +5,7 @@ import { Cargando, Encabezado, ErrorCarga, Pila, Tarjeta } from '../../component
 import { useCriterios, useOpciones, usePreguntas } from '../../data/hooks/useCatalogo';
 import { useEntrevistas, useEvidencias } from '../../data/hooks/useEntrevistas';
 import { admiteEntrevistas, contarCompletas } from '../../domain/flujo';
-import type { Entrevista } from '../../domain/tipos';
+import type { Entrevista, Id } from '../../domain/tipos';
 import { EditorEntrevista } from './EditorEntrevista';
 import { ListaEntrevistas } from './ListaEntrevistas';
 
@@ -46,11 +46,11 @@ export function EntrevistasPage() {
 
   const lista = entrevistas.data;
   const listaEvidencias = evidencias.data;
-  const idSolicitado = Number(params.get('entrevista'));
+  const idSolicitado = params.get('entrevista');
   const seleccionada = lista.find((e) => e.id === idSolicitado) ?? predeterminada(lista);
   const completas = contarCompletas(lista);
   const editable = admiteEntrevistas(verificacion.estado);
-  const seleccionar = (id: number) => setParams({ entrevista: String(id) }, { replace: true });
+  const seleccionar = (id: Id) => setParams({ entrevista: id }, { replace: true });
 
   return (
     <Pila>

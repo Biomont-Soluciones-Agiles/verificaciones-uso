@@ -18,7 +18,7 @@ import { useAvisos } from '../../components/avisos';
 import { Acciones, Cargando, ErrorCarga, Tarjeta } from '../../components/Estructura';
 import { useCriterios, useGuardarCriterios, type CambiosCriterios } from '../../data/hooks/useCatalogo';
 import { pesosValidos, sumaPesos, SUMA_PESOS_REQUERIDA } from '../../domain/evaluacion';
-import type { Criterio } from '../../domain/tipos';
+import type { Criterio, Id } from '../../domain/tipos';
 
 export function AdminCriterios() {
   const { data, error, isPending, dataUpdatedAt } = useCriterios();
@@ -45,20 +45,20 @@ function EditorCriterios({ originales }: { originales: Criterio[] }) {
   const avisos = useAvisos();
   const guardar = useGuardarCriterios();
   const [filas, setFilas] = useState<Criterio[]>(originales);
-  const [siguienteTemporal, setSiguienteTemporal] = useState(-1);
+  const [siguienteTemporal, setSiguienteTemporal] = useState(1);
 
   const suma = sumaPesos(filas);
   const validos = pesosValidos(filas) && filas.every((f) => f.titulo.trim() && f.peso >= 0 && f.peso <= 100);
 
-  const cambiar = (id: number, cambios: Partial<Criterio>) =>
+  const cambiar = (id: Id, cambios: Partial<Criterio>) =>
     setFilas((fs) => fs.map((f) => (f.id === id ? { ...f, ...cambios } : f)));
 
   const agregar = () => {
     setFilas((fs) => [
       ...fs,
-      { id: siguienteTemporal, titulo: '', peso: 0, orden: fs.reduce((m, f) => Math.max(m, f.orden), 0) + 1, activo: true },
+      { id: `nuevo-${siguienteTemporal}`, titulo: '', peso: 0, orden: fs.reduce((m, f) => Math.max(m, f.orden), 0) + 1, activo: true },
     ]);
-    setSiguienteTemporal((n) => n - 1);
+    setSiguienteTemporal((n) => n + 1);
   };
 
   const guardarCambios = async () => {

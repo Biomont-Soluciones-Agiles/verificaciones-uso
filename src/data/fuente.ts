@@ -1,14 +1,14 @@
+import { crearRepositoriosDataverse } from './dataverse/repositoriosDataverse';
 import { crearRepositoriosMock } from './mock/repositoriosMock';
 import type { Repositorios } from './repositorios';
-import { crearRepositoriosSharePoint } from './sharepoint/repositoriosSharePoint';
 
-export type FuenteDatos = 'mock' | 'sharepoint';
+export type FuenteDatos = 'dataverse' | 'mock';
 
-/** `VITE_DATA_SOURCE` (ver `.env.example`); `mock` por defecto. */
+/** `VITE_DATA_SOURCE` (ver `.env.example`); `dataverse` por defecto (§3.5). */
 export function fuenteConfigurada(): FuenteDatos {
-  return import.meta.env.VITE_DATA_SOURCE === 'sharepoint' ? 'sharepoint' : 'mock';
+  return import.meta.env.VITE_DATA_SOURCE === 'mock' ? 'mock' : 'dataverse';
 }
 
 export function crearRepositorios(fuente: FuenteDatos = fuenteConfigurada()): Repositorios {
-  return fuente === 'sharepoint' ? crearRepositoriosSharePoint() : crearRepositoriosMock();
+  return fuente === 'mock' ? crearRepositoriosMock() : crearRepositoriosDataverse();
 }

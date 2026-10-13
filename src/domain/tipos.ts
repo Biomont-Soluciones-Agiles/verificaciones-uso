@@ -1,13 +1,14 @@
 /**
  * Tipos de dominio de la verificación de uso (VU).
  *
- * Los valores de las elecciones son EXACTAMENTE los definidos en
- * `docs/diseno-verificacion-uso.md` §2.3–§2.5, porque se escriben tal cual en
- * las columnas de elección de SharePoint y los flujos de Power Automate los comparan.
- * Este módulo no depende de SharePoint: los nombres internos de columnas viven en `src/data/sharepoint/`.
+ * Los textos de las elecciones son EXACTAMENTE las etiquetas de `docs/diseno-verificacion-uso.md`
+ * §2.3–§2.5. En Dataverse se guardan como valores numéricos de opción (100000000…); la
+ * traducción texto ↔ número vive en `src/data/dataverse/opciones.ts`.
+ * Este módulo no depende de Dataverse.
  */
 
-export type Id = number;
+/** Identificador de fila: GUID en Dataverse; texto corto en el modo mock. */
+export type Id = string;
 
 /** Fecha sin hora en formato ISO `YYYY-MM-DD`. */
 export type FechaISO = string;
@@ -15,6 +16,8 @@ export type FechaISO = string;
 export type FechaHoraISO = string;
 
 export interface Persona {
+  /** `systemuserid` en Dataverse (si se conoce); el mock no lo usa. */
+  id?: Id | null;
   email: string;
   nombre: string;
 }
@@ -169,7 +172,7 @@ export interface OpcionRespuesta {
 
 export interface Verificacion {
   id: Id;
-  /** `VU-00012`; vacío hasta que la app lo escribe tras crear el elemento. */
+  /** `VU-00012`: lo asigna la autonumeración de Dataverse al crear la fila (la app no lo escribe). */
   codigo: string;
   solucionId: Id;
   /** Valor de la búsqueda (solo lectura). */
@@ -234,7 +237,7 @@ export interface Respuesta {
 export interface Evidencia {
   id: Id;
   nombreArchivo: string;
-  /** URL del archivo en la biblioteca (null en modo mock). */
+  /** URL directa del archivo, si la hay (en Dataverse se descarga con `EvidenciasRepo.descargar`). */
   url: string | null;
   verificacionId: Id;
   entrevistaId: Id;

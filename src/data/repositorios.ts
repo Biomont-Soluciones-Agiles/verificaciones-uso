@@ -19,7 +19,7 @@ import type {
 /**
  * Contratos de acceso a datos por agregado. Las pantallas y los servicios de aplicación
  * solo conocen estos contratos y los tipos de dominio; las implementaciones viven en
- * `mock/` (en memoria) y `sharepoint/` (servicios generados por `pac code add-data-source`).
+ * `mock/` (en memoria) y `dataverse/` (servicios generados por `pa app add data-source`).
  */
 
 export type SinId<T> = Omit<T, 'id'>;
@@ -59,7 +59,7 @@ export interface EntrevistasRepo {
 }
 
 export interface RespuestasRepo {
-  /** Filtra por la columna desnormalizada `Verificacion` (indexada). */
+  /** Filtra por la búsqueda desnormalizada `vu_verificacionid`. */
   listarPorVerificacion(verificacionId: Id): Promise<Respuesta[]>;
   listarPorEntrevista(entrevistaId: Id): Promise<Respuesta[]>;
   crear(datos: SinId<Respuesta>): Promise<Respuesta>;
@@ -75,10 +75,7 @@ export interface PuntajesRepo {
 
 export interface NuevaEvidencia {
   verificacionId: Id;
-  /** `VU-00012`, para la carpeta de la biblioteca. */
-  verificacionCodigo: string;
   entrevistaId: Id;
-  entrevistaNumero: number;
   respuestaId: Id | null;
   tipo: TipoEvidencia;
   archivo: File;
@@ -86,8 +83,10 @@ export interface NuevaEvidencia {
 
 export interface EvidenciasRepo {
   listarPorVerificacion(verificacionId: Id): Promise<Evidencia[]>;
-  /** Sube el archivo a `VU_Evidencias/{VU-xxxxx}/Entrevista-nn/` y escribe sus metadatos. */
+  /** Crea la fila `vu_evidencia` y sube el archivo a su columna `vu_archivo` (máx. 32 MB). */
   subir(datos: NuevaEvidencia): Promise<Evidencia>;
+  /** Contenido del archivo (null si no tiene o en modo mock). */
+  descargar(id: Id): Promise<Blob | null>;
   actualizar(id: Id, cambios: Pick<Cambios<Evidencia>, 'respuestaId' | 'tipo'>): Promise<Evidencia>;
   eliminar(id: Id): Promise<void>;
 }
@@ -115,7 +114,7 @@ export interface AprobacionesRepo {
   listarPorVerificacion(verificacionId: Id): Promise<Aprobacion[]>;
 }
 
-/** Personas de Entra ID (usuario actual y selector de personas). */
+/** Personas: usuarios del entorno (`systemuser`) para el usuario actual y el selector de personas. */
 export interface DirectorioRepo {
   usuarioActual(): Promise<Persona>;
   buscarPersonas(texto: string): Promise<Persona[]>;

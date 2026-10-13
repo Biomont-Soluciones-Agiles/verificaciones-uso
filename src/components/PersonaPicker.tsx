@@ -14,8 +14,9 @@ export interface PersonaPickerProps {
 }
 
 /**
- * Selector de personas. En modo mock usa el directorio de ejemplo; con SharePoint requiere
- * el conector Office 365 Users. Si la búsqueda no está disponible se puede escribir un correo.
+ * Selector de personas. En modo mock usa el directorio de ejemplo; con Dataverse, los usuarios
+ * habilitados del entorno (`systemuser`). También se puede escribir un correo: al guardar se
+ * busca el usuario por correo y, si es una búsqueda obligatoria y no existe, se avisa.
  * Usar dentro de un `<Field>` para la etiqueta.
  */
 export function PersonaPicker({ id, valor, onChange, deshabilitado, placeholder }: PersonaPickerProps) {

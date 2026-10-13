@@ -148,9 +148,9 @@ export function FormularioProgramacion({ verificacion, soluciones, inicial }: Fo
           <Campos>
             <Field label="Solución digital" required>
               <Select
-                value={valores.solucionId?.toString() ?? ''}
+                value={valores.solucionId ?? ''}
                 disabled={!!verificacion || !editable}
-                onChange={(_, d) => cambiar('solucionId', d.value ? Number(d.value) : null)}
+                onChange={(_, d) => cambiar('solucionId', d.value || null)}
               >
                 <option value="">Selecciona…</option>
                 {soluciones.map((s) => (

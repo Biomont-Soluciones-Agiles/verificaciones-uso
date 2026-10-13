@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Outlet, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Cargando, ErrorCarga, Pila } from '../components/Estructura';
 import { useVerificacion } from '../data/hooks/useVerificaciones';
+import { idDeTexto } from '../domain/codigo';
 import { etapasCompletadas } from '../domain/flujo';
 import { Stepper } from './Stepper';
 import { recordarVerificacion } from './verificacionActiva';
@@ -13,13 +14,13 @@ export function VerificacionLayout() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const verificacionId = Number(id);
-  const valido = Number.isInteger(verificacionId) && verificacionId > 0;
-  const { data: verificacion, isPending, error } = useVerificacion(valido ? verificacionId : null);
+  const verificacionId = idDeTexto(id);
+  const valido = verificacionId !== null;
+  const { data: verificacion, isPending, error } = useVerificacion(verificacionId);
 
   useEffect(() => {
-    if (valido) recordarVerificacion(verificacionId);
-  }, [valido, verificacionId]);
+    if (verificacionId) recordarVerificacion(verificacionId);
+  }, [verificacionId]);
 
   if (!valido) return <ErrorCarga error={new Error(`"${id}" no es un identificador de verificación válido.`)} />;
   if (error) return <ErrorCarga error={error} titulo="No se pudo abrir la verificación" />;

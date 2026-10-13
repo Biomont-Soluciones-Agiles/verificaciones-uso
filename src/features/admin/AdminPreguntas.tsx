@@ -26,7 +26,7 @@ import {
   useOpciones,
   usePreguntas,
 } from '../../data/hooks/useCatalogo';
-import { TIPOS_RESPUESTA, type Criterio, type OpcionRespuesta, type Pregunta, type TipoRespuesta } from '../../domain/tipos';
+import { TIPOS_RESPUESTA, type Criterio, type Id, type OpcionRespuesta, type Pregunta, type TipoRespuesta } from '../../domain/tipos';
 
 type Seleccion = { modo: 'nueva' } | { modo: 'editar'; pregunta: Pregunta } | null;
 
@@ -43,7 +43,7 @@ export function AdminPreguntas() {
   const listaPreguntas = preguntas.data;
   const listaCriterios = criterios.data;
 
-  const nombreCriterio = (id: number) => listaCriterios.find((c) => c.id === id)?.titulo ?? '—';
+  const nombreCriterio = (id: Id) => listaCriterios.find((c) => c.id === id)?.titulo ?? '—';
   const borrar = async (p: Pregunta) => {
     if (!window.confirm(`¿Eliminar la pregunta "${p.titulo}" y sus opciones?`)) return;
     try {
@@ -124,9 +124,9 @@ function FormularioPregunta({ pregunta, criterios, ordenSiguiente, onGuardada, o
   const avisos = useAvisos();
   const guardar = useGuardarPregunta();
   const [datos, setDatos] = useState<Omit<Pregunta, 'id'>>(
-    pregunta ?? { titulo: '', criterioId: criterios[0]?.id ?? 0, tipoRespuesta: 'Selección', orden: ordenSiguiente, activo: true },
+    pregunta ?? { titulo: '', criterioId: criterios[0]?.id ?? '', tipoRespuesta: 'Selección', orden: ordenSiguiente, activo: true },
   );
-  const valido = datos.titulo.trim().length > 0 && datos.titulo.length <= 255 && datos.criterioId > 0;
+  const valido = datos.titulo.trim().length > 0 && datos.titulo.length <= 500 && datos.criterioId !== '';
 
   const enviar = async () => {
     try {
@@ -140,12 +140,12 @@ function FormularioPregunta({ pregunta, criterios, ordenSiguiente, onGuardada, o
 
   return (
     <Tarjeta titulo={pregunta ? 'Editar pregunta' : 'Nueva pregunta'}>
-      <Field label="Texto de la pregunta" required hint="Máximo 255 caracteres.">
-        <Input maxLength={255} value={datos.titulo} onChange={(_, d) => setDatos({ ...datos, titulo: d.value })} />
+      <Field label="Texto de la pregunta" required hint="Máximo 500 caracteres.">
+        <Input maxLength={500} value={datos.titulo} onChange={(_, d) => setDatos({ ...datos, titulo: d.value })} />
       </Field>
       <Campos>
         <Field label="Criterio">
-          <Select value={String(datos.criterioId)} onChange={(_, d) => setDatos({ ...datos, criterioId: Number(d.value) })}>
+          <Select value={String(datos.criterioId)} onChange={(_, d) => setDatos({ ...datos, criterioId: d.value })}>
             {criterios.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.titulo}
@@ -195,7 +195,7 @@ function OpcionesPregunta({ pregunta }: { pregunta: Pregunta }) {
   );
 }
 
-function FilaOpcion({ opcion, preguntaId, ordenSiguiente }: { opcion: OpcionRespuesta | null; preguntaId: number; ordenSiguiente: number }) {
+function FilaOpcion({ opcion, preguntaId, ordenSiguiente }: { opcion: OpcionRespuesta | null; preguntaId: Id; ordenSiguiente: number }) {
   const avisos = useAvisos();
   const guardar = useGuardarOpcion();
   const eliminar = useEliminarOpcion();

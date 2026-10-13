@@ -1,137 +1,120 @@
 # Power Automate · Verificación de uso
 
-Definiciones de los cuatro flujos de la app *Verificación de uso* (Biomont), que se apoyan en las listas SharePoint de `https://biomont.sharepoint.com/sites/VerificacionUso`. La fuente de verdad es [`docs/diseno-verificacion-uso.md`](../../docs/diseno-verificacion-uso.md): §1.3 (reglas), §2.3 (nombres internos), §2.4 y §2.5 (estados), §3.3 (flujos) y §3.6 (seguridad).
+Definiciones de los cuatro flujos de la app *Verificación de uso*, con el conector **Microsoft Dataverse** (`shared_commondataserviceforapps`) sobre las tablas `vu_*` del entorno `42eff49b-d50d-e366-9c13-fa86677af7e3` (`https://org4d363b5e.crm2.dynamics.com`). La fuente de verdad es [`docs/diseno-verificacion-uso.md`](../../docs/diseno-verificacion-uso.md): §1.3 (reglas), §2.3 (nombres lógicos y valores de opción), §2.4 y §2.5 (estados), §3.3 (flujos), §3.6 (seguridad) y §3.7 (ALM). Los EntitySetName y los nombres de navegación de las búsquedas se contrastan con [`infra/dataverse/schema.json`](../dataverse/schema.json).
+
+> **Nota histórica.** Hasta la migración a Dataverse, estos flujos usaban listas de SharePoint. Esa versión se ha retirado por completo: no quedan variables de sitio o lista, ni condiciones antibucle, ni *Get changes*.
 
 | Flujo | Carpeta | Disparador | Qué hace | Conexiones |
 |---|---|---|---|---|
-| **F1** Alerta anticipada | [`F1-AlertaAnticipada`](F1-AlertaAnticipada/README.md) | Recurrencia diaria a las 07:00 (Lima) | `Programada` + `FechaAlerta ≤ hoy` + `AlertaEnviada = No` → correo al **responsable**, `AlertaEnviada = Sí` y bitácora | SharePoint, Outlook |
-| **F2** Envío a revisión | [`F2-EnvioRevision`](F2-EnvioRevision/README.md) | *When an item or a file is modified* en `VU_Verificaciones` (Estado = En revisión, editor ≠ cuenta de servicio, concurrencia 1) | Revalida RN-07 → aprobación del piloto → aprobación productiva (Approvals con respuestas Aprobar/Observar/Rechazar) → estados, `FechaAprobacion`, `ProximaVU`, `EstadoVU` y avisos | SharePoint, Approvals, Outlook, Teams |
-| **F3** Estado de la solución | [`F3-EstadoSolucion`](F3-EstadoSolucion/README.md) | *When an item is created or modified* en `VU_Verificaciones` (editor ≠ cuenta de servicio) | Recalcula `EstadoVU` y `UltimaVerificacionId` (§2.5) | SharePoint |
-| **F4** Vencimiento | [`F4-Vencimiento`](F4-Vencimiento/README.md) | Recurrencia semanal, lunes a las 07:00 (Lima) | `ProximaVU ≤ hoy + 30` y sin verificación activa → recordatorio al responsable de la solución; si ya venció, `EstadoVU = Pendiente` | SharePoint, Outlook |
+| **F1** Alerta anticipada | [`F1-AlertaAnticipada`](F1-AlertaAnticipada/README.md) | Recurrencia diaria a las 07:00 (Lima) | *List rows* `vu_verificacions` con `vu_estado eq 100000001 and vu_fechaalerta le <hoy> and vu_alertaenviada eq false` → correo al **responsable**, `vu_alertaenviada = true` y `vu_notificacion` | `vu_dataverse`, `vu_office365` |
+| **F2** Envío a revisión | [`F2-EnvioRevision`](F2-EnvioRevision/README.md) | Dataverse *Modified* en `vu_verificacion`, columnas de filtro `vu_estado`, filtro de filas `vu_estado eq 100000004`, concurrencia 25 | Revalida RN-07 → aprobación del piloto → aprobación productiva (Approvals: Aprobar/Observar/Rechazar, 14 días por nivel) → `vu_aprobacion`, `vu_estado`, `vu_fechaaprobacion`, `vu_proximavu` y avisos | `vu_dataverse`, `vu_approvals`, `vu_office365`, `vu_teams` |
+| **F3** Estado de la solución | [`F3-EstadoSolucion`](F3-EstadoSolucion/README.md) | Dataverse *Added or Modified* en `vu_verificacion`, columnas de filtro `vu_estado`, concurrencia 1 | Recalcula `vu_estadovu` y `vu_ultimaverificacionid` de la solución (§2.5). También se dispara con los cambios de F2 | `vu_dataverse` |
+| **F4** Vencimiento | [`F4-Vencimiento`](F4-Vencimiento/README.md) | Recurrencia semanal, lunes a las 07:00 (Lima) | `vu_proximavu ≤ hoy + 30` y sin verificación activa → recordatorio al responsable + `vu_notificacion` con `vu_solucionid`; si ya venció, `vu_estadovu = Pendiente` | `vu_dataverse`, `vu_office365` |
 
-> **RN-06 por diseño.** Ningún flujo se dispara desde `VU_Entrevistas`, `VU_Respuestas`, `VU_PuntajesCriterio` ni `VU_Evidencias`. El autoguardado y "Guardar avance sin notificar" no pueden generar avisos. F2 solo **lee** `VU_Entrevistas` para revalidar RN-07. La primera notificación a la aprobadora es la solicitud de Approvals que envía F2. F1 solo escribe al responsable. Todo envío queda en `VU_Notificaciones`, con `EstadoEnvio` en `Enviada` o `Error`.
+> **RN-06 por diseño.** Ningún flujo escucha `vu_entrevista`, `vu_respuesta`, `vu_puntajecriterio` ni `vu_evidencia`, y F2/F3 filtran por la columna `vu_estado`, así que el autoguardado y "Guardar avance" nunca generan avisos. F2 solo **lee** `vu_entrevista` para revalidar RN-07. La primera notificación a la aprobadora es la solicitud de Approvals de F2. F1 solo escribe al responsable. Todo envío queda en `vu_notificacion` con `vu_estadoenvio` Enviada (`100000000`) o Error (`100000001`).
 
 ## Formato de los archivos
 
-Cada `definition.json` sigue el formato de un flujo de solución:
+Cada `definition.json` sigue el formato de un flujo de solución (el `clientdata` de `Workflows/<flujo>.json`):
 
 ```json
-{ "properties": { "connectionReferences": { … }, "definition": { "$schema": ".../workflowdefinition.json#", … } }, "schemaVersion": "1.0.0.0" }
+{ "properties": { "connectionReferences": { … }, "definition": { "$schema": ".../workflowdefinition.json#", … }, "templateName": "" }, "schemaVersion": "1.0.0.0" }
 ```
 
-- Acciones `OpenApiConnection` y `OpenApiConnectionWebhook` (Approvals) con `host.connectionName`, `operationId` y `apiId`.
-- Las acciones **no** llevan `inputs.authentication`: Power Automate lo añade al guardar. Si se incluye, la API de flujos rechaza la definición con `WorkflowRunActionInputsInvalidProperty`.
-- Las variables de entorno se declaran como parámetros `"<schema> (<schema>)"` y se usan con `@parameters('vu_SiteUrl (vu_SiteUrl)')`.
+- Disparadores Dataverse: `OpenApiConnectionWebhook` con `operationId = SubscribeWebhookTrigger` y los parámetros `subscriptionRequest/message` (3 = Modified, 4 = Added or Modified), `subscriptionRequest/entityname` (nombre lógico **singular**: `vu_verificacion`), `subscriptionRequest/scope` (4 = Organization), `subscriptionRequest/filteringattributes`, `subscriptionRequest/filterexpression` y `subscriptionRequest/runas` (3 = propietario del flujo).
+- Acciones Dataverse: `ListRecords` (*List rows*), `GetItem` (*Get a row by ID*), `CreateRecord` (*Add a new row*) y `UpdateOnlyRecord` (*Update a row*). Se usa `UpdateOnlyRecord` en vez de `UpdateRecord` porque este último es *Upsert* y crearía una fila si el GUID no existiera. `entityName` es el **EntitySetName** plural (`vu_verificacions`, `vu_solucions`, `vu_aprobacions`, `vu_notificacions`, `vu_entrevistas`, `systemusers`).
+- Columnas: se escriben como `item/<nombre lógico>`. Las opciones se escriben con su **valor numérico** y los Sí/No con `true`/`false`. Las búsquedas se leen como `_<col>_value` y se escriben como `item/<SchemaName>@odata.bind` = `/<EntitySetName>(<guid>)`, por ejemplo `item/vu_VerificacionId@odata.bind: /vu_verificacions(<guid>)`.
+- Con *Update a row* solo se envían las columnas que cambian; no hace falta reenviar las obligatorias.
+- Las acciones **no** llevan `inputs.authentication`, porque Power Automate lo añade al guardar.
+- Los correos de los usuarios se leen con *Get a row by ID* de `systemusers` (`internalemailaddress` y, si está vacío, `domainname`).
 
-### Variables de entorno (solución `VerificacionUso`, prefijo de editor `vu`)
-
-| Nombre de esquema | Tipo | Ejemplo / valor por defecto | Usado en |
-|---|---|---|---|
-| `vu_SiteUrl` | Texto (o *Origen de datos*: sitio SharePoint) | `https://biomont.sharepoint.com/sites/VerificacionUso` | F1–F4 |
-| `vu_ListaVerificaciones` | Texto (o *Origen de datos*: lista) | `VU_Verificaciones` | F1–F4 |
-| `vu_ListaSoluciones` | Texto (o *Origen de datos*: lista) | `VU_Soluciones` | F2, F3, F4 |
-| `vu_ListaEntrevistas` | Texto (o *Origen de datos*: lista) | `VU_Entrevistas` | F2 (solo lectura) |
-| `vu_ListaAprobaciones` | Texto (o *Origen de datos*: lista) | `VU_Aprobaciones` | F2 |
-| `vu_ListaNotificaciones` | Texto (o *Origen de datos*: lista) | `VU_Notificaciones` | F1, F2, F4 |
-| `vu_CuentaServicioEmail` | Texto | `svc-flujos-vu@biomont.com.pe` (ejemplo; **obligatorio**, sin valor por defecto) | F2, F3 (condición antibucle) |
-
-- **Valor de las listas.** El parámetro `table` del conector acepta el **título** o el **GUID** de la lista. `Provision-VerificacionUso.ps1` deja el título igual al nombre interno (`VU_…`), salvo que se ejecute con `-TitulosEnEspanol`. En ese caso hay que usar el GUID (o el título en español). Se recomienda el tipo *Origen de datos*, que guarda el GUID y no depende del título.
-- **`vu_CuentaServicioEmail`** debe ser el correo (UPN) de la cuenta dueña de las conexiones. Si queda vacío, F2 sigue sin entrar en bucle (sus propias ediciones no dejan `Estado = En revisión`), pero F3 se ejecutaría también tras las ediciones de F1 y F2.
-- Si un valor se cambia directamente en el entorno, y no con una importación, los flujos siguen usando el anterior hasta que se apagan y se vuelven a encender.
-
-### Referencias de conexión
+## Referencias de conexión
 
 | Nombre lógico | Conector (`api.name`) | Clave en `connectionReferences` / `host.connectionName` | Flujos |
 |---|---|---|---|
-| `vu_sharepoint` | SharePoint | `shared_sharepointonline` | F1–F4 |
+| `vu_dataverse` | Microsoft Dataverse | `shared_commondataserviceforapps` | F1–F4 |
 | `vu_approvals` | Approvals | `shared_approvals` | F2 |
 | `vu_office365` | Office 365 Outlook | `shared_office365` | F1, F2, F4 |
 | `vu_teams` | Microsoft Teams | `shared_teams` | F2 |
 
-Todas deben apuntar a conexiones de la **cuenta de servicio** (§3.2). Esa cuenta necesita *Editar* en el sitio (§3.6), buzón para enviar correo y licencia de Teams. Approvals muestra siempre como remitente al creador del flujo.
+Todas deben apuntar a conexiones de la **cuenta de servicio** (§3.6): un rol *VU Administrador* (o administrador del sistema) en Dataverse, buzón para enviar correo y licencia de Teams. Approvals muestra siempre como remitente al dueño de la conexión.
 
-## Cómo importar
+## Variables de entorno
 
-### A. En la solución de Power Platform `VerificacionUso` (recomendado, ALM)
+Ninguna (las variables de sitio y de listas, `vu_SiteUrl` y `vu_Lista*`, se eliminaron). El conector Dataverse usa el entorno actual y las tablas se identifican por su nombre, igual en Dev, Test y Prod. `vu_CuentaServicioEmail` (§3.7) **no se usa** en estos flujos: la condición antibucle ya no hace falta, porque los disparadores filtran por la columna `vu_estado` y ningún flujo se dispara con sus propias escrituras. Puede seguir en la solución para otros usos.
 
-1. En la solución, crea las 7 variables de entorno de la tabla y las 4 referencias de conexión con esos nombres lógicos, enlazadas a las conexiones de la cuenta de servicio.
-2. Crea cada flujo dentro de la solución (*Nuevo → Automatización → Flujo de nube*) y pega la definición. Hay dos maneras:
-   - Exportar la solución, colocar el contenido de cada `definition.json` en `Workflows/<flujo>.json` (clientdata) y volver a importarla.
-   - Usar la herramienta de la opción B con el flujo ya asociado a la solución.
-3. Abre cada flujo en el diseñador, comprueba que los parámetros resuelven y **guarda**. Al guardar se valida el esquema dinámico de SharePoint. Después **actívalo**.
-4. Promoción entre entornos: exporta la solución gestionada y, al importarla en Test o Prod, informa los valores de las variables y las conexiones.
+## Cómo importar en la solución `VerificacionUso`
 
-### B. Con el plugin de Power Automate (`create_flow`)
-
-1. `resolve_refs` / `pick_or_create_connection` en el entorno destino para `shared_sharepointonline`, `shared_approvals`, `shared_office365` y `shared_teams`, con la cuenta de servicio.
-2. `preflight_flow`, pasando `properties.definition` y las `connectionReferences` en el formato del plugin (`{"shared_sharepointonline": {"connectionName": "<conexión>", "source": "Embedded", "id": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"}}`).
-3. `create_flow` con el nombre sugerido en el README de cada flujo. En un flujo fuera de solución, los parámetros `vu_*` toman su `defaultValue`: edítalos antes de crear el flujo (sobre todo `vu_CuentaServicioEmail`) o asocia después el flujo a la solución.
+1. En la solución, crea (o reutiliza) las 4 referencias de conexión con los nombres lógicos de la tabla, enlazadas a las conexiones de la cuenta de servicio.
+2. Crea cada flujo **dentro de la solución** (*Nuevo → Automatización → Flujo de nube*) con el nombre sugerido en su README y sustituye su definición. Hay dos formas:
+   - Exportar la solución no administrada (`pac solution export`), poner el contenido de cada `definition.json` en `Workflows/<flujo>-<guid>.json`, empaquetar y volver a importar (`pac solution import`).
+   - Con el plugin de Power Automate: `preflight_flow` y luego `update_flow` sobre el flujo ya creado en la solución, pasando `properties.definition` y las `connectionReferences`.
+3. Abre cada flujo en el diseñador, comprueba que las tablas y columnas se resuelven y **guarda**. Al guardar se valida el esquema dinámico de Dataverse y se registra el webhook del disparador. Después **actívalo**.
+4. Promoción: exporta la solución como **administrada** e impórtala en Test o Prod, enlazando las referencias de conexión. No hay variables que rellenar.
 
 > Estas definiciones **no** se han creado en ningún entorno: este frente solo entrega los archivos.
 
 ## Cómo probar
 
-Requisitos previos:
-
-- Listas aprovisionadas (`infra/sharepoint/Provision-VerificacionUso.ps1`) con el **historial de versiones activo en `VU_Verificaciones`**, que necesita *Get changes* en F2.
-- Datos semilla y dos usuarios de prueba (responsable y aprobadora).
+Requisitos: tablas aprovisionadas con `infra/dataverse/` y datos semilla, la Code App (o el formulario de la tabla) para cambiar estados, y dos usuarios de prueba (responsable y aprobadora).
 
 | Flujo | Caso | Resultado esperado |
 |---|---|---|
-| F1 | Verificación `Programada` con `FechaAlerta` = hoy y `AlertaEnviada` = No. Ejecuta el flujo a mano | Correo **solo** al responsable, `AlertaEnviada = Sí`, fila *Alerta anticipada · Correo · Enviada*. Una segunda ejecución no hace nada |
-| F1 | `Responsable` sin buzón | Fila *Error*, `AlertaEnviada` sigue en No y la ejecución termina *Failed* |
-| F3 | Crea una verificación en `Borrador` y luego pásala a `Programada` | `EstadoVU`: `Pendiente` (o `Vigente` si la solución tiene `ProximaVU ≥ hoy`), luego `Programada`. `UltimaVerificacionId` = ID |
-| F3 | Cambia `Title` sin tocar `Estado` | La ejecución termina sin escribir (no hay cambios) |
-| F2 | `En revisión` con menos entrevistas `Completa` que `EntrevistasPrevistas` | Vuelve a `En evaluación`, correo con el motivo, fila *Envío a revisión*, `EstadoVU = En proceso`. No se crea ninguna aprobación |
-| F2 | RN-07 OK y la aprobadora del piloto responde **Observar** | `VU_Aprobaciones` en *Observada* con el comentario, `Estado = Observada`, correo y tarjeta de Teams al responsable, 3 filas en la bitácora |
-| F2 | Piloto **Aprobar** y productiva **Aprobar** | Estado `Aprobada piloto` → `Aprobada`, `FechaAprobacion`, `ProximaVU = hoy + PeriodicidadMeses`, `EstadoVU = Vigente` |
-| F2 | Piloto **Aprobar** sin `AprobadorProductivo` | Se queda en `Aprobada piloto` y `EstadoVU = En revisión` |
-| F2 | Editar otro campo de una verificación que ya está *En revisión* | La ejecución termina en *Terminar_sin_cambios* (*Get changes* no detecta cambio de `Estado`) |
-| F4 | Solución con `ProximaVU` = hoy + 10 y sin verificación activa | Recordatorio "por vencer (en 10 días)" y fila *Recordatorio de vencimiento* |
-| F4 | `ProximaVU` = ayer, sin verificación activa | Recordatorio "vencida" y `EstadoVU = Pendiente` |
+| F1 | Verificación `Programada` con `vu_fechaalerta` = hoy y `vu_alertaenviada` = No. Ejecuta el flujo a mano | Correo **solo** al responsable, `vu_alertaenviada = Sí`, fila *Alerta anticipada · Correo · Enviada*. Una segunda ejecución no hace nada |
+| F1 | Responsable sin buzón | Fila *Error*, `vu_alertaenviada` sigue en No y se reintenta al día siguiente |
+| F3 | Crea una verificación en `Borrador` y pásala a `Programada` | `vu_estadovu`: `Pendiente` y luego `Programada`; `vu_ultimaverificacionid` = la verificación |
+| F3 | Cambia `vu_objetivo` sin tocar `vu_estado` | No hay ejecución (columna de filtro) |
+| F2 | `En revisión` con menos entrevistas `Completa` que `vu_entrevistasprevistas` | Vuelve a `En evaluación`, correo con el motivo, fila *Envío a revisión*. F3 deja `En proceso`. No se crea ninguna aprobación |
+| F2 | RN-07 correcta y la aprobadora del piloto responde **Observar** | `vu_aprobacion` *Observada* con el comentario, `vu_estado = Observada`, correo y tarjeta de Teams al responsable, 3 filas en `vu_notificacion` |
+| F2 | Piloto **Aprobar** y productiva **Aprobar** | `Aprobada piloto` → `Aprobada`, `vu_fechaaprobacion`, `vu_proximavu = hoy + vu_periodicidadmeses`, F3 deja `Vigente` |
+| F2 | Piloto **Aprobar** sin aprobadora productiva | Se queda en `Aprobada piloto`; F3 deja `En revisión` |
+| F2 | Volver a guardar la fila con `vu_estado = En revisión` mientras espera la aprobación | La nueva ejecución termina en *Terminar_sin_cambios* (guarda de idempotencia) |
+| F2 | Editar otro campo de una verificación *En revisión* | No hay ejecución |
+| F4 | Solución con `vu_proximavu` = hoy + 10 y sin verificación activa | Recordatorio "por vencer (en 10 días)" y fila *Recordatorio de vencimiento* con `vu_solucionid` |
+| F4 | `vu_proximavu` = ayer, sin verificación activa | Recordatorio "vencida" y `vu_estadovu = Pendiente` |
 | F4 | Solución con una verificación `Programada` | No hace nada |
 
-Para que el plazo de 14 días del nivel piloto se pueda probar sin esperar, cambia temporalmente `limit.timeout` a `PT5M` en un entorno de desarrollo.
+Para probar los plazos de 14 días sin esperar, cambia temporalmente `limit.timeout` a `PT5M` en desarrollo.
 
 ### Verificación estática (sin entorno)
 
 ```bash
-python -I -c "import json,glob;[json.load(open(f,encoding='utf-8')) for f in glob.glob('infra/power-automate/**/*.json',recursive=True)]"
 python -I infra/power-automate/validar_definiciones.py
 ```
 
-`validar_definiciones.py` comprueba:
+`validar_definiciones.py` lee §2.3 del documento (tablas, columnas, obligatoriedad, búsquedas y valores de opción) y, si existe, `infra/dataverse/schema.json` (EntitySetName, SchemaName de navegación, requiredLevel y valores). Comprueba:
 
-- Que el JSON es válido.
-- La estructura: `runAfter`, referencias a acciones, `items()` dentro de su bucle, variables, parámetros, paréntesis balanceados, ausencia de `authentication` y `Terminate` fuera de bucles.
-- Que las **columnas** usadas en `$filter`, `$orderby`, `item/…`, `body()`, `items()`, `triggerOutputs()` y `ColumnHasChanged` existen en §2.3 de su lista, con la subpropiedad que corresponde al tipo.
-- Los **valores de elección**.
-- Que cada `PostItem` y `PatchItem` envía **todas las columnas obligatorias**.
-- `empty()` aplicado a columnas numéricas.
-- Si existe `infra/sharepoint/schema/listas.json`, que las columnas usadas coinciden con él en existencia, obligatoriedad y valores de elección.
+- JSON válido y forma de flujo de solución. Estructura: `runAfter`, referencias a acciones, `items()` dentro de su bucle, variables, paréntesis balanceados, sin `authentication`, `Terminate` fuera de bucles, referencias de conexión con los nombres lógicos acordados y usadas.
+- `entityName` = EntitySetName de una tabla de §2.3 (o `systemusers`), y disparador con el nombre lógico singular.
+- Que existen las columnas de `$select`, `$filter`, `$orderby`, `filteringattributes`, `filterexpression`, `item/…`, `body()`, `items()` y `triggerOutputs()`; búsquedas leídas como `_x_value` y escritas con `@odata.bind` hacia la tabla destino correcta y con el SchemaName exacto.
+- Los valores de opción de los filtros, de `item/…`, de las condiciones `equals(<columna>, N)` y de `varEstadoFinal`.
+- Que cada `CreateRecord` envía las columnas obligatorias sin valor predeterminado.
+- Que las fechas *solo fecha* no se comparan con cadenas entre comillas ni con horas.
+- Los disparadores de §3.3 (mensaje, tabla, columnas de filtro, filtro de filas, concurrencia 25 en F2, zona de Lima en las recurrencias).
+- Que no queda ninguna referencia al almacenamiento anterior.
+
+Acepta una carpeta como argumento (`python -I validar_definiciones.py <copia>`) para comprobar una copia alterada sin tocar el repo.
 
 ## Decisiones transversales
 
-1. **`PatchItem` reenvía las columnas obligatorias.** El esquema dinámico de *Create item* y *Update item* exige las columnas *Req.* (si faltan, la API devuelve un error del tipo *requires the property 'item/Title'*). Antes de cada actualización se lee el elemento (`GetItem`) y se reenvían sus valores con el cambio aplicado. Tras las esperas largas de F2 siempre se vuelve a leer.
-2. **Fechas "solo fecha".** Los filtros usan `le 'yyyy-MM-ddT23:59:59Z'` y las comparaciones en expresiones usan `int(replace(take(fecha,10),'-',''))`. "Hoy" se calcula en `SA Pacific Standard Time`. Se supone un sitio en UTC−5 (Lima).
-3. **Números de SharePoint** (`4` o `4.0`): `int(first(split(string(x), '.')))`. `empty()` nunca se aplica a un número (se usa `empty(string(coalesce(x,'')))`).
-4. **Avisos.** En F1 y F4, si un envío falla, la ejecución termina en *Failed* para que sea visible: hay ramas `runAfter: Failed/TimedOut` que registran `Error`. En F2 el registro se hace con `runAfter: Succeeded/Failed/TimedOut` y `EstadoEnvio` calculado, para que un fallo de correo o de Teams no detenga la aprobación.
-5. **Sondeo de los disparadores SharePoint cada 5 minutos.** El servicio aplica de todos modos el mínimo de la licencia.
+1. **Fechas solo fecha** (`vu_fechaalerta`, `vu_proximavu`): "hoy" es `convertFromUtc(utcNow(), 'SA Pacific Standard Time', 'yyyy-MM-dd')`. Los filtros OData comparan con `yyyy-MM-dd` sin comillas y las expresiones comparan enteros `yyyyMMdd`.
+2. **Avisos**: F1 y F4 registran `Enviada` con `runAfter: Succeeded` y `Error` con `runAfter: Failed/TimedOut`. F2 registra con `runAfter: Succeeded/Failed/TimedOut` y `vu_estadoenvio` calculado, para que un fallo de correo o de Teams no detenga la aprobación.
+3. **Sin antibucle ni *Get changes***: el filtro de columna `vu_estado` lo resuelve. F1 y F4 escriben columnas que no disparan nada. F2 escribe `vu_estado` con valores distintos de 100000004, así que no se vuelve a disparar, pero sí dispara F3, como pide §3.3. F3 solo escribe en `vu_solucion`.
+4. **Concurrencia**: 25 en F2 (esperas de días; ver su README), 1 en F3 (recálculos cortos y serializados) y 5 en los bucles de F1 y F4.
 
 ## Huecos del diseño detectados (decisiones conservadoras, a validar con negocio)
 
 | # | Hueco | Decisión tomada |
 |---|---|---|
-| 1 | El diagrama de §2.4 no tiene estado *Rechazada*, pero `VU_Aprobaciones.Decision` sí | Rechazar → `Decision = Rechazada` y `Estado = Observada` (vuelve al responsable) |
-| 2 | §2.4 no tiene la transición *Aprobada piloto → Observada* | Si la aprobadora productiva observa o rechaza → `Observada`. Al reenviar se repiten **los dos** niveles |
-| 3 | Sin `AprobadorProductivo` no hay forma de lanzar después la aprobación productiva (pregunta abierta n.º 4) | Se queda en `Aprobada piloto` y `EstadoVU = En revisión`. No existe ningún disparador que la relance: hace falta definirlo |
-| 4 | No se define qué ocurre si nadie responde a la aprobación | Timeout de 14 días por nivel (límite de 30 días por ejecución). En el piloto pasa a `Observada` (se puede reenviar). En el productivo se queda en `Aprobada piloto`. En ambos casos `Decision` queda en `Pendiente` con un comentario de expiración (no hay valor *Expirada*) |
-| 5 | **Concurrencia 1 en F2** con esperas de días: las demás revisiones quedan en cola (como máximo 11 en espera; después el disparador deja de sondear) | Se mantiene 1, como pide el diseño. **Se recomienda subirla** (por ejemplo a 25): las salvaguardas de F2 (*Get changes* y volver a leer `Estado`) hacen seguras las ejecuciones en paralelo |
-| 6 | §3.3 combina *When an item is created or modified* con *Get changes* (`since` = token de ventana), pero esos tokens solo los devuelve *When an item or a file is modified* | F2 usa `GetOnChangedItems`. *En revisión* siempre se alcanza editando |
-| 7 | `TipoNotificacion` no tiene valor para "envío rechazado por RN-07" | Se registra como *Envío a revisión* |
-| 8 | `VU_Notificaciones.Verificacion` es obligatoria, pero el recordatorio de F4 es de la solución | Decisión de coordinación: la fila se crea con `Verificacion` **vacía**. `VU_Notificaciones.Verificacion` pasará a ser opcional en el esquema durante la integración; `validar_definiciones.py` registra esta excepción en `EXCEPCIONES_REQ` |
-| 9 | `NotificarAlFinalizar` no tiene un efecto definido en el servidor | F2 lo ignora: las solicitudes de aprobación siempre se notifican. Propuesta: que la app exija Sí para enviar, o eliminar la columna |
-| 10 | Quién escribe `VU_Verificaciones.FechaEnvio` | La escribe F2 al superar RN-07 |
-| 11 | §2.5: el orden entre "ProximaVU < hoy → Pendiente" y una verificación en curso | La vigencia solo se evalúa cuando la última verificación está *Aprobada* (o no hay ninguna). Si hay una en curso, prevalece su estado |
-| 12 | RN-07 exige `completas = previstas` (igualdad estricta) | Se respeta la igualdad. Si hay más entrevistas completas que previstas, la verificación se devuelve |
-| 13 | F2 y F3 se disparan a la vez cuando se envía a revisión | F3 vuelve a leer el estado. Queda una ventana de segundos en la que F3 podría pisar a F2, y se corrige en el siguiente cambio |
+| 1 | §2.4 no tiene estado *Rechazada*, pero `vu_aprobacion.vu_decision` sí | Rechazar → `vu_decision = Rechazada` y `vu_estado = Observada` (pregunta abierta n.º 7) |
+| 2 | Sin aprobadora productiva no hay forma de lanzar después el nivel productivo (pregunta n.º 4) | Se queda en `Aprobada piloto`. No hay disparador que lo relance (F2 solo escucha `En revisión`): hay que definirlo |
+| 3 | Qué pasa si nadie responde | 14 días por nivel. En el piloto pasa a `Observada` (se puede reenviar) y en el productivo se queda en `Aprobada piloto`. `vu_decision` queda `Pendiente` con un comentario de expiración (no existe el valor *Expirada*) |
+| 4 | El disparador de Dataverse se activa aunque `vu_estado` no cambie de valor si viene en la actualización | Guarda de idempotencia en F2 (aprobación *Pendiente* de menos de 14 días). Se recomienda que la app solo envíe `vu_estado` cuando cambia |
+| 5 | `vu_tiponotificacion` no tiene valor para "devuelta por RN-07" | Se registra como *Envío a revisión* |
+| 6 | `vu_notificaralfinalizar` no tiene efecto definido en el servidor (pregunta n.º 6) | F2 lo ignora: las solicitudes de aprobación siempre se notifican |
+| 7 | §2.5 define la "última verificación" sin decir cuál es ni qué pasa con un borrador o una cancelación posteriores a una aprobada vigente | Última = la creada más recientemente (`createdon desc`), aplicando la tabla al pie de la letra: un borrador o una cancelación nuevos dejan la solución en *Pendiente* aunque la anterior estuviera vigente. Confirmar si deben ignorarse |
+| 8 | §2.5: orden entre "`vu_proximavu` < hoy → Pendiente" y una verificación en curso | La vigencia solo se evalúa cuando la última está *Aprobada*. Si hay una en curso, prevalece su estado. El paso de *Vigente* a *Pendiente* por fecha lo hace F4 (los lunes) |
+| 9 | No hay URL de la app ni del registro para los enlaces de correos y aprobaciones | Los avisos citan el código `VU-xxxxx` sin enlace. Si se quiere un enlace, añadir una variable de entorno (p. ej. `vu_UrlApp`) a §3.7 |
+| 10 | RN-07 exige `completas = previstas` (igualdad estricta) | Se respeta. F2 cuenta las `vu_entrevista` *Completa* en el servidor (no usa `vu_entrevistascompletas`) |
+| 11 | `vu_solucion.vu_periodicidadmeses` es obligatoria, pero puede faltar en datos antiguos | Si viene vacía se usan 6 meses (su valor predeterminado) |
+| 12 | `runas` del disparador no está en el diseño | `3` (propietario del flujo = cuenta de servicio). Solo afecta a conexiones de invocador, y aquí todas son de la cuenta de servicio |

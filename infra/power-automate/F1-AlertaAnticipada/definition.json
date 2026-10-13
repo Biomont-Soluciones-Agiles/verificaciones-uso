@@ -1,13 +1,13 @@
 {
   "properties": {
     "connectionReferences": {
-      "shared_sharepointonline": {
+      "shared_commondataserviceforapps": {
         "runtimeSource": "embedded",
         "connection": {
-          "connectionReferenceLogicalName": "vu_sharepoint"
+          "connectionReferenceLogicalName": "vu_dataverse"
         },
         "api": {
-          "name": "shared_sharepointonline"
+          "name": "shared_commondataserviceforapps"
         }
       },
       "shared_office365": {
@@ -31,30 +31,6 @@
         "$authentication": {
           "defaultValue": {},
           "type": "SecureObject"
-        },
-        "vu_SiteUrl (vu_SiteUrl)": {
-          "defaultValue": "https://biomont.sharepoint.com/sites/VerificacionUso",
-          "type": "String",
-          "metadata": {
-            "schemaName": "vu_SiteUrl",
-            "description": "URL del sitio SharePoint de Verificacion de uso"
-          }
-        },
-        "vu_ListaVerificaciones (vu_ListaVerificaciones)": {
-          "defaultValue": "VU_Verificaciones",
-          "type": "String",
-          "metadata": {
-            "schemaName": "vu_ListaVerificaciones",
-            "description": "Nombre (o GUID) de la lista VU_Verificaciones"
-          }
-        },
-        "vu_ListaNotificaciones (vu_ListaNotificaciones)": {
-          "defaultValue": "VU_Notificaciones",
-          "type": "String",
-          "metadata": {
-            "schemaName": "vu_ListaNotificaciones",
-            "description": "Nombre (o GUID) de la lista VU_Notificaciones"
-          }
         }
       },
       "triggers": {
@@ -79,9 +55,9 @@
         "Hoy_Lima": {
           "runAfter": {},
           "type": "Compose",
-          "inputs": "@formatDateTime(convertTimeZone(utcNow(), 'UTC', 'SA Pacific Standard Time'), 'yyyy-MM-dd')"
+          "inputs": "@convertFromUtc(utcNow(), 'SA Pacific Standard Time', 'yyyy-MM-dd')"
         },
-        "Obtener_verificaciones_a_alertar": {
+        "Listar_verificaciones_a_alertar": {
           "runAfter": {
             "Hoy_Lima": [
               "Succeeded"
@@ -90,27 +66,62 @@
           "type": "OpenApiConnection",
           "inputs": {
             "host": {
-              "connectionName": "shared_sharepointonline",
-              "operationId": "GetItems",
-              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "ListRecords",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
             },
             "parameters": {
-              "dataset": "@parameters('vu_SiteUrl (vu_SiteUrl)')",
-              "table": "@parameters('vu_ListaVerificaciones (vu_ListaVerificaciones)')",
-              "$filter": "Estado eq 'Programada' and FechaAlerta le '@{outputs('Hoy_Lima')}T23:59:59Z' and AlertaEnviada eq 0"
-            }
-          },
-          "runtimeConfiguration": {
-            "paginationPolicy": {
-              "minimumItemCount": 5000
+              "entityName": "vu_verificacions",
+              "$select": "vu_verificacionid,vu_name,vu_fechaobjetivo,vu_diasanticipacion,vu_entrevistasprevistas,vu_modalidad,_vu_solucionid_value,_vu_responsableid_value",
+              "$filter": "vu_estado eq 100000001 and vu_fechaalerta le @{outputs('Hoy_Lima')} and vu_alertaenviada eq false"
             }
           }
         },
         "Para_cada_verificacion": {
-          "foreach": "@body('Obtener_verificaciones_a_alertar')?['value']",
+          "foreach": "@body('Listar_verificaciones_a_alertar')?['value']",
           "actions": {
-            "Enviar_alerta_al_responsable": {
+            "Leer_responsable": {
               "runAfter": {},
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_commondataserviceforapps",
+                  "operationId": "GetItem",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                },
+                "parameters": {
+                  "entityName": "systemusers",
+                  "recordId": "@items('Para_cada_verificacion')?['_vu_responsableid_value']",
+                  "$select": "systemuserid,fullname,internalemailaddress,domainname"
+                }
+              }
+            },
+            "Leer_solucion": {
+              "runAfter": {
+                "Leer_responsable": [
+                  "Succeeded"
+                ]
+              },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_commondataserviceforapps",
+                  "operationId": "GetItem",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                },
+                "parameters": {
+                  "entityName": "vu_solucions",
+                  "recordId": "@items('Para_cada_verificacion')?['_vu_solucionid_value']",
+                  "$select": "vu_name"
+                }
+              }
+            },
+            "Enviar_alerta_al_responsable": {
+              "runAfter": {
+                "Leer_solucion": [
+                  "Succeeded"
+                ]
+              },
               "type": "OpenApiConnection",
               "inputs": {
                 "host": {
@@ -119,9 +130,9 @@
                   "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365"
                 },
                 "parameters": {
-                  "emailMessage/To": "@{items('Para_cada_verificacion')?['Responsable/Email']}",
-                  "emailMessage/Subject": "Alerta anticipada: verificación de uso @{items('Para_cada_verificacion')?['Title']} (@{items('Para_cada_verificacion')?['Solucion/Value']}) programada para el @{formatDateTime(take(string(items('Para_cada_verificacion')?['FechaObjetivo']), 10), 'dd/MM/yyyy')}",
-                  "emailMessage/Body": "<p>Hola @{items('Para_cada_verificacion')?['Responsable/DisplayName']}:</p><p>La verificación de uso <b>@{items('Para_cada_verificacion')?['Title']}</b> de la solución <b>@{items('Para_cada_verificacion')?['Solucion/Value']}</b> está programada para el <b>@{formatDateTime(take(string(items('Para_cada_verificacion')?['FechaObjetivo']), 10), 'dd/MM/yyyy')}</b>.</p><ul><li>Entrevistas previstas: @{items('Para_cada_verificacion')?['EntrevistasPrevistas']}</li><li>Modalidad: @{items('Para_cada_verificacion')?['Modalidad/Value']}</li><li>Anticipación del aviso: @{items('Para_cada_verificacion')?['DiasAnticipacion']} días</li></ul><p>Coordine las entrevistas y registre el avance en la app <i>Verificación de uso</i>. Este aviso es solo para usted: la aprobadora no recibe nada hasta que finalice la verificación (RN-06).</p>",
+                  "emailMessage/To": "@{coalesce(body('Leer_responsable')?['internalemailaddress'], body('Leer_responsable')?['domainname'])}",
+                  "emailMessage/Subject": "Alerta anticipada: verificación de uso @{items('Para_cada_verificacion')?['vu_name']} (@{body('Leer_solucion')?['vu_name']}) programada para el @{formatDateTime(items('Para_cada_verificacion')?['vu_fechaobjetivo'], 'dd/MM/yyyy')}",
+                  "emailMessage/Body": "<p>Hola @{body('Leer_responsable')?['fullname']}:</p><p>La verificación de uso <b>@{items('Para_cada_verificacion')?['vu_name']}</b> de la solución <b>@{body('Leer_solucion')?['vu_name']}</b> está programada para el <b>@{formatDateTime(items('Para_cada_verificacion')?['vu_fechaobjetivo'], 'dd/MM/yyyy')}</b>.</p><ul><li>Entrevistas previstas: @{items('Para_cada_verificacion')?['vu_entrevistasprevistas']}</li><li>Modalidad: @{items('Para_cada_verificacion')?['vu_modalidad@OData.Community.Display.V1.FormattedValue']}</li><li>Anticipación del aviso: @{items('Para_cada_verificacion')?['vu_diasanticipacion']} días</li></ul><p>Coordine las entrevistas y registre el avance en la app <i>Verificación de uso</i>. Este aviso es solo para usted: la aprobadora no recibe nada hasta que finalice la verificación (RN-06).</p>",
                   "emailMessage/Importance": "Normal"
                 }
               }
@@ -135,52 +146,39 @@
               "type": "OpenApiConnection",
               "inputs": {
                 "host": {
-                  "connectionName": "shared_sharepointonline",
-                  "operationId": "PatchItem",
-                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+                  "connectionName": "shared_commondataserviceforapps",
+                  "operationId": "UpdateOnlyRecord",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
                 },
                 "parameters": {
-                  "dataset": "@parameters('vu_SiteUrl (vu_SiteUrl)')",
-                  "table": "@parameters('vu_ListaVerificaciones (vu_ListaVerificaciones)')",
-                  "id": "@items('Para_cada_verificacion')?['ID']",
-                  "item/Title": "@items('Para_cada_verificacion')?['Title']",
-                  "item/Solucion/Id": "@items('Para_cada_verificacion')?['Solucion/Id']",
-                  "item/Responsable/Claims": "@items('Para_cada_verificacion')?['Responsable/Claims']",
-                  "item/FechaObjetivo": "@items('Para_cada_verificacion')?['FechaObjetivo']",
-                  "item/DiasAnticipacion": "@items('Para_cada_verificacion')?['DiasAnticipacion']",
-                  "item/FechaAlerta": "@items('Para_cada_verificacion')?['FechaAlerta']",
-                  "item/AlertaEnviada": true,
-                  "item/EntrevistasPrevistas": "@items('Para_cada_verificacion')?['EntrevistasPrevistas']",
-                  "item/EntrevistasCompletas": "@items('Para_cada_verificacion')?['EntrevistasCompletas']",
-                  "item/Modalidad/Value": "@items('Para_cada_verificacion')?['Modalidad/Value']",
-                  "item/Estado/Value": "@items('Para_cada_verificacion')?['Estado/Value']",
-                  "item/NotificarAlFinalizar": "@items('Para_cada_verificacion')?['NotificarAlFinalizar']"
+                  "entityName": "vu_verificacions",
+                  "recordId": "@items('Para_cada_verificacion')?['vu_verificacionid']",
+                  "item/vu_alertaenviada": true
                 }
               }
             },
             "Registrar_notificacion_enviada": {
               "runAfter": {
-                "Enviar_alerta_al_responsable": [
+                "Marcar_alerta_enviada": [
                   "Succeeded"
                 ]
               },
               "type": "OpenApiConnection",
               "inputs": {
                 "host": {
-                  "connectionName": "shared_sharepointonline",
-                  "operationId": "PostItem",
-                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+                  "connectionName": "shared_commondataserviceforapps",
+                  "operationId": "CreateRecord",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
                 },
                 "parameters": {
-                  "dataset": "@parameters('vu_SiteUrl (vu_SiteUrl)')",
-                  "table": "@parameters('vu_ListaNotificaciones (vu_ListaNotificaciones)')",
-                  "item/Title": "Alerta anticipada: verificación de uso @{items('Para_cada_verificacion')?['Title']} (@{items('Para_cada_verificacion')?['Solucion/Value']}) programada para el @{formatDateTime(take(string(items('Para_cada_verificacion')?['FechaObjetivo']), 10), 'dd/MM/yyyy')}",
-                  "item/Verificacion/Id": "@items('Para_cada_verificacion')?['ID']",
-                  "item/TipoNotificacion/Value": "Alerta anticipada",
-                  "item/Destinatario/Claims": "@{items('Para_cada_verificacion')?['Responsable/Email']}",
-                  "item/Canal/Value": "Correo",
-                  "item/FechaEnvio": "@utcNow()",
-                  "item/EstadoEnvio/Value": "Enviada"
+                  "entityName": "vu_notificacions",
+                  "item/vu_name": "Alerta anticipada: verificación de uso @{items('Para_cada_verificacion')?['vu_name']} (@{body('Leer_solucion')?['vu_name']}) programada para el @{formatDateTime(items('Para_cada_verificacion')?['vu_fechaobjetivo'], 'dd/MM/yyyy')}",
+                  "item/vu_tiponotificacion": 100000000,
+                  "item/vu_DestinatarioId@odata.bind": "/systemusers(@{items('Para_cada_verificacion')?['_vu_responsableid_value']})",
+                  "item/vu_canal": 100000000,
+                  "item/vu_fechaenvio": "@utcNow()",
+                  "item/vu_estadoenvio": 100000000,
+                  "item/vu_VerificacionId@odata.bind": "/vu_verificacions(@{items('Para_cada_verificacion')?['vu_verificacionid']})"
                 }
               }
             },
@@ -194,26 +192,25 @@
               "type": "OpenApiConnection",
               "inputs": {
                 "host": {
-                  "connectionName": "shared_sharepointonline",
-                  "operationId": "PostItem",
-                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+                  "connectionName": "shared_commondataserviceforapps",
+                  "operationId": "CreateRecord",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
                 },
                 "parameters": {
-                  "dataset": "@parameters('vu_SiteUrl (vu_SiteUrl)')",
-                  "table": "@parameters('vu_ListaNotificaciones (vu_ListaNotificaciones)')",
-                  "item/Title": "Alerta anticipada: verificación de uso @{items('Para_cada_verificacion')?['Title']} (@{items('Para_cada_verificacion')?['Solucion/Value']}) programada para el @{formatDateTime(take(string(items('Para_cada_verificacion')?['FechaObjetivo']), 10), 'dd/MM/yyyy')}",
-                  "item/Verificacion/Id": "@items('Para_cada_verificacion')?['ID']",
-                  "item/TipoNotificacion/Value": "Alerta anticipada",
-                  "item/Destinatario/Claims": "@{items('Para_cada_verificacion')?['Responsable/Email']}",
-                  "item/Canal/Value": "Correo",
-                  "item/FechaEnvio": "@utcNow()",
-                  "item/EstadoEnvio/Value": "Error"
+                  "entityName": "vu_notificacions",
+                  "item/vu_name": "Alerta anticipada: verificación de uso @{items('Para_cada_verificacion')?['vu_name']} (@{body('Leer_solucion')?['vu_name']}) programada para el @{formatDateTime(items('Para_cada_verificacion')?['vu_fechaobjetivo'], 'dd/MM/yyyy')}",
+                  "item/vu_tiponotificacion": 100000000,
+                  "item/vu_DestinatarioId@odata.bind": "/systemusers(@{items('Para_cada_verificacion')?['_vu_responsableid_value']})",
+                  "item/vu_canal": 100000000,
+                  "item/vu_fechaenvio": "@utcNow()",
+                  "item/vu_estadoenvio": 100000001,
+                  "item/vu_VerificacionId@odata.bind": "/vu_verificacions(@{items('Para_cada_verificacion')?['vu_verificacionid']})"
                 }
               }
             }
           },
           "runAfter": {
-            "Obtener_verificaciones_a_alertar": [
+            "Listar_verificaciones_a_alertar": [
               "Succeeded"
             ]
           },
@@ -227,7 +224,7 @@
       },
       "outputs": {}
     },
-    "templateName": null
+    "templateName": ""
   },
   "schemaVersion": "1.0.0.0"
 }

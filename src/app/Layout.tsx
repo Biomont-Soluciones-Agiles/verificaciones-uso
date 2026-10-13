@@ -11,6 +11,7 @@ import type { ReactElement } from 'react';
 import { Outlet, useLocation, useMatch, useNavigate } from 'react-router-dom';
 import { useFuenteDatos } from '../data/contexto';
 import { useVerificacion, useVerificaciones } from '../data/hooks/useVerificaciones';
+import { compararCodigoDesc, idDeTexto } from '../domain/codigo';
 import { esVerificacionActiva, estaSinNotificar } from '../domain/flujo';
 import type { Verificacion } from '../domain/tipos';
 import { useVerificacionRecordada } from './verificacionActiva';
@@ -71,12 +72,12 @@ export function Layout() {
   const recordada = useVerificacionRecordada();
   const { data: verificaciones } = useVerificaciones();
 
-  const idRuta = match ? Number(match.params.id) : NaN;
+  const idRuta = idDeTexto(match?.params.id);
   const predeterminada =
     verificaciones
       ?.filter((v) => esVerificacionActiva(v.estado))
-      .sort((a, b) => b.id - a.id)[0]?.id ?? null;
-  const idActiva = Number.isInteger(idRuta) && idRuta > 0 ? idRuta : (recordada ?? predeterminada);
+      .sort(compararCodigoDesc)[0]?.id ?? null;
+  const idActiva = idRuta ?? recordada ?? predeterminada;
   const { data: verificacion } = useVerificacion(idActiva);
 
   const rutaVerificacion = (s: string) => (idActiva ? `/verificaciones/${idActiva}/${s}` : null);

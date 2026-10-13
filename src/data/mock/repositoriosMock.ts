@@ -1,4 +1,4 @@
-import { tituloAprobacion } from '../../domain/codigo';
+import { compararCodigoDesc, formatearCodigoVU, tituloAprobacion } from '../../domain/codigo';
 import { ahoraISO, hoyISO } from '../../domain/fechas';
 import { estadoSolucion } from '../../domain/flujo';
 import type { Aprobacion, Id, Verificacion } from '../../domain/tipos';
@@ -16,7 +16,8 @@ export interface OpcionesMock {
 /**
  * Repositorios en memoria sembrados con los datos del prototipo.
  *
- * Además de imitar las relaciones de SharePoint (cascada / restringir eliminación),
+ * Además de imitar Dataverse (relaciones con cascada / restringir eliminación y la
+ * autonumeración `VU-{SEQNUM:5}` del código de la verificación),
  * simula de forma mínima los flujos de Power Automate para que la demo sea coherente:
  * - F3: recalcula `EstadoVU` y `UltimaVerificacionId` de la solución al cambiar una verificación.
  * - F2: al pasar a "En revisión" crea la aprobación de nivel Piloto en estado Pendiente.
@@ -61,7 +62,7 @@ export function crearRepositoriosMock(opciones: OpcionesMock = {}): Repositorios
     if (!solucion) return;
     const relevantes = verificaciones
       .donde((v) => v.solucionId === solucionId && v.estado !== 'Borrador' && v.estado !== 'Cancelada')
-      .sort((a, b) => b.id - a.id);
+      .sort(compararCodigoDesc);
     const ultima = relevantes[0];
     if (!ultima) return; // sin verificaciones relevantes se conserva el valor histórico
     soluciones.actualizar(solucionId, {
@@ -127,11 +128,13 @@ export function crearRepositoriosMock(opciones: OpcionesMock = {}): Repositorios
         verificaciones.donde((v) => filtro?.solucionId === undefined || v.solucionId === filtro.solucionId),
       ),
       obtener: op((id: Id) => verificaciones.buscar(id)),
-      crear: op((datos) =>
-        trasCambioVerificacion(
-          verificaciones.insertar({ ...datos, solucionNombre: nombreSolucion(datos.solucionId) }),
-        ),
-      ),
+      crear: op((datos) => {
+        const nueva = verificaciones.insertar({ ...datos, solucionNombre: nombreSolucion(datos.solucionId) });
+        // Autonumeración: el código lo pone el "servidor", no la app.
+        return trasCambioVerificacion(
+          verificaciones.actualizar(nueva.id, { codigo: formatearCodigoVU(Number(nueva.id)) }),
+        );
+      }),
       actualizar: op((id, cambios) => {
         const extra =
           cambios.solucionId !== undefined ? { solucionNombre: nombreSolucion(cambios.solucionId) } : {};
@@ -155,7 +158,8 @@ export function crearRepositoriosMock(opciones: OpcionesMock = {}): Repositorios
       eliminar: op((id: Id) => {
         const ids = new Set(respuestas.donde((r) => r.entrevistaId === id).map((r) => r.id));
         respuestas.eliminarDonde((r) => r.entrevistaId === id);
-        // La biblioteca no tiene cascada: se desvinculan las evidencias (la app/flujo borra la carpeta).
+        // Parental: las evidencias de la entrevista se borran; RemoveLink: se desvinculan de sus respuestas.
+        evidencias.eliminarDonde((x) => x.entrevistaId === id);
         for (const e of evidencias.donde((x) => x.respuestaId !== null && ids.has(x.respuestaId))) {
           evidencias.actualizar(e.id, { respuestaId: null });
         }
@@ -208,6 +212,7 @@ export function crearRepositoriosMock(opciones: OpcionesMock = {}): Repositorios
           tipo: datos.tipo,
         }),
       ),
+      descargar: op((): Blob | null => null),
       actualizar: op((id, cambios) => evidencias.actualizar(id, cambios)),
       eliminar: op((id: Id) => evidencias.eliminar(id)),
     },

@@ -49,7 +49,7 @@ export function FormularioEvaluacion({ verificacion, puntajesIniciales, entrevis
   const indice = indiceAdopcion(puntajes);
   const pendientes = puntajes.filter(faltaSustento).length;
 
-  const cambiar = (id: number, cambios: Partial<PuntajeCriterio>) =>
+  const cambiar = (id: PuntajeCriterio['id'], cambios: Partial<PuntajeCriterio>) =>
     setPuntajes((lista) => lista.map((p) => (p.id === id ? { ...p, ...cambios } : p)));
 
   const guardarBorrador = async (irAlConsolidado: boolean) => {

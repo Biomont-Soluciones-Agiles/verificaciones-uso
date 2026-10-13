@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react';
+import { idDeTexto } from '../domain/codigo';
 import type { Id } from '../domain/tipos';
 
 /**
@@ -11,8 +12,7 @@ const suscriptores = new Set<() => void>();
 
 function leerInicial(): Id | null {
   try {
-    const valor = Number(sessionStorage.getItem(CLAVE));
-    return Number.isInteger(valor) && valor > 0 ? valor : null;
+    return idDeTexto(sessionStorage.getItem(CLAVE));
   } catch {
     return null;
   }

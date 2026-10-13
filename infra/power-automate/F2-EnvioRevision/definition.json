@@ -1,13 +1,13 @@
 {
   "properties": {
     "connectionReferences": {
-      "shared_sharepointonline": {
+      "shared_commondataserviceforapps": {
         "runtimeSource": "embedded",
         "connection": {
-          "connectionReferenceLogicalName": "vu_sharepoint"
+          "connectionReferenceLogicalName": "vu_dataverse"
         },
         "api": {
-          "name": "shared_sharepointonline"
+          "name": "shared_commondataserviceforapps"
         }
       },
       "shared_approvals": {
@@ -49,94 +49,29 @@
         "$authentication": {
           "defaultValue": {},
           "type": "SecureObject"
-        },
-        "vu_SiteUrl (vu_SiteUrl)": {
-          "defaultValue": "https://biomont.sharepoint.com/sites/VerificacionUso",
-          "type": "String",
-          "metadata": {
-            "schemaName": "vu_SiteUrl",
-            "description": "URL del sitio SharePoint de Verificacion de uso"
-          }
-        },
-        "vu_ListaVerificaciones (vu_ListaVerificaciones)": {
-          "defaultValue": "VU_Verificaciones",
-          "type": "String",
-          "metadata": {
-            "schemaName": "vu_ListaVerificaciones",
-            "description": "Nombre (o GUID) de la lista VU_Verificaciones"
-          }
-        },
-        "vu_ListaSoluciones (vu_ListaSoluciones)": {
-          "defaultValue": "VU_Soluciones",
-          "type": "String",
-          "metadata": {
-            "schemaName": "vu_ListaSoluciones",
-            "description": "Nombre (o GUID) de la lista VU_Soluciones"
-          }
-        },
-        "vu_ListaEntrevistas (vu_ListaEntrevistas)": {
-          "defaultValue": "VU_Entrevistas",
-          "type": "String",
-          "metadata": {
-            "schemaName": "vu_ListaEntrevistas",
-            "description": "Nombre (o GUID) de la lista VU_Entrevistas (solo lectura, RN-07)"
-          }
-        },
-        "vu_ListaAprobaciones (vu_ListaAprobaciones)": {
-          "defaultValue": "VU_Aprobaciones",
-          "type": "String",
-          "metadata": {
-            "schemaName": "vu_ListaAprobaciones",
-            "description": "Nombre (o GUID) de la lista VU_Aprobaciones"
-          }
-        },
-        "vu_ListaNotificaciones (vu_ListaNotificaciones)": {
-          "defaultValue": "VU_Notificaciones",
-          "type": "String",
-          "metadata": {
-            "schemaName": "vu_ListaNotificaciones",
-            "description": "Nombre (o GUID) de la lista VU_Notificaciones"
-          }
-        },
-        "vu_CuentaServicioEmail (vu_CuentaServicioEmail)": {
-          "defaultValue": "",
-          "type": "String",
-          "metadata": {
-            "schemaName": "vu_CuentaServicioEmail",
-            "description": "Correo de la cuenta de servicio duena de las conexiones (excluye sus ediciones de los disparadores)"
-          }
         }
       },
       "triggers": {
-        "Al_modificar_una_verificacion": {
-          "recurrence": {
-            "interval": 5,
-            "frequency": "Minute"
-          },
-          "splitOn": "@triggerOutputs()?['body/value']",
-          "type": "OpenApiConnection",
+        "Al_pasar_una_verificacion_a_En_revision": {
+          "type": "OpenApiConnectionWebhook",
           "inputs": {
             "host": {
-              "connectionName": "shared_sharepointonline",
-              "operationId": "GetOnChangedItems",
-              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "SubscribeWebhookTrigger",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
             },
             "parameters": {
-              "dataset": "@parameters('vu_SiteUrl (vu_SiteUrl)')",
-              "table": "@parameters('vu_ListaVerificaciones (vu_ListaVerificaciones)')"
+              "subscriptionRequest/message": 3,
+              "subscriptionRequest/entityname": "vu_verificacion",
+              "subscriptionRequest/scope": 4,
+              "subscriptionRequest/filteringattributes": "vu_estado",
+              "subscriptionRequest/filterexpression": "vu_estado eq 100000004",
+              "subscriptionRequest/runas": 3
             }
           },
-          "conditions": [
-            {
-              "expression": "@equals(triggerOutputs()?['body/Estado/Value'], 'En revisión')"
-            },
-            {
-              "expression": "@not(equals(toLower(coalesce(triggerOutputs()?['body/Editor/Email'], '')), toLower(parameters('vu_CuentaServicioEmail (vu_CuentaServicioEmail)'))))"
-            }
-          ],
           "runtimeConfiguration": {
             "concurrency": {
-              "runs": 1
+              "runs": 25
             }
           }
         }
@@ -149,8 +84,8 @@
             "variables": [
               {
                 "name": "varEstadoFinal",
-                "type": "string",
-                "value": "En revisión"
+                "type": "integer",
+                "value": 100000004
               }
             ]
           }
@@ -172,7 +107,7 @@
             ]
           }
         },
-        "Obtener_cambios_del_elemento": {
+        "Leer_verificacion": {
           "runAfter": {
             "Inicializar_varMotivoDevolucion": [
               "Succeeded"
@@ -181,41 +116,39 @@
           "type": "OpenApiConnection",
           "inputs": {
             "host": {
-              "connectionName": "shared_sharepointonline",
-              "operationId": "GetItemChanges",
-              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "GetItem",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
             },
             "parameters": {
-              "dataset": "@parameters('vu_SiteUrl (vu_SiteUrl)')",
-              "table": "@parameters('vu_ListaVerificaciones (vu_ListaVerificaciones)')",
-              "id": "@triggerOutputs()?['body/ID']",
-              "since": "@triggerOutputs()?['body/{TriggerWindowStartToken}']",
-              "until": "@triggerOutputs()?['body/{TriggerWindowEndToken}']",
-              "includeDrafts": false
+              "entityName": "vu_verificacions",
+              "recordId": "@triggerOutputs()?['body/vu_verificacionid']",
+              "$select": "vu_verificacionid,vu_name,vu_estado,vu_entrevistasprevistas,vu_indiceadopcion,vu_resultado,vu_sustentoglobal,vu_oportunidadesconsolidadas,vu_recomendacionesconsolidadas,_vu_solucionid_value,_vu_responsableid_value,_vu_aprobadorpilotoid_value,_vu_aprobadorproductivoid_value"
             }
           }
         },
-        "Leer_verificacion_actual": {
+        "Listar_aprobaciones_en_curso": {
           "runAfter": {
-            "Obtener_cambios_del_elemento": [
+            "Leer_verificacion": [
               "Succeeded"
             ]
           },
           "type": "OpenApiConnection",
           "inputs": {
             "host": {
-              "connectionName": "shared_sharepointonline",
-              "operationId": "GetItem",
-              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "ListRecords",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
             },
             "parameters": {
-              "dataset": "@parameters('vu_SiteUrl (vu_SiteUrl)')",
-              "table": "@parameters('vu_ListaVerificaciones (vu_ListaVerificaciones)')",
-              "id": "@triggerOutputs()?['body/ID']"
+              "entityName": "vu_aprobacions",
+              "$select": "vu_aprobacionid",
+              "$filter": "_vu_verificacionid_value eq @{triggerOutputs()?['body/vu_verificacionid']} and vu_decision eq 100000000 and vu_fechasolicitud gt @{formatDateTime(addDays(utcNow(), -14), 'yyyy-MM-ddTHH:mm:ssZ')}",
+              "$top": 1
             }
           }
         },
-        "Si_no_cambio_Estado_o_ya_no_esta_En_revision": {
+        "Si_ya_no_esta_En_revision_o_hay_aprobacion_en_curso": {
           "actions": {
             "Terminar_sin_cambios": {
               "runAfter": {},
@@ -226,7 +159,7 @@
             }
           },
           "runAfter": {
-            "Leer_verificacion_actual": [
+            "Listar_aprobaciones_en_curso": [
               "Succeeded"
             ]
           },
@@ -235,18 +168,16 @@
               {
                 "not": {
                   "equals": [
-                    "@body('Obtener_cambios_del_elemento')?['ColumnHasChanged']?['Estado']",
-                    true
+                    "@body('Leer_verificacion')?['vu_estado']",
+                    100000004
                   ]
                 }
               },
               {
-                "not": {
-                  "equals": [
-                    "@body('Leer_verificacion_actual')?['Estado/Value']",
-                    "En revisión"
-                  ]
-                }
+                "greater": [
+                  "@length(body('Listar_aprobaciones_en_curso')?['value'])",
+                  0
+                ]
               }
             ]
           },
@@ -255,74 +186,114 @@
             "actions": {}
           }
         },
-        "Leer_entrevistas_completas": {
+        "Listar_entrevistas_completas": {
           "runAfter": {
-            "Si_no_cambio_Estado_o_ya_no_esta_En_revision": [
+            "Si_ya_no_esta_En_revision_o_hay_aprobacion_en_curso": [
               "Succeeded"
             ]
           },
           "type": "OpenApiConnection",
           "inputs": {
             "host": {
-              "connectionName": "shared_sharepointonline",
-              "operationId": "GetItems",
-              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "ListRecords",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
             },
             "parameters": {
-              "dataset": "@parameters('vu_SiteUrl (vu_SiteUrl)')",
-              "table": "@parameters('vu_ListaEntrevistas (vu_ListaEntrevistas)')",
-              "$filter": "Verificacion/Id eq @{triggerOutputs()?['body/ID']} and Estado eq 'Completa'",
-              "$top": 100
+              "entityName": "vu_entrevistas",
+              "$select": "vu_entrevistaid",
+              "$filter": "_vu_verificacionid_value eq @{triggerOutputs()?['body/vu_verificacionid']} and vu_estadoentrevista eq 100000002"
+            }
+          }
+        },
+        "Leer_solucion": {
+          "runAfter": {
+            "Listar_entrevistas_completas": [
+              "Succeeded"
+            ]
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "GetItem",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "entityName": "vu_solucions",
+              "recordId": "@body('Leer_verificacion')?['_vu_solucionid_value']",
+              "$select": "vu_name,vu_periodicidadmeses"
+            }
+          }
+        },
+        "Leer_responsable": {
+          "runAfter": {
+            "Leer_solucion": [
+              "Succeeded"
+            ]
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "GetItem",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "entityName": "systemusers",
+              "recordId": "@body('Leer_verificacion')?['_vu_responsableid_value']",
+              "$select": "systemuserid,fullname,internalemailaddress,domainname"
             }
           }
         },
         "Datos_RN07": {
           "runAfter": {
-            "Leer_entrevistas_completas": [
+            "Leer_responsable": [
               "Succeeded"
             ]
           },
           "type": "Compose",
           "inputs": {
-            "codigo": "@body('Leer_verificacion_actual')?['Title']",
-            "solucion": "@body('Leer_verificacion_actual')?['Solucion/Value']",
-            "solucionId": "@body('Leer_verificacion_actual')?['Solucion/Id']",
-            "responsable": "@body('Leer_verificacion_actual')?['Responsable/Email']",
-            "aprobadorPiloto": "@coalesce(body('Leer_verificacion_actual')?['AprobadorPiloto/Email'], '')",
-            "aprobadorProductivo": "@coalesce(body('Leer_verificacion_actual')?['AprobadorProductivo/Email'], '')",
-            "completas": "@length(body('Leer_entrevistas_completas')?['value'])",
-            "previstas": "@int(first(split(string(coalesce(body('Leer_verificacion_actual')?['EntrevistasPrevistas'], 0)), '.')))"
+            "codigo": "@body('Leer_verificacion')?['vu_name']",
+            "solucion": "@body('Leer_solucion')?['vu_name']",
+            "completas": "@length(body('Listar_entrevistas_completas')?['value'])",
+            "previstas": "@body('Leer_verificacion')?['vu_entrevistasprevistas']",
+            "responsableId": "@body('Leer_verificacion')?['_vu_responsableid_value']",
+            "responsable": "@coalesce(body('Leer_responsable')?['internalemailaddress'], body('Leer_responsable')?['domainname'])",
+            "responsableNombre": "@body('Leer_responsable')?['fullname']",
+            "aprobadorPilotoId": "@coalesce(body('Leer_verificacion')?['_vu_aprobadorpilotoid_value'], '')",
+            "aprobadorProductivoId": "@coalesce(body('Leer_verificacion')?['_vu_aprobadorproductivoid_value'], '')"
           }
         },
         "Si_cumple_RN07": {
           "actions": {
-            "Registrar_FechaEnvio": {
+            "Leer_aprobador_Piloto": {
               "runAfter": {},
               "type": "OpenApiConnection",
               "inputs": {
                 "host": {
-                  "connectionName": "shared_sharepointonline",
-                  "operationId": "PatchItem",
-                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+                  "connectionName": "shared_commondataserviceforapps",
+                  "operationId": "GetItem",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
                 },
                 "parameters": {
-                  "dataset": "@parameters('vu_SiteUrl (vu_SiteUrl)')",
-                  "table": "@parameters('vu_ListaVerificaciones (vu_ListaVerificaciones)')",
-                  "id": "@triggerOutputs()?['body/ID']",
-                  "item/Title": "@body('Leer_verificacion_actual')?['Title']",
-                  "item/Solucion/Id": "@body('Leer_verificacion_actual')?['Solucion/Id']",
-                  "item/Responsable/Claims": "@body('Leer_verificacion_actual')?['Responsable/Claims']",
-                  "item/FechaObjetivo": "@body('Leer_verificacion_actual')?['FechaObjetivo']",
-                  "item/DiasAnticipacion": "@body('Leer_verificacion_actual')?['DiasAnticipacion']",
-                  "item/FechaAlerta": "@body('Leer_verificacion_actual')?['FechaAlerta']",
-                  "item/AlertaEnviada": "@body('Leer_verificacion_actual')?['AlertaEnviada']",
-                  "item/EntrevistasPrevistas": "@body('Leer_verificacion_actual')?['EntrevistasPrevistas']",
-                  "item/EntrevistasCompletas": "@body('Leer_verificacion_actual')?['EntrevistasCompletas']",
-                  "item/Modalidad/Value": "@body('Leer_verificacion_actual')?['Modalidad/Value']",
-                  "item/Estado/Value": "@body('Leer_verificacion_actual')?['Estado/Value']",
-                  "item/NotificarAlFinalizar": "@body('Leer_verificacion_actual')?['NotificarAlFinalizar']",
-                  "item/FechaEnvio": "@utcNow()"
+                  "entityName": "systemusers",
+                  "recordId": "@outputs('Datos_RN07')?['aprobadorPilotoId']",
+                  "$select": "systemuserid,fullname,internalemailaddress,domainname"
                 }
+              }
+            },
+            "Aprobador_Piloto": {
+              "runAfter": {
+                "Leer_aprobador_Piloto": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Compose",
+              "inputs": {
+                "id": "@body('Leer_aprobador_Piloto')?['systemuserid']",
+                "email": "@coalesce(body('Leer_aprobador_Piloto')?['internalemailaddress'], body('Leer_aprobador_Piloto')?['domainname'])",
+                "nombre": "@body('Leer_aprobador_Piloto')?['fullname']"
               }
             },
             "Scope_Nivel_Piloto": {
@@ -332,19 +303,18 @@
                   "type": "OpenApiConnection",
                   "inputs": {
                     "host": {
-                      "connectionName": "shared_sharepointonline",
-                      "operationId": "PostItem",
-                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+                      "connectionName": "shared_commondataserviceforapps",
+                      "operationId": "CreateRecord",
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
                     },
                     "parameters": {
-                      "dataset": "@parameters('vu_SiteUrl (vu_SiteUrl)')",
-                      "table": "@parameters('vu_ListaAprobaciones (vu_ListaAprobaciones)')",
-                      "item/Title": "@{outputs('Datos_RN07')?['codigo']} · Piloto",
-                      "item/Verificacion/Id": "@triggerOutputs()?['body/ID']",
-                      "item/Nivel/Value": "Piloto",
-                      "item/Aprobador/Claims": "@{outputs('Datos_RN07')?['aprobadorPiloto']}",
-                      "item/Decision/Value": "Pendiente",
-                      "item/FechaSolicitud": "@utcNow()"
+                      "entityName": "vu_aprobacions",
+                      "item/vu_name": "@{outputs('Datos_RN07')?['codigo']} · Piloto",
+                      "item/vu_VerificacionId@odata.bind": "/vu_verificacions(@{triggerOutputs()?['body/vu_verificacionid']})",
+                      "item/vu_nivel": 100000000,
+                      "item/vu_AprobadorId@odata.bind": "/systemusers(@{outputs('Aprobador_Piloto')?['id']})",
+                      "item/vu_decision": 100000000,
+                      "item/vu_fechasolicitud": "@utcNow()"
                     }
                   }
                 },
@@ -372,10 +342,8 @@
                         "Observar",
                         "Rechazar"
                       ],
-                      "WebhookApprovalCreationInput/assignedTo": "@{outputs('Datos_RN07')?['aprobadorPiloto']}",
-                      "WebhookApprovalCreationInput/details": "**Verificación:** @{outputs('Datos_RN07')?['codigo']}\n\n**Solución:** @{outputs('Datos_RN07')?['solucion']}\n\n**Responsable:** @{body('Leer_verificacion_actual')?['Responsable/DisplayName']}\n\n**Entrevistas completas:** @{outputs('Datos_RN07')?['completas']} de @{outputs('Datos_RN07')?['previstas']}\n\n**Índice de adopción:** @{body('Leer_verificacion_actual')?['IndiceAdopcion']} %\n\n**Resultado:** @{body('Leer_verificacion_actual')?['Resultado/Value']}\n\n**Sustento global:**\n\n@{coalesce(body('Leer_verificacion_actual')?['SustentoGlobal'], '-')}\n\n**Oportunidades de mejora:**\n\n@{coalesce(body('Leer_verificacion_actual')?['OportunidadesConsolidadas'], '-')}\n\n**Recomendaciones:**\n\n@{coalesce(body('Leer_verificacion_actual')?['RecomendacionesConsolidadas'], '-')}\n\n---\n\nResponda **Aprobar**, **Observar** (vuelve al responsable para corregir) o **Rechazar**. Nivel: **Piloto**.",
-                      "WebhookApprovalCreationInput/itemLink": "@{triggerOutputs()?['body/{Link}']}",
-                      "WebhookApprovalCreationInput/itemLinkDescription": "Ver la verificación @{outputs('Datos_RN07')?['codigo']}",
+                      "WebhookApprovalCreationInput/assignedTo": "@{outputs('Aprobador_Piloto')?['email']}",
+                      "WebhookApprovalCreationInput/details": "**Verificación:** @{outputs('Datos_RN07')?['codigo']}\n\n**Solución:** @{outputs('Datos_RN07')?['solucion']}\n\n**Responsable:** @{outputs('Datos_RN07')?['responsableNombre']}\n\n**Entrevistas completas:** @{outputs('Datos_RN07')?['completas']} de @{outputs('Datos_RN07')?['previstas']}\n\n**Índice de adopción:** @{body('Leer_verificacion')?['vu_indiceadopcion']} %\n\n**Resultado:** @{body('Leer_verificacion')?['vu_resultado@OData.Community.Display.V1.FormattedValue']}\n\n**Sustento global:**\n\n@{coalesce(body('Leer_verificacion')?['vu_sustentoglobal'], '-')}\n\n**Oportunidades de mejora:**\n\n@{coalesce(body('Leer_verificacion')?['vu_oportunidadesconsolidadas'], '-')}\n\n**Recomendaciones:**\n\n@{coalesce(body('Leer_verificacion')?['vu_recomendacionesconsolidadas'], '-')}\n\n---\n\nResponda **Aprobar**, **Observar** (vuelve al responsable para corregir) o **Rechazar**. Nivel: **Piloto**.",
                       "WebhookApprovalCreationInput/enableNotifications": true,
                       "WebhookApprovalCreationInput/enableReassignment": false
                     }
@@ -392,20 +360,19 @@
                   "type": "OpenApiConnection",
                   "inputs": {
                     "host": {
-                      "connectionName": "shared_sharepointonline",
-                      "operationId": "PostItem",
-                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+                      "connectionName": "shared_commondataserviceforapps",
+                      "operationId": "CreateRecord",
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
                     },
                     "parameters": {
-                      "dataset": "@parameters('vu_SiteUrl (vu_SiteUrl)')",
-                      "table": "@parameters('vu_ListaNotificaciones (vu_ListaNotificaciones)')",
-                      "item/Title": "Solicitud de aprobación (Piloto) · @{outputs('Datos_RN07')?['codigo']}",
-                      "item/Verificacion/Id": "@triggerOutputs()?['body/ID']",
-                      "item/TipoNotificacion/Value": "Envío a revisión",
-                      "item/Destinatario/Claims": "@{outputs('Datos_RN07')?['aprobadorPiloto']}",
-                      "item/Canal/Value": "Correo",
-                      "item/FechaEnvio": "@body('Crear_aprobacion_Piloto')?['FechaSolicitud']",
-                      "item/EstadoEnvio/Value": "@{if(equals(actions('Solicitar_aprobacion_Piloto')?['status'], 'Failed'), 'Error', 'Enviada')}"
+                      "entityName": "vu_notificacions",
+                      "item/vu_name": "Solicitud de aprobación (Piloto) · @{outputs('Datos_RN07')?['codigo']}",
+                      "item/vu_tiponotificacion": 100000001,
+                      "item/vu_DestinatarioId@odata.bind": "/systemusers(@{outputs('Aprobador_Piloto')?['id']})",
+                      "item/vu_canal": 100000000,
+                      "item/vu_fechaenvio": "@body('Crear_aprobacion_Piloto')?['vu_fechasolicitud']",
+                      "item/vu_estadoenvio": "@if(equals(actions('Solicitar_aprobacion_Piloto')?['status'], 'Failed'), 100000001, 100000000)",
+                      "item/vu_VerificacionId@odata.bind": "/vu_verificacions(@{triggerOutputs()?['body/vu_verificacionid']})"
                     }
                   }
                 },
@@ -460,9 +427,9 @@
                   },
                   "type": "Compose",
                   "inputs": {
-                    "decision": "@if(equals(outputs('Respuesta_Piloto'), 'Aprobar'), 'Aprobada', if(equals(outputs('Respuesta_Piloto'), 'Observar'), 'Observada', if(equals(outputs('Respuesta_Piloto'), 'Rechazar'), 'Rechazada', 'Pendiente')))",
+                    "decision": "@if(equals(outputs('Respuesta_Piloto'), 'Aprobar'), 100000001, if(equals(outputs('Respuesta_Piloto'), 'Observar'), 100000002, if(equals(outputs('Respuesta_Piloto'), 'Rechazar'), 100000003, 100000000)))",
+                    "texto": "@if(equals(outputs('Respuesta_Piloto'), 'Aprobar'), 'Aprobada', if(equals(outputs('Respuesta_Piloto'), 'Observar'), 'Observada', if(equals(outputs('Respuesta_Piloto'), 'Rechazar'), 'Rechazada', 'Pendiente')))",
                     "comentario": "@if(equals(outputs('Respuesta_Piloto'), 'Expirada'), 'Sin respuesta: la solicitud expiró a los 14 días y se canceló.', coalesce(actions('Solicitar_aprobacion_Piloto')?['outputs']?['body']?['responses']?[0]?['comments'], ''))",
-                    "respondidoPor": "@coalesce(actions('Solicitar_aprobacion_Piloto')?['outputs']?['body']?['responses']?[0]?['responder']?['displayName'], '')",
                     "fechaDecision": "@coalesce(actions('Solicitar_aprobacion_Piloto')?['outputs']?['body']?['responses']?[0]?['responseDate'], utcNow())",
                     "approvalId": "@coalesce(actions('Solicitar_aprobacion_Piloto')?['outputs']?['body']?['name'], '')"
                   }
@@ -476,23 +443,17 @@
                   "type": "OpenApiConnection",
                   "inputs": {
                     "host": {
-                      "connectionName": "shared_sharepointonline",
-                      "operationId": "PatchItem",
-                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+                      "connectionName": "shared_commondataserviceforapps",
+                      "operationId": "UpdateOnlyRecord",
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
                     },
                     "parameters": {
-                      "dataset": "@parameters('vu_SiteUrl (vu_SiteUrl)')",
-                      "table": "@parameters('vu_ListaAprobaciones (vu_ListaAprobaciones)')",
-                      "id": "@body('Crear_aprobacion_Piloto')?['ID']",
-                      "item/Title": "@body('Crear_aprobacion_Piloto')?['Title']",
-                      "item/Verificacion/Id": "@body('Crear_aprobacion_Piloto')?['Verificacion/Id']",
-                      "item/Nivel/Value": "@body('Crear_aprobacion_Piloto')?['Nivel/Value']",
-                      "item/Aprobador/Claims": "@body('Crear_aprobacion_Piloto')?['Aprobador/Claims']",
-                      "item/FechaSolicitud": "@body('Crear_aprobacion_Piloto')?['FechaSolicitud']",
-                      "item/Decision/Value": "@outputs('Decision_Piloto')?['decision']",
-                      "item/Comentario": "@outputs('Decision_Piloto')?['comentario']",
-                      "item/FechaDecision": "@outputs('Decision_Piloto')?['fechaDecision']",
-                      "item/ApprovalId": "@outputs('Decision_Piloto')?['approvalId']"
+                      "entityName": "vu_aprobacions",
+                      "recordId": "@body('Crear_aprobacion_Piloto')?['vu_aprobacionid']",
+                      "item/vu_decision": "@outputs('Decision_Piloto')?['decision']",
+                      "item/vu_comentario": "@outputs('Decision_Piloto')?['comentario']",
+                      "item/vu_fechadecision": "@outputs('Decision_Piloto')?['fechaDecision']",
+                      "item/vu_approvalid": "@outputs('Decision_Piloto')?['approvalId']"
                     }
                   }
                 },
@@ -505,7 +466,7 @@
                   "type": "SetVariable",
                   "inputs": {
                     "name": "varEstadoFinal",
-                    "value": "@if(equals(outputs('Respuesta_Piloto'), 'Aprobar'), 'Aprobada piloto', 'Observada')"
+                    "value": "@if(equals(outputs('Respuesta_Piloto'), 'Aprobar'), 100000006, 100000005)"
                   }
                 },
                 "Avisar_decision_correo_Piloto": {
@@ -523,8 +484,8 @@
                     },
                     "parameters": {
                       "emailMessage/To": "@{outputs('Datos_RN07')?['responsable']}",
-                      "emailMessage/Subject": "Verificación @{outputs('Datos_RN07')?['codigo']} – nivel Piloto: @{if(equals(outputs('Respuesta_Piloto'), 'Expirada'), 'sin respuesta (expirada)', toLower(outputs('Decision_Piloto')?['decision']))}",
-                      "emailMessage/Body": "<p>Hola @{body('Leer_verificacion_actual')?['Responsable/DisplayName']}:</p><p>La aprobación de nivel <b>Piloto</b> de la verificación <b>@{outputs('Datos_RN07')?['codigo']}</b> (@{outputs('Datos_RN07')?['solucion']}) terminó con la decisión <b>@{if(equals(outputs('Respuesta_Piloto'), 'Expirada'), 'sin respuesta (expirada)', toLower(outputs('Decision_Piloto')?['decision']))}</b>.</p><p><b>Comentario:</b> @{outputs('Decision_Piloto')?['comentario']}</p><p>@{if(equals(outputs('Respuesta_Piloto'), 'Aprobar'), if(empty(outputs('Datos_RN07')?['aprobadorProductivo']), 'No hay aprobadora productiva registrada: la verificación queda en estado Aprobada piloto.', concat('Se solicita ahora la aprobación productiva a ', outputs('Datos_RN07')?['aprobadorProductivo'], '.')), if(equals(outputs('Respuesta_Piloto'), 'Expirada'), 'La solicitud expiró sin respuesta: la verificación queda Observada para que pueda reenviarla.', 'La verificación queda Observada: revise los comentarios, corrija en la app y vuelva a enviarla.'))}</p><p><a href=\"@{triggerOutputs()?['body/{Link}']}\">Abrir la verificación</a></p>",
+                      "emailMessage/Subject": "Verificación @{outputs('Datos_RN07')?['codigo']} · nivel Piloto: @{if(equals(outputs('Respuesta_Piloto'), 'Expirada'), 'sin respuesta (expirada)', toLower(outputs('Decision_Piloto')?['texto']))}",
+                      "emailMessage/Body": "<p>Hola @{outputs('Datos_RN07')?['responsableNombre']}:</p><p>La aprobación de nivel <b>Piloto</b> de la verificación <b>@{outputs('Datos_RN07')?['codigo']}</b> (@{outputs('Datos_RN07')?['solucion']}) terminó con la decisión <b>@{if(equals(outputs('Respuesta_Piloto'), 'Expirada'), 'sin respuesta (expirada)', toLower(outputs('Decision_Piloto')?['texto']))}</b>.</p><p><b>Comentario:</b> @{outputs('Decision_Piloto')?['comentario']}</p><p>@{if(equals(outputs('Respuesta_Piloto'), 'Aprobar'), if(empty(outputs('Datos_RN07')?['aprobadorProductivoId']), 'No hay aprobadora productiva registrada: la verificación queda en estado Aprobada piloto.', 'Se solicita ahora la aprobación productiva.'), if(equals(outputs('Respuesta_Piloto'), 'Expirada'), 'La solicitud expiró sin respuesta: la verificación queda Observada para que pueda reenviarla.', 'La verificación queda Observada: revise los comentarios, corrija en la app y vuelva a enviarla.'))}</p>",
                       "emailMessage/Importance": "Normal"
                     }
                   }
@@ -540,20 +501,19 @@
                   "type": "OpenApiConnection",
                   "inputs": {
                     "host": {
-                      "connectionName": "shared_sharepointonline",
-                      "operationId": "PostItem",
-                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+                      "connectionName": "shared_commondataserviceforapps",
+                      "operationId": "CreateRecord",
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
                     },
                     "parameters": {
-                      "dataset": "@parameters('vu_SiteUrl (vu_SiteUrl)')",
-                      "table": "@parameters('vu_ListaNotificaciones (vu_ListaNotificaciones)')",
-                      "item/Title": "Verificación @{outputs('Datos_RN07')?['codigo']} – nivel Piloto: @{if(equals(outputs('Respuesta_Piloto'), 'Expirada'), 'sin respuesta (expirada)', toLower(outputs('Decision_Piloto')?['decision']))}",
-                      "item/Verificacion/Id": "@triggerOutputs()?['body/ID']",
-                      "item/TipoNotificacion/Value": "Decisión",
-                      "item/Destinatario/Claims": "@{outputs('Datos_RN07')?['responsable']}",
-                      "item/Canal/Value": "Correo",
-                      "item/FechaEnvio": "@utcNow()",
-                      "item/EstadoEnvio/Value": "@{if(equals(actions('Avisar_decision_correo_Piloto')?['status'], 'Succeeded'), 'Enviada', 'Error')}"
+                      "entityName": "vu_notificacions",
+                      "item/vu_name": "Verificación @{outputs('Datos_RN07')?['codigo']} · nivel Piloto: @{if(equals(outputs('Respuesta_Piloto'), 'Expirada'), 'sin respuesta (expirada)', toLower(outputs('Decision_Piloto')?['texto']))}",
+                      "item/vu_tiponotificacion": 100000002,
+                      "item/vu_DestinatarioId@odata.bind": "/systemusers(@{outputs('Datos_RN07')?['responsableId']})",
+                      "item/vu_canal": 100000000,
+                      "item/vu_fechaenvio": "@utcNow()",
+                      "item/vu_estadoenvio": "@if(equals(actions('Avisar_decision_correo_Piloto')?['status'], 'Succeeded'), 100000000, 100000001)",
+                      "item/vu_VerificacionId@odata.bind": "/vu_verificacions(@{triggerOutputs()?['body/vu_verificacionid']})"
                     }
                   }
                 },
@@ -573,7 +533,7 @@
                         "size": "Medium",
                         "weight": "Bolder",
                         "wrap": true,
-                        "text": "Verificación @{outputs('Datos_RN07')?['codigo']} – nivel Piloto: @{if(equals(outputs('Respuesta_Piloto'), 'Expirada'), 'sin respuesta (expirada)', toLower(outputs('Decision_Piloto')?['decision']))}"
+                        "text": "Verificación @{outputs('Datos_RN07')?['codigo']} · nivel Piloto: @{if(equals(outputs('Respuesta_Piloto'), 'Expirada'), 'sin respuesta (expirada)', toLower(outputs('Decision_Piloto')?['texto']))}"
                       },
                       {
                         "type": "FactSet",
@@ -588,11 +548,7 @@
                           },
                           {
                             "title": "Decisión",
-                            "value": "@{if(equals(outputs('Respuesta_Piloto'), 'Expirada'), 'sin respuesta (expirada)', toLower(outputs('Decision_Piloto')?['decision']))}"
-                          },
-                          {
-                            "title": "Estado",
-                            "value": "@{variables('varEstadoFinal')}"
+                            "value": "@{if(equals(outputs('Respuesta_Piloto'), 'Expirada'), 'sin respuesta (expirada)', toLower(outputs('Decision_Piloto')?['texto']))}"
                           },
                           {
                             "title": "Comentario",
@@ -603,14 +559,7 @@
                       {
                         "type": "TextBlock",
                         "wrap": true,
-                        "text": "@{if(equals(outputs('Respuesta_Piloto'), 'Aprobar'), if(empty(outputs('Datos_RN07')?['aprobadorProductivo']), 'No hay aprobadora productiva registrada: la verificación queda en estado Aprobada piloto.', concat('Se solicita ahora la aprobación productiva a ', outputs('Datos_RN07')?['aprobadorProductivo'], '.')), if(equals(outputs('Respuesta_Piloto'), 'Expirada'), 'La solicitud expiró sin respuesta: la verificación queda Observada para que pueda reenviarla.', 'La verificación queda Observada: revise los comentarios, corrija en la app y vuelva a enviarla.'))}"
-                      }
-                    ],
-                    "actions": [
-                      {
-                        "type": "Action.OpenUrl",
-                        "title": "Abrir la verificación",
-                        "url": "@{triggerOutputs()?['body/{Link}']}"
+                        "text": "@{if(equals(outputs('Respuesta_Piloto'), 'Aprobar'), if(empty(outputs('Datos_RN07')?['aprobadorProductivoId']), 'No hay aprobadora productiva registrada: la verificación queda en estado Aprobada piloto.', 'Se solicita ahora la aprobación productiva.'), if(equals(outputs('Respuesta_Piloto'), 'Expirada'), 'La solicitud expiró sin respuesta: la verificación queda Observada para que pueda reenviarla.', 'La verificación queda Observada: revise los comentarios, corrija en la app y vuelva a enviarla.'))}"
                       }
                     ]
                   }
@@ -647,79 +596,99 @@
                   "type": "OpenApiConnection",
                   "inputs": {
                     "host": {
-                      "connectionName": "shared_sharepointonline",
-                      "operationId": "PostItem",
-                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+                      "connectionName": "shared_commondataserviceforapps",
+                      "operationId": "CreateRecord",
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
                     },
                     "parameters": {
-                      "dataset": "@parameters('vu_SiteUrl (vu_SiteUrl)')",
-                      "table": "@parameters('vu_ListaNotificaciones (vu_ListaNotificaciones)')",
-                      "item/Title": "Verificación @{outputs('Datos_RN07')?['codigo']} – nivel Piloto: @{if(equals(outputs('Respuesta_Piloto'), 'Expirada'), 'sin respuesta (expirada)', toLower(outputs('Decision_Piloto')?['decision']))}",
-                      "item/Verificacion/Id": "@triggerOutputs()?['body/ID']",
-                      "item/TipoNotificacion/Value": "Decisión",
-                      "item/Destinatario/Claims": "@{outputs('Datos_RN07')?['responsable']}",
-                      "item/Canal/Value": "Teams",
-                      "item/FechaEnvio": "@utcNow()",
-                      "item/EstadoEnvio/Value": "@{if(equals(actions('Avisar_decision_Teams_Piloto')?['status'], 'Succeeded'), 'Enviada', 'Error')}"
+                      "entityName": "vu_notificacions",
+                      "item/vu_name": "Verificación @{outputs('Datos_RN07')?['codigo']} · nivel Piloto: @{if(equals(outputs('Respuesta_Piloto'), 'Expirada'), 'sin respuesta (expirada)', toLower(outputs('Decision_Piloto')?['texto']))}",
+                      "item/vu_tiponotificacion": 100000002,
+                      "item/vu_DestinatarioId@odata.bind": "/systemusers(@{outputs('Datos_RN07')?['responsableId']})",
+                      "item/vu_canal": 100000001,
+                      "item/vu_fechaenvio": "@utcNow()",
+                      "item/vu_estadoenvio": "@if(equals(actions('Avisar_decision_Teams_Piloto')?['status'], 'Succeeded'), 100000000, 100000001)",
+                      "item/vu_VerificacionId@odata.bind": "/vu_verificacions(@{triggerOutputs()?['body/vu_verificacionid']})"
                     }
                   }
                 }
               },
               "runAfter": {
-                "Registrar_FechaEnvio": [
+                "Aprobador_Piloto": [
                   "Succeeded"
                 ]
               },
               "type": "Scope"
             },
+            "Leer_verificacion_tras_piloto": {
+              "runAfter": {
+                "Scope_Nivel_Piloto": [
+                  "Succeeded"
+                ]
+              },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_commondataserviceforapps",
+                  "operationId": "GetItem",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                },
+                "parameters": {
+                  "entityName": "vu_verificacions",
+                  "recordId": "@triggerOutputs()?['body/vu_verificacionid']",
+                  "$select": "vu_estado"
+                }
+              }
+            },
             "Si_continua_a_nivel_Productiva": {
               "actions": {
-                "Leer_verificacion_tras_piloto": {
+                "Marcar_Aprobada_piloto": {
                   "runAfter": {},
                   "type": "OpenApiConnection",
                   "inputs": {
                     "host": {
-                      "connectionName": "shared_sharepointonline",
-                      "operationId": "GetItem",
-                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+                      "connectionName": "shared_commondataserviceforapps",
+                      "operationId": "UpdateOnlyRecord",
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
                     },
                     "parameters": {
-                      "dataset": "@parameters('vu_SiteUrl (vu_SiteUrl)')",
-                      "table": "@parameters('vu_ListaVerificaciones (vu_ListaVerificaciones)')",
-                      "id": "@triggerOutputs()?['body/ID']"
+                      "entityName": "vu_verificacions",
+                      "recordId": "@triggerOutputs()?['body/vu_verificacionid']",
+                      "item/vu_estado": 100000006
                     }
                   }
                 },
-                "Marcar_Aprobada_piloto": {
+                "Leer_aprobador_Productiva": {
                   "runAfter": {
-                    "Leer_verificacion_tras_piloto": [
+                    "Marcar_Aprobada_piloto": [
                       "Succeeded"
                     ]
                   },
                   "type": "OpenApiConnection",
                   "inputs": {
                     "host": {
-                      "connectionName": "shared_sharepointonline",
-                      "operationId": "PatchItem",
-                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+                      "connectionName": "shared_commondataserviceforapps",
+                      "operationId": "GetItem",
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
                     },
                     "parameters": {
-                      "dataset": "@parameters('vu_SiteUrl (vu_SiteUrl)')",
-                      "table": "@parameters('vu_ListaVerificaciones (vu_ListaVerificaciones)')",
-                      "id": "@triggerOutputs()?['body/ID']",
-                      "item/Title": "@body('Leer_verificacion_tras_piloto')?['Title']",
-                      "item/Solucion/Id": "@body('Leer_verificacion_tras_piloto')?['Solucion/Id']",
-                      "item/Responsable/Claims": "@body('Leer_verificacion_tras_piloto')?['Responsable/Claims']",
-                      "item/FechaObjetivo": "@body('Leer_verificacion_tras_piloto')?['FechaObjetivo']",
-                      "item/DiasAnticipacion": "@body('Leer_verificacion_tras_piloto')?['DiasAnticipacion']",
-                      "item/FechaAlerta": "@body('Leer_verificacion_tras_piloto')?['FechaAlerta']",
-                      "item/AlertaEnviada": "@body('Leer_verificacion_tras_piloto')?['AlertaEnviada']",
-                      "item/EntrevistasPrevistas": "@body('Leer_verificacion_tras_piloto')?['EntrevistasPrevistas']",
-                      "item/EntrevistasCompletas": "@body('Leer_verificacion_tras_piloto')?['EntrevistasCompletas']",
-                      "item/Modalidad/Value": "@body('Leer_verificacion_tras_piloto')?['Modalidad/Value']",
-                      "item/Estado/Value": "Aprobada piloto",
-                      "item/NotificarAlFinalizar": "@body('Leer_verificacion_tras_piloto')?['NotificarAlFinalizar']"
+                      "entityName": "systemusers",
+                      "recordId": "@outputs('Datos_RN07')?['aprobadorProductivoId']",
+                      "$select": "systemuserid,fullname,internalemailaddress,domainname"
                     }
+                  }
+                },
+                "Aprobador_Productiva": {
+                  "runAfter": {
+                    "Leer_aprobador_Productiva": [
+                      "Succeeded"
+                    ]
+                  },
+                  "type": "Compose",
+                  "inputs": {
+                    "id": "@body('Leer_aprobador_Productiva')?['systemuserid']",
+                    "email": "@coalesce(body('Leer_aprobador_Productiva')?['internalemailaddress'], body('Leer_aprobador_Productiva')?['domainname'])",
+                    "nombre": "@body('Leer_aprobador_Productiva')?['fullname']"
                   }
                 },
                 "Scope_Nivel_Productiva": {
@@ -729,19 +698,18 @@
                       "type": "OpenApiConnection",
                       "inputs": {
                         "host": {
-                          "connectionName": "shared_sharepointonline",
-                          "operationId": "PostItem",
-                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+                          "connectionName": "shared_commondataserviceforapps",
+                          "operationId": "CreateRecord",
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
                         },
                         "parameters": {
-                          "dataset": "@parameters('vu_SiteUrl (vu_SiteUrl)')",
-                          "table": "@parameters('vu_ListaAprobaciones (vu_ListaAprobaciones)')",
-                          "item/Title": "@{outputs('Datos_RN07')?['codigo']} · Productiva",
-                          "item/Verificacion/Id": "@triggerOutputs()?['body/ID']",
-                          "item/Nivel/Value": "Productiva",
-                          "item/Aprobador/Claims": "@{outputs('Datos_RN07')?['aprobadorProductivo']}",
-                          "item/Decision/Value": "Pendiente",
-                          "item/FechaSolicitud": "@utcNow()"
+                          "entityName": "vu_aprobacions",
+                          "item/vu_name": "@{outputs('Datos_RN07')?['codigo']} · Productiva",
+                          "item/vu_VerificacionId@odata.bind": "/vu_verificacions(@{triggerOutputs()?['body/vu_verificacionid']})",
+                          "item/vu_nivel": 100000001,
+                          "item/vu_AprobadorId@odata.bind": "/systemusers(@{outputs('Aprobador_Productiva')?['id']})",
+                          "item/vu_decision": 100000000,
+                          "item/vu_fechasolicitud": "@utcNow()"
                         }
                       }
                     },
@@ -769,10 +737,8 @@
                             "Observar",
                             "Rechazar"
                           ],
-                          "WebhookApprovalCreationInput/assignedTo": "@{outputs('Datos_RN07')?['aprobadorProductivo']}",
-                          "WebhookApprovalCreationInput/details": "**Verificación:** @{outputs('Datos_RN07')?['codigo']}\n\n**Solución:** @{outputs('Datos_RN07')?['solucion']}\n\n**Responsable:** @{body('Leer_verificacion_actual')?['Responsable/DisplayName']}\n\n**Entrevistas completas:** @{outputs('Datos_RN07')?['completas']} de @{outputs('Datos_RN07')?['previstas']}\n\n**Índice de adopción:** @{body('Leer_verificacion_actual')?['IndiceAdopcion']} %\n\n**Resultado:** @{body('Leer_verificacion_actual')?['Resultado/Value']}\n\n**Sustento global:**\n\n@{coalesce(body('Leer_verificacion_actual')?['SustentoGlobal'], '-')}\n\n**Oportunidades de mejora:**\n\n@{coalesce(body('Leer_verificacion_actual')?['OportunidadesConsolidadas'], '-')}\n\n**Recomendaciones:**\n\n@{coalesce(body('Leer_verificacion_actual')?['RecomendacionesConsolidadas'], '-')}\n\n**Nivel piloto:** aprobado por @{outputs('Decision_Piloto')?['respondidoPor']}. Comentario: @{outputs('Decision_Piloto')?['comentario']}\n\n---\n\nResponda **Aprobar**, **Observar** (vuelve al responsable para corregir) o **Rechazar**. Nivel: **Productiva**.",
-                          "WebhookApprovalCreationInput/itemLink": "@{triggerOutputs()?['body/{Link}']}",
-                          "WebhookApprovalCreationInput/itemLinkDescription": "Ver la verificación @{outputs('Datos_RN07')?['codigo']}",
+                          "WebhookApprovalCreationInput/assignedTo": "@{outputs('Aprobador_Productiva')?['email']}",
+                          "WebhookApprovalCreationInput/details": "**Verificación:** @{outputs('Datos_RN07')?['codigo']}\n\n**Solución:** @{outputs('Datos_RN07')?['solucion']}\n\n**Responsable:** @{outputs('Datos_RN07')?['responsableNombre']}\n\n**Entrevistas completas:** @{outputs('Datos_RN07')?['completas']} de @{outputs('Datos_RN07')?['previstas']}\n\n**Índice de adopción:** @{body('Leer_verificacion')?['vu_indiceadopcion']} %\n\n**Resultado:** @{body('Leer_verificacion')?['vu_resultado@OData.Community.Display.V1.FormattedValue']}\n\n**Sustento global:**\n\n@{coalesce(body('Leer_verificacion')?['vu_sustentoglobal'], '-')}\n\n**Oportunidades de mejora:**\n\n@{coalesce(body('Leer_verificacion')?['vu_oportunidadesconsolidadas'], '-')}\n\n**Recomendaciones:**\n\n@{coalesce(body('Leer_verificacion')?['vu_recomendacionesconsolidadas'], '-')}\n\n---\n\nResponda **Aprobar**, **Observar** (vuelve al responsable para corregir) o **Rechazar**. Nivel: **Productiva**.",
                           "WebhookApprovalCreationInput/enableNotifications": true,
                           "WebhookApprovalCreationInput/enableReassignment": false
                         }
@@ -789,20 +755,19 @@
                       "type": "OpenApiConnection",
                       "inputs": {
                         "host": {
-                          "connectionName": "shared_sharepointonline",
-                          "operationId": "PostItem",
-                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+                          "connectionName": "shared_commondataserviceforapps",
+                          "operationId": "CreateRecord",
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
                         },
                         "parameters": {
-                          "dataset": "@parameters('vu_SiteUrl (vu_SiteUrl)')",
-                          "table": "@parameters('vu_ListaNotificaciones (vu_ListaNotificaciones)')",
-                          "item/Title": "Solicitud de aprobación (Productiva) · @{outputs('Datos_RN07')?['codigo']}",
-                          "item/Verificacion/Id": "@triggerOutputs()?['body/ID']",
-                          "item/TipoNotificacion/Value": "Envío a revisión",
-                          "item/Destinatario/Claims": "@{outputs('Datos_RN07')?['aprobadorProductivo']}",
-                          "item/Canal/Value": "Correo",
-                          "item/FechaEnvio": "@body('Crear_aprobacion_Productiva')?['FechaSolicitud']",
-                          "item/EstadoEnvio/Value": "@{if(equals(actions('Solicitar_aprobacion_Productiva')?['status'], 'Failed'), 'Error', 'Enviada')}"
+                          "entityName": "vu_notificacions",
+                          "item/vu_name": "Solicitud de aprobación (Productiva) · @{outputs('Datos_RN07')?['codigo']}",
+                          "item/vu_tiponotificacion": 100000001,
+                          "item/vu_DestinatarioId@odata.bind": "/systemusers(@{outputs('Aprobador_Productiva')?['id']})",
+                          "item/vu_canal": 100000000,
+                          "item/vu_fechaenvio": "@body('Crear_aprobacion_Productiva')?['vu_fechasolicitud']",
+                          "item/vu_estadoenvio": "@if(equals(actions('Solicitar_aprobacion_Productiva')?['status'], 'Failed'), 100000001, 100000000)",
+                          "item/vu_VerificacionId@odata.bind": "/vu_verificacions(@{triggerOutputs()?['body/vu_verificacionid']})"
                         }
                       }
                     },
@@ -857,9 +822,9 @@
                       },
                       "type": "Compose",
                       "inputs": {
-                        "decision": "@if(equals(outputs('Respuesta_Productiva'), 'Aprobar'), 'Aprobada', if(equals(outputs('Respuesta_Productiva'), 'Observar'), 'Observada', if(equals(outputs('Respuesta_Productiva'), 'Rechazar'), 'Rechazada', 'Pendiente')))",
+                        "decision": "@if(equals(outputs('Respuesta_Productiva'), 'Aprobar'), 100000001, if(equals(outputs('Respuesta_Productiva'), 'Observar'), 100000002, if(equals(outputs('Respuesta_Productiva'), 'Rechazar'), 100000003, 100000000)))",
+                        "texto": "@if(equals(outputs('Respuesta_Productiva'), 'Aprobar'), 'Aprobada', if(equals(outputs('Respuesta_Productiva'), 'Observar'), 'Observada', if(equals(outputs('Respuesta_Productiva'), 'Rechazar'), 'Rechazada', 'Pendiente')))",
                         "comentario": "@if(equals(outputs('Respuesta_Productiva'), 'Expirada'), 'Sin respuesta: la solicitud expiró a los 14 días y se canceló.', coalesce(actions('Solicitar_aprobacion_Productiva')?['outputs']?['body']?['responses']?[0]?['comments'], ''))",
-                        "respondidoPor": "@coalesce(actions('Solicitar_aprobacion_Productiva')?['outputs']?['body']?['responses']?[0]?['responder']?['displayName'], '')",
                         "fechaDecision": "@coalesce(actions('Solicitar_aprobacion_Productiva')?['outputs']?['body']?['responses']?[0]?['responseDate'], utcNow())",
                         "approvalId": "@coalesce(actions('Solicitar_aprobacion_Productiva')?['outputs']?['body']?['name'], '')"
                       }
@@ -873,23 +838,17 @@
                       "type": "OpenApiConnection",
                       "inputs": {
                         "host": {
-                          "connectionName": "shared_sharepointonline",
-                          "operationId": "PatchItem",
-                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+                          "connectionName": "shared_commondataserviceforapps",
+                          "operationId": "UpdateOnlyRecord",
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
                         },
                         "parameters": {
-                          "dataset": "@parameters('vu_SiteUrl (vu_SiteUrl)')",
-                          "table": "@parameters('vu_ListaAprobaciones (vu_ListaAprobaciones)')",
-                          "id": "@body('Crear_aprobacion_Productiva')?['ID']",
-                          "item/Title": "@body('Crear_aprobacion_Productiva')?['Title']",
-                          "item/Verificacion/Id": "@body('Crear_aprobacion_Productiva')?['Verificacion/Id']",
-                          "item/Nivel/Value": "@body('Crear_aprobacion_Productiva')?['Nivel/Value']",
-                          "item/Aprobador/Claims": "@body('Crear_aprobacion_Productiva')?['Aprobador/Claims']",
-                          "item/FechaSolicitud": "@body('Crear_aprobacion_Productiva')?['FechaSolicitud']",
-                          "item/Decision/Value": "@outputs('Decision_Productiva')?['decision']",
-                          "item/Comentario": "@outputs('Decision_Productiva')?['comentario']",
-                          "item/FechaDecision": "@outputs('Decision_Productiva')?['fechaDecision']",
-                          "item/ApprovalId": "@outputs('Decision_Productiva')?['approvalId']"
+                          "entityName": "vu_aprobacions",
+                          "recordId": "@body('Crear_aprobacion_Productiva')?['vu_aprobacionid']",
+                          "item/vu_decision": "@outputs('Decision_Productiva')?['decision']",
+                          "item/vu_comentario": "@outputs('Decision_Productiva')?['comentario']",
+                          "item/vu_fechadecision": "@outputs('Decision_Productiva')?['fechaDecision']",
+                          "item/vu_approvalid": "@outputs('Decision_Productiva')?['approvalId']"
                         }
                       }
                     },
@@ -902,7 +861,7 @@
                       "type": "SetVariable",
                       "inputs": {
                         "name": "varEstadoFinal",
-                        "value": "@if(equals(outputs('Respuesta_Productiva'), 'Aprobar'), 'Aprobada', if(equals(outputs('Respuesta_Productiva'), 'Expirada'), 'Aprobada piloto', 'Observada'))"
+                        "value": "@if(equals(outputs('Respuesta_Productiva'), 'Aprobar'), 100000007, if(equals(outputs('Respuesta_Productiva'), 'Expirada'), 100000006, 100000005))"
                       }
                     },
                     "Avisar_decision_correo_Productiva": {
@@ -920,8 +879,8 @@
                         },
                         "parameters": {
                           "emailMessage/To": "@{outputs('Datos_RN07')?['responsable']}",
-                          "emailMessage/Subject": "Verificación @{outputs('Datos_RN07')?['codigo']} – nivel Productiva: @{if(equals(outputs('Respuesta_Productiva'), 'Expirada'), 'sin respuesta (expirada)', toLower(outputs('Decision_Productiva')?['decision']))}",
-                          "emailMessage/Body": "<p>Hola @{body('Leer_verificacion_actual')?['Responsable/DisplayName']}:</p><p>La aprobación de nivel <b>Productiva</b> de la verificación <b>@{outputs('Datos_RN07')?['codigo']}</b> (@{outputs('Datos_RN07')?['solucion']}) terminó con la decisión <b>@{if(equals(outputs('Respuesta_Productiva'), 'Expirada'), 'sin respuesta (expirada)', toLower(outputs('Decision_Productiva')?['decision']))}</b>.</p><p><b>Comentario:</b> @{outputs('Decision_Productiva')?['comentario']}</p><p>@{if(equals(outputs('Respuesta_Productiva'), 'Aprobar'), 'La verificación queda Aprobada y se recalcula la próxima VU de la solución.', if(equals(outputs('Respuesta_Productiva'), 'Expirada'), 'La aprobación productiva expiró sin respuesta: la verificación se mantiene en Aprobada piloto.', 'La verificación queda Observada: revise los comentarios, corrija en la app y vuelva a enviarla.'))}</p><p><a href=\"@{triggerOutputs()?['body/{Link}']}\">Abrir la verificación</a></p>",
+                          "emailMessage/Subject": "Verificación @{outputs('Datos_RN07')?['codigo']} · nivel Productiva: @{if(equals(outputs('Respuesta_Productiva'), 'Expirada'), 'sin respuesta (expirada)', toLower(outputs('Decision_Productiva')?['texto']))}",
+                          "emailMessage/Body": "<p>Hola @{outputs('Datos_RN07')?['responsableNombre']}:</p><p>La aprobación de nivel <b>Productiva</b> de la verificación <b>@{outputs('Datos_RN07')?['codigo']}</b> (@{outputs('Datos_RN07')?['solucion']}) terminó con la decisión <b>@{if(equals(outputs('Respuesta_Productiva'), 'Expirada'), 'sin respuesta (expirada)', toLower(outputs('Decision_Productiva')?['texto']))}</b>.</p><p><b>Comentario:</b> @{outputs('Decision_Productiva')?['comentario']}</p><p>@{if(equals(outputs('Respuesta_Productiva'), 'Aprobar'), 'La verificación queda Aprobada y se recalcula la próxima VU de la solución.', if(equals(outputs('Respuesta_Productiva'), 'Expirada'), 'La solicitud expiró sin respuesta: la verificación se queda en Aprobada piloto.', 'La verificación queda Observada: revise los comentarios, corrija en la app y vuelva a enviarla.'))}</p>",
                           "emailMessage/Importance": "Normal"
                         }
                       }
@@ -937,20 +896,19 @@
                       "type": "OpenApiConnection",
                       "inputs": {
                         "host": {
-                          "connectionName": "shared_sharepointonline",
-                          "operationId": "PostItem",
-                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+                          "connectionName": "shared_commondataserviceforapps",
+                          "operationId": "CreateRecord",
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
                         },
                         "parameters": {
-                          "dataset": "@parameters('vu_SiteUrl (vu_SiteUrl)')",
-                          "table": "@parameters('vu_ListaNotificaciones (vu_ListaNotificaciones)')",
-                          "item/Title": "Verificación @{outputs('Datos_RN07')?['codigo']} – nivel Productiva: @{if(equals(outputs('Respuesta_Productiva'), 'Expirada'), 'sin respuesta (expirada)', toLower(outputs('Decision_Productiva')?['decision']))}",
-                          "item/Verificacion/Id": "@triggerOutputs()?['body/ID']",
-                          "item/TipoNotificacion/Value": "Decisión",
-                          "item/Destinatario/Claims": "@{outputs('Datos_RN07')?['responsable']}",
-                          "item/Canal/Value": "Correo",
-                          "item/FechaEnvio": "@utcNow()",
-                          "item/EstadoEnvio/Value": "@{if(equals(actions('Avisar_decision_correo_Productiva')?['status'], 'Succeeded'), 'Enviada', 'Error')}"
+                          "entityName": "vu_notificacions",
+                          "item/vu_name": "Verificación @{outputs('Datos_RN07')?['codigo']} · nivel Productiva: @{if(equals(outputs('Respuesta_Productiva'), 'Expirada'), 'sin respuesta (expirada)', toLower(outputs('Decision_Productiva')?['texto']))}",
+                          "item/vu_tiponotificacion": 100000002,
+                          "item/vu_DestinatarioId@odata.bind": "/systemusers(@{outputs('Datos_RN07')?['responsableId']})",
+                          "item/vu_canal": 100000000,
+                          "item/vu_fechaenvio": "@utcNow()",
+                          "item/vu_estadoenvio": "@if(equals(actions('Avisar_decision_correo_Productiva')?['status'], 'Succeeded'), 100000000, 100000001)",
+                          "item/vu_VerificacionId@odata.bind": "/vu_verificacions(@{triggerOutputs()?['body/vu_verificacionid']})"
                         }
                       }
                     },
@@ -970,7 +928,7 @@
                             "size": "Medium",
                             "weight": "Bolder",
                             "wrap": true,
-                            "text": "Verificación @{outputs('Datos_RN07')?['codigo']} – nivel Productiva: @{if(equals(outputs('Respuesta_Productiva'), 'Expirada'), 'sin respuesta (expirada)', toLower(outputs('Decision_Productiva')?['decision']))}"
+                            "text": "Verificación @{outputs('Datos_RN07')?['codigo']} · nivel Productiva: @{if(equals(outputs('Respuesta_Productiva'), 'Expirada'), 'sin respuesta (expirada)', toLower(outputs('Decision_Productiva')?['texto']))}"
                           },
                           {
                             "type": "FactSet",
@@ -985,11 +943,7 @@
                               },
                               {
                                 "title": "Decisión",
-                                "value": "@{if(equals(outputs('Respuesta_Productiva'), 'Expirada'), 'sin respuesta (expirada)', toLower(outputs('Decision_Productiva')?['decision']))}"
-                              },
-                              {
-                                "title": "Estado",
-                                "value": "@{variables('varEstadoFinal')}"
+                                "value": "@{if(equals(outputs('Respuesta_Productiva'), 'Expirada'), 'sin respuesta (expirada)', toLower(outputs('Decision_Productiva')?['texto']))}"
                               },
                               {
                                 "title": "Comentario",
@@ -1000,14 +954,7 @@
                           {
                             "type": "TextBlock",
                             "wrap": true,
-                            "text": "@{if(equals(outputs('Respuesta_Productiva'), 'Aprobar'), 'La verificación queda Aprobada y se recalcula la próxima VU de la solución.', if(equals(outputs('Respuesta_Productiva'), 'Expirada'), 'La aprobación productiva expiró sin respuesta: la verificación se mantiene en Aprobada piloto.', 'La verificación queda Observada: revise los comentarios, corrija en la app y vuelva a enviarla.'))}"
-                          }
-                        ],
-                        "actions": [
-                          {
-                            "type": "Action.OpenUrl",
-                            "title": "Abrir la verificación",
-                            "url": "@{triggerOutputs()?['body/{Link}']}"
+                            "text": "@{if(equals(outputs('Respuesta_Productiva'), 'Aprobar'), 'La verificación queda Aprobada y se recalcula la próxima VU de la solución.', if(equals(outputs('Respuesta_Productiva'), 'Expirada'), 'La solicitud expiró sin respuesta: la verificación se queda en Aprobada piloto.', 'La verificación queda Observada: revise los comentarios, corrija en la app y vuelva a enviarla.'))}"
                           }
                         ]
                       }
@@ -1044,26 +991,25 @@
                       "type": "OpenApiConnection",
                       "inputs": {
                         "host": {
-                          "connectionName": "shared_sharepointonline",
-                          "operationId": "PostItem",
-                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+                          "connectionName": "shared_commondataserviceforapps",
+                          "operationId": "CreateRecord",
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
                         },
                         "parameters": {
-                          "dataset": "@parameters('vu_SiteUrl (vu_SiteUrl)')",
-                          "table": "@parameters('vu_ListaNotificaciones (vu_ListaNotificaciones)')",
-                          "item/Title": "Verificación @{outputs('Datos_RN07')?['codigo']} – nivel Productiva: @{if(equals(outputs('Respuesta_Productiva'), 'Expirada'), 'sin respuesta (expirada)', toLower(outputs('Decision_Productiva')?['decision']))}",
-                          "item/Verificacion/Id": "@triggerOutputs()?['body/ID']",
-                          "item/TipoNotificacion/Value": "Decisión",
-                          "item/Destinatario/Claims": "@{outputs('Datos_RN07')?['responsable']}",
-                          "item/Canal/Value": "Teams",
-                          "item/FechaEnvio": "@utcNow()",
-                          "item/EstadoEnvio/Value": "@{if(equals(actions('Avisar_decision_Teams_Productiva')?['status'], 'Succeeded'), 'Enviada', 'Error')}"
+                          "entityName": "vu_notificacions",
+                          "item/vu_name": "Verificación @{outputs('Datos_RN07')?['codigo']} · nivel Productiva: @{if(equals(outputs('Respuesta_Productiva'), 'Expirada'), 'sin respuesta (expirada)', toLower(outputs('Decision_Productiva')?['texto']))}",
+                          "item/vu_tiponotificacion": 100000002,
+                          "item/vu_DestinatarioId@odata.bind": "/systemusers(@{outputs('Datos_RN07')?['responsableId']})",
+                          "item/vu_canal": 100000001,
+                          "item/vu_fechaenvio": "@utcNow()",
+                          "item/vu_estadoenvio": "@if(equals(actions('Avisar_decision_Teams_Productiva')?['status'], 'Succeeded'), 100000000, 100000001)",
+                          "item/vu_VerificacionId@odata.bind": "/vu_verificacions(@{triggerOutputs()?['body/vu_verificacionid']})"
                         }
                       }
                     }
                   },
                   "runAfter": {
-                    "Marcar_Aprobada_piloto": [
+                    "Aprobador_Productiva": [
                       "Succeeded"
                     ]
                   },
@@ -1071,7 +1017,7 @@
                 }
               },
               "runAfter": {
-                "Scope_Nivel_Piloto": [
+                "Leer_verificacion_tras_piloto": [
                   "Succeeded"
                 ]
               },
@@ -1080,16 +1026,22 @@
                   {
                     "equals": [
                       "@variables('varEstadoFinal')",
-                      "Aprobada piloto"
+                      100000006
                     ]
                   },
                   {
                     "not": {
                       "equals": [
-                        "@empty(outputs('Datos_RN07')?['aprobadorProductivo'])",
+                        "@empty(outputs('Datos_RN07')?['aprobadorProductivoId'])",
                         true
                       ]
                     }
+                  },
+                  {
+                    "equals": [
+                      "@body('Leer_verificacion_tras_piloto')?['vu_estado']",
+                      100000004
+                    ]
                   }
                 ]
               },
@@ -1115,7 +1067,7 @@
               {
                 "not": {
                   "equals": [
-                    "@empty(outputs('Datos_RN07')?['aprobadorPiloto'])",
+                    "@empty(outputs('Datos_RN07')?['aprobadorPilotoId'])",
                     true
                   ]
                 }
@@ -1130,7 +1082,7 @@
                 "type": "SetVariable",
                 "inputs": {
                   "name": "varEstadoFinal",
-                  "value": "En evaluación"
+                  "value": 100000003
                 }
               },
               "Fijar_motivo_devolucion": {
@@ -1142,7 +1094,7 @@
                 "type": "SetVariable",
                 "inputs": {
                   "name": "varMotivoDevolucion",
-                  "value": "@{if(empty(outputs('Datos_RN07')?['aprobadorPiloto']), 'No se indicó la aprobadora del piloto. ', '')}@{if(equals(outputs('Datos_RN07')?['completas'], outputs('Datos_RN07')?['previstas']), '', concat('Hay ', string(outputs('Datos_RN07')?['completas']), ' entrevistas completas de ', string(outputs('Datos_RN07')?['previstas']), ' previstas (RN-07). '))}"
+                  "value": "@if(equals(outputs('Datos_RN07')?['completas'], outputs('Datos_RN07')?['previstas']), 'No hay aprobadora del piloto registrada.', concat('Hay ', string(outputs('Datos_RN07')?['completas']), ' entrevistas completas y se prevén ', string(outputs('Datos_RN07')?['previstas']), '. Para enviar a revisión deben coincidir (RN-07).'))"
                 }
               }
             }
@@ -1157,45 +1109,98 @@
           "type": "OpenApiConnection",
           "inputs": {
             "host": {
-              "connectionName": "shared_sharepointonline",
+              "connectionName": "shared_commondataserviceforapps",
               "operationId": "GetItem",
-              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
             },
             "parameters": {
-              "dataset": "@parameters('vu_SiteUrl (vu_SiteUrl)')",
-              "table": "@parameters('vu_ListaVerificaciones (vu_ListaVerificaciones)')",
-              "id": "@triggerOutputs()?['body/ID']"
+              "entityName": "vu_verificacions",
+              "recordId": "@triggerOutputs()?['body/vu_verificacionid']",
+              "$select": "vu_estado"
             }
           }
         },
         "Si_cambia_el_estado": {
           "actions": {
-            "Actualizar_estado_verificacion": {
-              "runAfter": {},
-              "type": "OpenApiConnection",
-              "inputs": {
-                "host": {
-                  "connectionName": "shared_sharepointonline",
-                  "operationId": "PatchItem",
-                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+            "Si_queda_Aprobada": {
+              "actions": {
+                "Calcular_proxima_VU": {
+                  "runAfter": {},
+                  "type": "Compose",
+                  "inputs": "@addToTime(convertFromUtc(utcNow(), 'SA Pacific Standard Time', 'yyyy-MM-dd'), coalesce(body('Leer_solucion')?['vu_periodicidadmeses'], 6), 'Month', 'yyyy-MM-dd')"
                 },
-                "parameters": {
-                  "dataset": "@parameters('vu_SiteUrl (vu_SiteUrl)')",
-                  "table": "@parameters('vu_ListaVerificaciones (vu_ListaVerificaciones)')",
-                  "id": "@triggerOutputs()?['body/ID']",
-                  "item/Title": "@body('Leer_verificacion_cierre')?['Title']",
-                  "item/Solucion/Id": "@body('Leer_verificacion_cierre')?['Solucion/Id']",
-                  "item/Responsable/Claims": "@body('Leer_verificacion_cierre')?['Responsable/Claims']",
-                  "item/FechaObjetivo": "@body('Leer_verificacion_cierre')?['FechaObjetivo']",
-                  "item/DiasAnticipacion": "@body('Leer_verificacion_cierre')?['DiasAnticipacion']",
-                  "item/FechaAlerta": "@body('Leer_verificacion_cierre')?['FechaAlerta']",
-                  "item/AlertaEnviada": "@body('Leer_verificacion_cierre')?['AlertaEnviada']",
-                  "item/EntrevistasPrevistas": "@body('Leer_verificacion_cierre')?['EntrevistasPrevistas']",
-                  "item/EntrevistasCompletas": "@body('Leer_verificacion_cierre')?['EntrevistasCompletas']",
-                  "item/Modalidad/Value": "@body('Leer_verificacion_cierre')?['Modalidad/Value']",
-                  "item/Estado/Value": "@variables('varEstadoFinal')",
-                  "item/NotificarAlFinalizar": "@body('Leer_verificacion_cierre')?['NotificarAlFinalizar']",
-                  "item/FechaAprobacion": "@if(equals(variables('varEstadoFinal'), 'Aprobada'), utcNow(), body('Leer_verificacion_cierre')?['FechaAprobacion'])"
+                "Actualizar_proxima_VU_solucion": {
+                  "runAfter": {
+                    "Calcular_proxima_VU": [
+                      "Succeeded"
+                    ]
+                  },
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "connectionName": "shared_commondataserviceforapps",
+                      "operationId": "UpdateOnlyRecord",
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                    },
+                    "parameters": {
+                      "entityName": "vu_solucions",
+                      "recordId": "@body('Leer_verificacion')?['_vu_solucionid_value']",
+                      "item/vu_proximavu": "@outputs('Calcular_proxima_VU')"
+                    }
+                  }
+                },
+                "Marcar_Aprobada": {
+                  "runAfter": {
+                    "Actualizar_proxima_VU_solucion": [
+                      "Succeeded"
+                    ]
+                  },
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "connectionName": "shared_commondataserviceforapps",
+                      "operationId": "UpdateOnlyRecord",
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                    },
+                    "parameters": {
+                      "entityName": "vu_verificacions",
+                      "recordId": "@triggerOutputs()?['body/vu_verificacionid']",
+                      "item/vu_estado": 100000007,
+                      "item/vu_fechaaprobacion": "@utcNow()"
+                    }
+                  }
+                }
+              },
+              "runAfter": {},
+              "expression": {
+                "and": [
+                  {
+                    "equals": [
+                      "@variables('varEstadoFinal')",
+                      100000007
+                    ]
+                  }
+                ]
+              },
+              "type": "If",
+              "else": {
+                "actions": {
+                  "Actualizar_estado_verificacion": {
+                    "runAfter": {},
+                    "type": "OpenApiConnection",
+                    "inputs": {
+                      "host": {
+                        "connectionName": "shared_commondataserviceforapps",
+                        "operationId": "UpdateOnlyRecord",
+                        "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                      },
+                      "parameters": {
+                        "entityName": "vu_verificacions",
+                        "recordId": "@triggerOutputs()?['body/vu_verificacionid']",
+                        "item/vu_estado": "@variables('varEstadoFinal')"
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -1206,75 +1211,36 @@
             ]
           },
           "expression": {
-            "not": {
-              "equals": [
-                "@body('Leer_verificacion_cierre')?['Estado/Value']",
-                "@variables('varEstadoFinal')"
-              ]
-            }
+            "and": [
+              {
+                "or": [
+                  {
+                    "equals": [
+                      "@body('Leer_verificacion_cierre')?['vu_estado']",
+                      100000004
+                    ]
+                  },
+                  {
+                    "equals": [
+                      "@body('Leer_verificacion_cierre')?['vu_estado']",
+                      100000006
+                    ]
+                  }
+                ]
+              },
+              {
+                "not": {
+                  "equals": [
+                    "@body('Leer_verificacion_cierre')?['vu_estado']",
+                    "@variables('varEstadoFinal')"
+                  ]
+                }
+              }
+            ]
           },
           "type": "If",
           "else": {
             "actions": {}
-          }
-        },
-        "Leer_solucion": {
-          "runAfter": {
-            "Si_cambia_el_estado": [
-              "Succeeded"
-            ]
-          },
-          "type": "OpenApiConnection",
-          "inputs": {
-            "host": {
-              "connectionName": "shared_sharepointonline",
-              "operationId": "GetItem",
-              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
-            },
-            "parameters": {
-              "dataset": "@parameters('vu_SiteUrl (vu_SiteUrl)')",
-              "table": "@parameters('vu_ListaSoluciones (vu_ListaSoluciones)')",
-              "id": "@outputs('Datos_RN07')?['solucionId']"
-            }
-          }
-        },
-        "Datos_solucion": {
-          "runAfter": {
-            "Leer_solucion": [
-              "Succeeded"
-            ]
-          },
-          "type": "Compose",
-          "inputs": {
-            "estadoVU": "@if(equals(variables('varEstadoFinal'), 'Aprobada'), 'Vigente', if(or(equals(variables('varEstadoFinal'), 'Aprobada piloto'), equals(variables('varEstadoFinal'), 'En revisión')), 'En revisión', 'En proceso'))",
-            "proximaVU": "@if(equals(variables('varEstadoFinal'), 'Aprobada'), addToTime(convertTimeZone(utcNow(), 'UTC', 'SA Pacific Standard Time'), int(first(split(string(coalesce(body('Leer_solucion')?['PeriodicidadMeses'], 6)), '.'))), 'Month', 'yyyy-MM-dd'), body('Leer_solucion')?['ProximaVU'])"
-          }
-        },
-        "Actualizar_solucion": {
-          "runAfter": {
-            "Datos_solucion": [
-              "Succeeded"
-            ]
-          },
-          "type": "OpenApiConnection",
-          "inputs": {
-            "host": {
-              "connectionName": "shared_sharepointonline",
-              "operationId": "PatchItem",
-              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
-            },
-            "parameters": {
-              "dataset": "@parameters('vu_SiteUrl (vu_SiteUrl)')",
-              "table": "@parameters('vu_ListaSoluciones (vu_ListaSoluciones)')",
-              "id": "@outputs('Datos_RN07')?['solucionId']",
-              "item/Title": "@body('Leer_solucion')?['Title']",
-              "item/Proceso/Id": "@body('Leer_solucion')?['Proceso/Id']",
-              "item/Responsable/Claims": "@body('Leer_solucion')?['Responsable/Claims']",
-              "item/PeriodicidadMeses": "@body('Leer_solucion')?['PeriodicidadMeses']",
-              "item/EstadoVU/Value": "@outputs('Datos_solucion')?['estadoVU']",
-              "item/UltimaVerificacionId": "@triggerOutputs()?['body/ID']",
-              "item/ProximaVU": "@outputs('Datos_solucion')?['proximaVU']"
-            }
           }
         },
         "Si_fue_devuelta_por_RN07": {
@@ -1290,8 +1256,8 @@
                 },
                 "parameters": {
                   "emailMessage/To": "@{outputs('Datos_RN07')?['responsable']}",
-                  "emailMessage/Subject": "Verificación @{outputs('Datos_RN07')?['codigo']}: no se pudo enviar a revisión",
-                  "emailMessage/Body": "<p>Hola @{body('Leer_verificacion_actual')?['Responsable/DisplayName']}:</p><p>La verificación <b>@{outputs('Datos_RN07')?['codigo']}</b> (@{outputs('Datos_RN07')?['solucion']}) no se envió a aprobación porque no cumple las condiciones de finalización:</p><p>@{variables('varMotivoDevolucion')}</p><p>La verificación volvió al estado <b>En evaluación</b>. Complete lo pendiente en la app y vuelva a usar <i>Finalizar y enviar</i>.</p>",
+                  "emailMessage/Subject": "Verificación @{outputs('Datos_RN07')?['codigo']} devuelta a evaluación",
+                  "emailMessage/Body": "<p>Hola @{outputs('Datos_RN07')?['responsableNombre']}:</p><p>La verificación <b>@{outputs('Datos_RN07')?['codigo']}</b> (@{outputs('Datos_RN07')?['solucion']}) no se pudo enviar a revisión y volvió a <b>En evaluación</b>.</p><p><b>Motivo:</b> @{variables('varMotivoDevolucion')}</p><p>Corrija en la app <i>Verificación de uso</i> y vuelva a enviarla.</p>",
                   "emailMessage/Importance": "Normal"
                 }
               }
@@ -1307,26 +1273,25 @@
               "type": "OpenApiConnection",
               "inputs": {
                 "host": {
-                  "connectionName": "shared_sharepointonline",
-                  "operationId": "PostItem",
-                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+                  "connectionName": "shared_commondataserviceforapps",
+                  "operationId": "CreateRecord",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
                 },
                 "parameters": {
-                  "dataset": "@parameters('vu_SiteUrl (vu_SiteUrl)')",
-                  "table": "@parameters('vu_ListaNotificaciones (vu_ListaNotificaciones)')",
-                  "item/Title": "Verificación @{outputs('Datos_RN07')?['codigo']}: no se pudo enviar a revisión",
-                  "item/Verificacion/Id": "@triggerOutputs()?['body/ID']",
-                  "item/TipoNotificacion/Value": "Envío a revisión",
-                  "item/Destinatario/Claims": "@{outputs('Datos_RN07')?['responsable']}",
-                  "item/Canal/Value": "Correo",
-                  "item/FechaEnvio": "@utcNow()",
-                  "item/EstadoEnvio/Value": "@{if(equals(actions('Avisar_devolucion_al_responsable')?['status'], 'Succeeded'), 'Enviada', 'Error')}"
+                  "entityName": "vu_notificacions",
+                  "item/vu_name": "Verificación @{outputs('Datos_RN07')?['codigo']} devuelta a evaluación",
+                  "item/vu_tiponotificacion": 100000001,
+                  "item/vu_DestinatarioId@odata.bind": "/systemusers(@{outputs('Datos_RN07')?['responsableId']})",
+                  "item/vu_canal": 100000000,
+                  "item/vu_fechaenvio": "@utcNow()",
+                  "item/vu_estadoenvio": "@if(equals(actions('Avisar_devolucion_al_responsable')?['status'], 'Succeeded'), 100000000, 100000001)",
+                  "item/vu_VerificacionId@odata.bind": "/vu_verificacions(@{triggerOutputs()?['body/vu_verificacionid']})"
                 }
               }
             }
           },
           "runAfter": {
-            "Actualizar_solucion": [
+            "Si_cambia_el_estado": [
               "Succeeded"
             ]
           },
@@ -1335,7 +1300,13 @@
               {
                 "equals": [
                   "@variables('varEstadoFinal')",
-                  "En evaluación"
+                  100000003
+                ]
+              },
+              {
+                "equals": [
+                  "@body('Leer_verificacion_cierre')?['vu_estado']",
+                  100000004
                 ]
               }
             ]
@@ -1348,7 +1319,7 @@
       },
       "outputs": {}
     },
-    "templateName": null
+    "templateName": ""
   },
   "schemaVersion": "1.0.0.0"
 }
