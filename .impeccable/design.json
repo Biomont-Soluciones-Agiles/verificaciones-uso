@@ -1,0 +1,137 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-14T00:00:00Z",
+  "title": "Design System: Verificación de uso",
+  "extensions": {
+    "colorMeta": {
+      "rojo-corporativo": { "role": "primary", "displayName": "Rojo Corporativo", "canonical": "#e51200", "tonalRamp": ["#3a0200", "#710100", "#a70000", "#c60900", "#e51200", "#ef665a", "#f9bbb5", "#fff3f1"] },
+      "rojo-corporativo-hover": { "role": "primary", "displayName": "Rojo Corporativo Hover", "canonical": "#c60900", "tonalRamp": ["#3a0200", "#710100", "#a70000", "#c60900", "#e51200", "#ef665a", "#f9bbb5", "#fff3f1"] },
+      "rojo-oxido": { "role": "primary", "displayName": "Rojo Óxido", "canonical": "#a70000", "tonalRamp": ["#3a0200", "#710100", "#a70000", "#c60900", "#e51200", "#ef665a", "#f9bbb5", "#fff3f1"] },
+      "rojo-pulsado": { "role": "primary", "displayName": "Rojo Pulsado", "canonical": "#710100", "tonalRamp": ["#3a0200", "#710100", "#a70000", "#c60900", "#e51200", "#ef665a", "#f9bbb5", "#fff3f1"] },
+      "velo-rosado": { "role": "primary", "displayName": "Velo Rosado", "canonical": "#fff3f1", "tonalRamp": ["#3a0200", "#710100", "#a70000", "#c60900", "#e51200", "#ef665a", "#f9bbb5", "#fff3f1"] },
+      "tinta-noche": { "role": "neutral", "displayName": "Tinta Noche", "canonical": "#1b1b35", "tonalRamp": ["#0b0b18", "#1b1b35", "#33335a", "#4d4d7a", "#6c6c96", "#9393b3", "#c4c4d6", "#ececf3"] },
+      "papel-claro": { "role": "neutral", "displayName": "Papel Claro", "canonical": "#fafafa", "tonalRamp": ["#242424", "#424242", "#616161", "#9e9e9e", "#d1d1d1", "#e0e0e0", "#f5f5f5", "#fafafa"] },
+      "superficie": { "role": "neutral", "displayName": "Superficie", "canonical": "#ffffff", "tonalRamp": ["#242424", "#424242", "#616161", "#9e9e9e", "#d1d1d1", "#e0e0e0", "#f5f5f5", "#ffffff"] },
+      "tinta-secundaria": { "role": "neutral", "displayName": "Tinta Secundaria", "canonical": "#424242", "tonalRamp": ["#242424", "#424242", "#616161", "#9e9e9e", "#d1d1d1", "#e0e0e0", "#f5f5f5", "#fafafa"] },
+      "tinta-terciaria": { "role": "neutral", "displayName": "Tinta Terciaria", "canonical": "#616161", "tonalRamp": ["#242424", "#424242", "#616161", "#9e9e9e", "#d1d1d1", "#e0e0e0", "#f5f5f5", "#fafafa"] },
+      "linea-divisoria": { "role": "neutral", "displayName": "Línea Divisoria", "canonical": "#e0e0e0", "tonalRamp": ["#242424", "#424242", "#616161", "#9e9e9e", "#d1d1d1", "#e0e0e0", "#f5f5f5", "#fafafa"] },
+      "linea-campo": { "role": "neutral", "displayName": "Línea de Campo", "canonical": "#d1d1d1", "tonalRamp": ["#242424", "#424242", "#616161", "#9e9e9e", "#d1d1d1", "#e0e0e0", "#f5f5f5", "#fafafa"] },
+      "verde-completado": { "role": "tertiary", "displayName": "Verde Completado", "canonical": "#107c10", "tonalRamp": ["#052505", "#0b5a08", "#107c10", "#359b35", "#5ec75a", "#9fd89f", "#c9eac7", "#f1faf1"] }
+    },
+    "typographyMeta": {
+      "title": { "displayName": "Título de pantalla", "purpose": "Título de cada pantalla (h2), con text-wrap: balance." },
+      "headline": { "displayName": "Nombre de la herramienta", "purpose": "\"Verificación de uso\" en la franja roja (h1) y encabezado del editor de entrevistas." },
+      "subtitle": { "displayName": "Título de sección", "purpose": "Títulos de tarjetas y secciones (h3)." },
+      "body": { "displayName": "Texto de trabajo", "purpose": "Campos, tablas y textos; explicativos hasta 72ch." },
+      "label": { "displayName": "Etiqueta", "purpose": "Ayudas, metadatos, correos e insignias." },
+      "numero-destacado": { "displayName": "Número destacado", "purpose": "Solo el índice de adopción, con cifras tabulares." }
+    },
+    "shadows": [
+      { "name": "reposo", "value": "0 0 2px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.14)", "purpose": "Contenedor del stepper." },
+      { "name": "cabecera", "value": "0 0 2px rgba(0,0,0,0.12), 0 2px 4px rgba(0,0,0,0.14)", "purpose": "Cabecera fija, tarjetas e indicador del índice." },
+      { "name": "flotante", "value": "0 0 2px rgba(0,0,0,0.12), 0 4px 8px rgba(0,0,0,0.14)", "purpose": "Enlace \"Saltar al contenido\" con foco." }
+    ],
+    "breakpoints": [
+      { "name": "estrecho", "value": "640px" },
+      { "name": "panel-apilado", "value": "760px" },
+      { "name": "intermedio", "value": "860px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Botón primario",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Acción principal de una zona (guardar, programar, enviar). Uno por zona.",
+      "html": "<button class=\"ds-btn-primary\">Programar verificación</button>",
+      "css": ".ds-btn-primary { background: #e51200; color: #ffffff; border: none; border-radius: 6px; height: 32px; padding: 5px 12px; font: 600 14px/20px Quicksand, 'Segoe UI', sans-serif; cursor: pointer; transition: background 0.1s; } .ds-btn-primary:hover { background: #c60900; } .ds-btn-primary:active { background: #710100; } .ds-btn-primary:focus-visible { outline: 2px solid #1b1b35; outline-offset: 2px; }"
+    },
+    {
+      "name": "Botón sutil",
+      "kind": "button",
+      "refersTo": "button-subtle",
+      "description": "Acciones secundarias, de tabla y navegación inactiva.",
+      "html": "<button class=\"ds-btn-subtle\">Ver detalle</button>",
+      "css": ".ds-btn-subtle { background: transparent; color: #1b1b35; border: none; border-radius: 6px; height: 32px; padding: 5px 12px; font: 600 14px/20px Quicksand, 'Segoe UI', sans-serif; cursor: pointer; } .ds-btn-subtle:hover { background: #f5f5f5; } .ds-btn-subtle:active { background: #e0e0e0; } .ds-btn-subtle:focus-visible { outline: 2px solid #1b1b35; outline-offset: 2px; }"
+    },
+    {
+      "name": "Cabecera con navegación",
+      "kind": "nav",
+      "refersTo": "franja-marca",
+      "description": "Franja roja con el nombre de la herramienta y barra blanca con navegación en píldora.",
+      "html": "<header class=\"ds-cabecera\"><div class=\"ds-franja\"><strong class=\"ds-marca\">Verificación de uso</strong><span class=\"ds-sub\">Soluciones digitales</span></div><nav class=\"ds-barra\"><a class=\"ds-nav ds-nav-activo\" href=\"#\">Catálogo</a><a class=\"ds-nav\" href=\"#\">Programación</a><a class=\"ds-nav\" href=\"#\">Administración</a></nav></header>",
+      "css": ".ds-cabecera { background: #ffffff; box-shadow: 0 0 2px rgba(0,0,0,0.12), 0 2px 4px rgba(0,0,0,0.14); font-family: Quicksand, 'Segoe UI', sans-serif; } .ds-franja { display: flex; align-items: baseline; gap: 8px; padding: 12px 20px; background: #e51200; color: #ffffff; } .ds-marca { font-size: 20px; line-height: 28px; font-weight: 700; } .ds-sub { font-size: 14px; } .ds-barra { display: flex; gap: 4px; padding: 8px 16px; border-bottom: 1px solid #e0e0e0; overflow-x: auto; } .ds-nav { display: inline-flex; align-items: center; height: 32px; padding: 0 12px; border-radius: 10000px; color: #1b1b35; text-decoration: none; font-size: 14px; font-weight: 600; white-space: nowrap; } .ds-nav:hover { background: #f5f5f5; } .ds-nav:focus-visible { outline: 2px solid #1b1b35; outline-offset: 2px; } .ds-nav-activo { background: #e51200; color: #ffffff; } .ds-nav-activo:hover { background: #c60900; }"
+    },
+    {
+      "name": "Campo con etiqueta",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Campo de Fluent dentro de un Field con etiqueta visible.",
+      "html": "<label class=\"ds-field\"><span class=\"ds-field-label\">Fecha objetivo</span><input class=\"ds-input\" type=\"text\" value=\"01/11/2026\"></label>",
+      "css": ".ds-field { display: flex; flex-direction: column; gap: 4px; font-family: Quicksand, 'Segoe UI', sans-serif; color: #1b1b35; } .ds-field-label { font-size: 14px; font-weight: 600; } .ds-input { height: 32px; padding: 0 10px; border: 1px solid #d1d1d1; border-bottom-color: #616161; border-radius: 6px; background: #ffffff; color: #1b1b35; font: 400 14px/20px inherit; } .ds-input:hover { border-color: #c7c7c7; border-bottom-color: #424242; } .ds-input:focus-visible { outline: none; border-bottom: 2px solid #e51200; }"
+    },
+    {
+      "name": "Insignia de estado",
+      "kind": "chip",
+      "refersTo": "badge-estado",
+      "description": "Estado de una verificación o solución, siempre con texto visible.",
+      "html": "<span class=\"ds-badge ds-badge-marca\">Programada</span> <span class=\"ds-badge ds-badge-exito\">Aprobada</span> <span class=\"ds-badge ds-badge-peligro\">Observada</span>",
+      "css": ".ds-badge { display: inline-flex; align-items: center; height: 20px; padding: 0 6px; border-radius: 6px; font: 600 12px/16px Quicksand, 'Segoe UI', sans-serif; border: 1px solid transparent; } .ds-badge-marca { background: #fff3f1; color: #c60900; border-color: #f9bbb5; } .ds-badge-exito { background: #f1faf1; color: #0e700e; border-color: #9fd89f; } .ds-badge-peligro { background: #fdf3f4; color: #b10e1c; border-color: #eeacb2; }"
+    },
+    {
+      "name": "Tarjeta",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Agrupa campos o contenido sobre el papel claro de la página.",
+      "html": "<section class=\"ds-card\"><h3 class=\"ds-card-titulo\">Material de la solución</h3><p class=\"ds-card-texto\">Manual de usuario · Instructivo · Video</p></section>",
+      "css": ".ds-card { display: flex; flex-direction: column; gap: 12px; padding: 16px; background: #ffffff; border-radius: 6px; box-shadow: 0 0 2px rgba(0,0,0,0.12), 0 2px 4px rgba(0,0,0,0.14); font-family: Quicksand, 'Segoe UI', sans-serif; color: #1b1b35; } .ds-card-titulo { margin: 0; font-size: 16px; line-height: 22px; font-weight: 600; } .ds-card-texto { margin: 0; font-size: 14px; line-height: 20px; color: #424242; }"
+    },
+    {
+      "name": "Indicador del índice",
+      "kind": "custom",
+      "refersTo": "numero-destacado",
+      "description": "Índice de adopción con resultado en icono y texto.",
+      "html": "<div class=\"ds-indice\" role=\"status\"><span class=\"ds-indice-etiqueta\">Índice de adopción</span><span class=\"ds-indice-valor\">72 %</span><span class=\"ds-indice-resultado\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 16 16\" aria-hidden=\"true\"><path fill=\"#c19c00\" d=\"M8.68 2.79a.75.75 0 0 0-1.36 0l-5.5 10A.75.75 0 0 0 2.5 14h11a.75.75 0 0 0 .68-1.21l-5.5-10ZM8 5.5c.28 0 .5.22.5.5v3.5a.5.5 0 0 1-1 0V6c0-.28.22-.5.5-.5Zm0 6.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5Z\"/></svg>Adopción parcial</span></div>",
+      "css": ".ds-indice { display: inline-flex; flex-direction: column; gap: 2px; min-width: 180px; padding: 8px 16px; background: #ffffff; border-radius: 10px; box-shadow: 0 0 2px rgba(0,0,0,0.12), 0 2px 4px rgba(0,0,0,0.14); font-family: Quicksand, 'Segoe UI', sans-serif; color: #1b1b35; } .ds-indice-etiqueta { font-size: 12px; line-height: 16px; color: #424242; } .ds-indice-valor { font-size: 40px; line-height: 52px; font-weight: 600; font-variant-numeric: tabular-nums; } .ds-indice-resultado { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; line-height: 16px; font-weight: 600; }"
+    },
+    {
+      "name": "Paso actual del stepper",
+      "kind": "custom",
+      "refersTo": "stepper-paso-actual",
+      "description": "Etapa en curso de la verificación.",
+      "html": "<div class=\"ds-paso\"><span class=\"ds-paso-marcador\">2</span><span class=\"ds-paso-textos\"><strong>Entrevistas</strong><small>Etapa actual</small></span></div>",
+      "css": ".ds-paso { display: inline-flex; align-items: center; gap: 8px; padding: 8px; background: #fff3f1; border-bottom: 3px solid #e51200; border-radius: 6px; font: 600 14px/20px Quicksand, 'Segoe UI', sans-serif; color: #1b1b35; } .ds-paso-marcador { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 10000px; background: #e51200; color: #ffffff; font-size: 12px; } .ds-paso-textos { display: flex; flex-direction: column; } .ds-paso-textos small { font-weight: 400; font-size: 12px; color: #424242; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "El Cuaderno de Laboratorio",
+    "overview": "Un laboratorio farmacéutico confía en lo que está registrado: cada dato en su casilla, con fecha, firma y sustento. La app se comporta como ese cuaderno. La página es papel claro y ordenado, la tinta es azul noche, y el rojo corporativo de Biomont aparece solo donde algo exige atención o acción: la franja de la cabecera, la acción principal de cada zona, el paso actual del proceso. Nada es decorativo; todo se puede leer de un vistazo y justificar después.\n\nEs una herramienta de operación, no de persuasión. Se usa en escritorio durante una llamada de Teams y en el celular en planta, así que la densidad es moderada: campos agrupados en tarjetas blancas sobre fondo gris claro, jerarquía tipográfica corta y estados explícitos con icono y texto. La identidad de Biomont vive en los detalles precisos: el rojo, las esquinas suaves y la navegación en píldora del sitio corporativo. No se usan el logotipo ni imágenes del sitio.\n\nEl sistema está construido sobre Fluent UI v9 con un tema propio (src/app/tema.ts). Todo color, espacio y radio sale de los tokens del tema; ningún componente repite un hex.",
+    "keyCharacteristics": [
+      "Fondo de papel claro, tarjetas blancas y una sola tinta de marca: el rojo corporativo.",
+      "Cabecera en dos niveles: franja roja con el nombre de la herramienta y barra de navegación blanca con sombra.",
+      "Estados de la verificación siempre como insignia con texto; el resultado del índice con icono, texto y color.",
+      "Números tabulares y alineados: el índice, los puntajes y las fechas se comparan en columna.",
+      "Adaptable: a 640 px las rejillas pasan a una columna y la navegación se desplaza en horizontal."
+    ],
+    "rules": [
+      { "name": "La Regla de la Tinta Roja", "body": "El rojo corporativo marca lo que pide acción o atención: un solo botón primario por zona, el ítem activo de la navegación y el paso actual. Si dos cosas rojas compiten en la misma tarjeta, una de ellas está mal.", "section": "colors" },
+      { "name": "La Regla del Rojo que no es Error", "body": "El rojo de marca y el rojo de peligro de Fluent son vecinos. Un error o un estado negativo (Observada, Rechazada, Adopción baja) siempre lleva icono y texto, nunca solo color.", "section": "colors" },
+      { "name": "La Regla de la Cifra en Columna", "body": "Todo número que se compara (índice, puntajes, fechas, valores de resumen) usa cifras tabulares (font-variant-numeric: tabular-nums) y se alinea a la derecha.", "section": "typography" },
+      { "name": "La Regla de las Tres Alturas", "body": "Solo existen tres niveles de sombra (reposo, cabecera y flotante). Los diálogos y menús usan los de Fluent; no se inventan sombras nuevas.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do tomar todo color, espacio, radio y sombra de los tokens del tema (tokens.* de Fluent con temaBiomont); el único color fijo permitido está en src/app/tema.ts.",
+      "Do acompañar cada estado y cada resultado con texto (y con icono cuando es positivo o negativo).",
+      "Do usar cifras tabulares alineadas a la derecha para índices, puntajes y fechas.",
+      "Do mantener un solo botón primario rojo por zona y dejar el resto en subtle o secundario.",
+      "Do probar cada pantalla a 640 px: una columna, navegación desplazable y botones que no se desbordan."
+    ],
+    "donts": [
+      "Don't poner texto rojo corporativo sobre velo rosado (4.38:1); usa tinta noche o rojo hover.",
+      "Don't usar el rojo como única señal de un error o de un resultado negativo.",
+      "Don't depender de Quicksand para que algo se lea bien: dentro de Power Apps se ve Segoe UI.",
+      "Don't introducir una segunda familia tipográfica ni sombras fuera de las tres alturas.",
+      "Don't incrustar el logotipo ni imágenes del sitio corporativo en la cabecera: la marca se expresa con color y texto."
+    ]
+  }
+}

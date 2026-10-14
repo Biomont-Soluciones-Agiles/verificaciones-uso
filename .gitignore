@@ -25,3 +25,7 @@ dist-ssr
 
 # Playwright MCP
 .playwright-mcp
+
+# Claude Code: configuración personal y binario de impeccable (se descarga en el primer uso)
+.claude/settings.local.json
+.claude/skills/impeccable/scripts/bin/
