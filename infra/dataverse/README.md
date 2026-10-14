@@ -8,6 +8,7 @@ Scripts Node (sin dependencias npm, Node 18+ por el `fetch` nativo) que crean y 
 | `provision.mjs` | Crea todo lo anterior de forma **idempotente** (comprueba antes de crear) y publica. |
 | `seed.mjs` + `seed/*.json` | Semilla idempotente de la configuración: áreas, criterios, pregunta y opciones. |
 | `importar-apps.mjs` + `tools/apps_xlsx_a_json.py` | Importa el catálogo real de soluciones desde la exportación a Excel de la lista SharePoint "Apps" (el JSON no se versiona). |
+| `copiar-catalogo.mjs` | Copia áreas y soluciones de desarrollo a otro entorno (QA, Producción) por `vu_name`; idempotente. El responsable se busca por correo en el destino. |
 | `verify.mjs` | Compara los metadatos del entorno con `schema.json`; sale con código ≠ 0 si hay diferencias. |
 | `lib.mjs` | Token de `az`, cliente Web API v9.2 con reintentos (429/503 respetando `Retry-After`, bloqueo de personalización), etiquetas. |
 
@@ -71,6 +72,15 @@ node infra/dataverse/importar-apps.mjs --file apps.json [--dry-run]
 ```
 
 Idempotente: busca cada solución por `vu_name` y la actualiza si ya existe.
+
+### Copiar el catálogo a QA y Producción
+
+```bash
+node infra/dataverse/copiar-catalogo.mjs --destino https://orgd0a1ee14.crm2.dynamics.com --dry-run   # QA
+node infra/dataverse/copiar-catalogo.mjs --destino https://org78cc7e9b.crm2.dynamics.com             # Producción
+```
+
+El destino necesita la solución `VerificacionUso` importada (compruébalo con `verify.mjs --org <destino>`). No copia verificaciones, así que `vu_ultimaverificacionid` queda vacía.
 
 ### Verificación
 

@@ -31,14 +31,16 @@ export const log = (...m) => console.log(stamp(), ...m);
 export const warn = (...m) => console.warn(stamp(), 'AVISO:', ...m);
 
 // ---------- token (az CLI) ----------
-let tokenCache = { value: null, at: 0 };
+// Un token por entorno: un mismo script puede hablar con varios (p. ej. copiar-catalogo.mjs).
+const tokenCache = new Map(); // org -> { value, at }
 const TOKEN_TTL_MS = 45 * 60 * 1000; // se renueva antes de que caduque (~60-75 min)
 function getToken(org) {
-  if (tokenCache.value && Date.now() - tokenCache.at < TOKEN_TTL_MS) return tokenCache.value;
+  const cached = tokenCache.get(org);
+  if (cached && Date.now() - cached.at < TOKEN_TTL_MS) return cached.value;
   const cmd = `az account get-access-token --resource ${org} --query accessToken -o tsv`;
   const value = execSync(cmd, { shell: true, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
   if (!value) throw new Error('az no devolvió token. Ejecuta "az login".');
-  tokenCache = { value, at: Date.now() };
+  tokenCache.set(org, { value, at: Date.now() });
   return value;
 }
 
@@ -82,7 +84,7 @@ export function createClient(org, { solution } = {}) {
       const text = await res.text();
       let data = null;
       if (text) { try { data = JSON.parse(text); } catch { data = text; } }
-      if (res.status === 401 && attempt < 1) { tokenCache.value = null; continue; }
+      if (res.status === 401 && attempt < 1) { tokenCache.delete(org); continue; }
       if (res.status === 404 && allow404) return { status: 404, data: null, headers: res.headers };
       if (!res.ok) {
         // bloqueo de personalización concurrente: se reintenta

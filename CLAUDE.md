@@ -29,6 +29,7 @@ node infra/dataverse/provision.mjs [--dry-run] [--verbose]   # idempotent schema
 node infra/dataverse/verify.mjs                              # diff environment metadata vs schema.json; exit≠0 on drift
 node infra/dataverse/seed.mjs                                # idempotent config seed (areas, criteria, question)
 node infra/dataverse/importar-apps.mjs --file apps.json [--dry-run]  # real solution catalog import
+node infra/dataverse/copiar-catalogo.mjs --destino <url> [--dry-run]  # copy areas + solutions dev → QA (orgd0a1ee14) / Prod (org78cc7e9b)
 node scripts/smoke-dataverse.mjs                             # READ-ONLY: runs the app's exact OData queries via Web API
 python -I infra/power-automate/validar_definiciones.py       # static validation of flow definitions vs §2.3 + schema.json
 node infra/power-automate/desplegar.mjs [--dry-run] [--sin-activar]  # idempotent: connection refs + F1–F4 into the solution, then activate
