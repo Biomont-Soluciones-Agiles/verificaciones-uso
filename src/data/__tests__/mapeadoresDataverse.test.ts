@@ -137,7 +137,7 @@ describe('verificación', () => {
       fechaAlerta: '2026-07-31',
       modalidad: 'Teams',
       estado: 'En levantamiento',
-      resultado: 'Usabilidad parcial',
+      resultado: 'Adopción parcial',
       indiceAdopcion: null,
       aprobadorPiloto: null,
       objetivo: '',

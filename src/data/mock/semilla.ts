@@ -228,8 +228,8 @@ export function crearSemilla(): Semilla {
       objetivo:
         'Validar frecuencia, cobertura, sustitución del proceso anterior y satisfacción de los usuarios.',
       estado: 'En levantamiento',
-      indiceAdopcion: 28.8,
-      resultado: 'Usabilidad parcial',
+      indiceAdopcion: 72,
+      resultado: 'Adopción parcial',
       sustentoGlobal:
         'La solución se usa con frecuencia y tiene buena aceptación. La cobertura y sustitución aún son parciales por dependencia de pocos usuarios y un apoyo manual.',
       oportunidadesConsolidadas: '',

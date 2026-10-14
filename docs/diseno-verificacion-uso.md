@@ -18,20 +18,20 @@ Gestionar el ciclo de **Verificación de Uso (VU)** de las soluciones digitales 
 | 1 | **Programación** | Crea la verificación de una solución y activa una alerta anticipada para el responsable (sin avisar todavía a la aprobadora). | Solución, responsable VU, fecha objetivo, anticipación del aviso (7/15/30 días), entrevistas previstas (1–20), modalidad (Teams/Presencial/Mixta), objetivo. **Fecha de alerta = fecha objetivo − anticipación** (15/08 − 15 d = 31/07) |
 | 2 | **Entrevistas** | Lista de entrevistas con su avance (x de N). Cada entrevista tiene una grabación, evidencias, **preguntas definidas** (catálogo) y **preguntas surgidas en la reunión** (libres, vinculadas a un criterio y con puntaje opcional), además de oportunidades de mejora y recomendaciones. Se guarda automáticamente. | Entrevistado, área, fecha y hora, modalidad, URL de la grabación, archivos, respuestas (opción, puntaje de 1 a 10, sustento, evidencia vinculada) |
 | 3 | **Evaluación** | Puntaje sugerido por criterio (calculado a partir de las respuestas) que el usuario puede ajustar dejando un sustento. Índice preliminar. | 4 criterios con peso: Frecuencia 30 %, Cobertura 25 %, Sustitución 30 %, Satisfacción 15 %. Sustento global |
-| 4 | **Revisión final** | Consolidado: entrevistas completadas, puntaje de usabilidad, resultado ("Usabilidad parcial"), cuántas evidencias hay, oportunidades y recomendaciones. "Finalizar y enviar" solo se habilita cuando están completas todas las entrevistas previstas. | Aprobadora del piloto, aprobadora productiva posterior, notificar al finalizar |
+| 4 | **Revisión final** | Consolidado: entrevistas completadas, índice, resultado ("Adopción parcial"), cuántas evidencias hay, oportunidades y recomendaciones. "Finalizar y enviar" solo se habilita cuando están completas todas las entrevistas previstas. | Aprobadora del piloto, aprobadora productiva posterior, notificar al finalizar |
 
 El stepper indica 5 etapas: **Programación → Entrevistas → Evaluación → Consolidación → Aprobación**.
 
 ### 1.3 Reglas de negocio extraídas
 1. **RN-01 Fecha de alerta** = `fecha_objetivo − dias_anticipacion`.
 2. **RN-02 Progreso** = `entrevistas completas / entrevistas previstas`.
-3. **RN-03 Puntaje de usabilidad** = `Σ(puntaje_criterio × peso) × 40 / 1000` → de 0 a 40 (pesos que suman 100, puntajes de 1 a 10). Replica la hoja "Criterios (validar)" del Excel de verificaciones, que suma los promedios de los 4 criterios (máximo 40); con los 4 pesos en 25 el resultado es exactamente esa suma. La columna se sigue llamando `vu_indiceadopcion`.
+3. **RN-03 Índice de adopción** = `Σ(puntaje_criterio × peso) / 10` → un porcentaje de 0 a 100, **redondeado a entero** como en el prototipo (pesos que suman 100, puntajes de 1 a 10).
 4. **RN-04 Puntaje sugerido por criterio** = se calcula con las respuestas de **todas** las entrevistas completas, tanto de las preguntas definidas como de las surgidas que impactan ese criterio. Propuesta: promedio simple de los puntajes no nulos.
 5. **RN-05 Un ajuste manual exige sustento**: si `puntaje_final ≠ puntaje_sugerido`, el sustento es obligatorio.
 6. **RN-06 Sin notificaciones parciales**: guardar un borrador o el avance nunca dispara avisos. La **primera** notificación a la aprobadora se envía al finalizar.
 7. **RN-07 Finalizar** solo si `completas = previstas` (el switch de notificación y el botón se bloquean hasta entonces).
 8. **RN-08 Aprobación en dos niveles**: primero la aprobadora del piloto y después la aprobadora productiva.
-9. **RN-09 Resultado** se deriva del puntaje con la interpretación del Excel: **Usabilidad confirmada** si es ≥ 30, **Usabilidad parcial** entre 20 y 30, **No confirmada** si es < 20.
+9. **RN-09 Resultado** (Adopción plena / parcial / baja) se deriva del índice. *Los umbrales no están en el prototipo*; se toman del Excel de verificaciones ("Criterios (validar)": confirmada ≥ 30, parcial 20–30, no confirmada < 20, sobre 40) llevados a %: **≥ 75 % plena, 50–74 % parcial, < 50 % baja**.
 10. **RN-10 Próxima VU** de la solución se recalcula al aprobar (fecha de aprobación + periodicidad de la solución).
 
 ### 1.4 Inconsistencias y vacíos del prototipo (a validar con negocio)
@@ -180,8 +180,8 @@ Leyenda de **Req.**: **Sí** = obligatorio para la empresa (*ApplicationRequired
 | vu_modalidad | Opción global `vu_modalidad` | Sí | |
 | vu_objetivo | Texto multilínea (2000) | No | |
 | vu_estado | Opción global `vu_estadoverificacion` (predeterminado Borrador) | Sí | §2.4 |
-| vu_indiceadopcion | Decimal 0–100 (1), nombre visible "Puntaje de usabilidad (0–40)" | No | RN-03: puntaje de 0 a 40 |
-| vu_resultado | Opción local: Usabilidad confirmada 100000000 / Usabilidad parcial 100000001 / No confirmada 100000002 | No | RN-09 |
+| vu_indiceadopcion | Decimal 0–100 (1) | No | RN-03 |
+| vu_resultado | Opción local: Adopción plena 100000000 / Adopción parcial 100000001 / Adopción baja 100000002 | No | RN-09 |
 | vu_sustentoglobal | Texto multilínea (4000) | No | |
 | vu_oportunidadesconsolidadas | Texto multilínea (4000) | No | |
 | vu_recomendacionesconsolidadas | Texto multilínea (4000) | No | |
@@ -417,7 +417,7 @@ Las tablas hijas heredan el propietario de su verificación por la relación *Pa
 ---
 
 ## 4. Supuestos y preguntas abiertas
-1. ~~Fórmula exacta del índice y umbrales de resultado.~~ Resuelto: se replica el Excel de verificaciones (RN-03, RN-09). Queda por confirmar si los pesos deben ser iguales (25 cada uno) para que el puntaje coincida exactamente con la suma del Excel.
+1. ~~Fórmula exacta del índice y umbrales de resultado.~~ Resuelto: fórmula del prototipo (redondeada a entero) y umbrales del Excel en % (RN-03, RN-09). Con 8, 6, 7 y 8 da 72 %; el 74 % del HTML es un valor fijo que el JS recalcula.
 2. Puntaje por defecto de cada opción de respuesta y la regla de agregación del puntaje sugerido.
 3. Periodicidad estándar de la VU.
 4. ¿La aprobación productiva ocurre inmediatamente después de la del piloto o en otro momento? Si no hay aprobadora productiva, hoy la verificación se queda en "Aprobada piloto".

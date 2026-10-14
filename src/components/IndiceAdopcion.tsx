@@ -28,16 +28,16 @@ export interface IndiceAdopcionProps {
 }
 
 /**
- * Indicador del puntaje de usabilidad (0–40): el número es lo principal; el resultado lleva icono y texto
+ * Indicador del índice de adopción: el número es lo principal; el resultado lleva icono y texto
  * (el color nunca es la única señal) y el texto conserva el color de texto, no el de estado.
  */
-export function IndiceAdopcion({ indice, etiqueta = 'Puntaje de usabilidad' }: IndiceAdopcionProps) {
+export function IndiceAdopcion({ indice, etiqueta = 'Índice de adopción' }: IndiceAdopcionProps) {
   const styles = useStyles();
   const texto = resultado(indice);
   const [icono, clase]: [ReactElement, string] =
-    texto === 'Usabilidad confirmada'
+    texto === 'Adopción plena'
       ? [<CheckmarkCircle16Filled key="i" />, styles.plena]
-      : texto === 'Usabilidad parcial'
+      : texto === 'Adopción parcial'
         ? [<Warning16Filled key="i" />, styles.parcial]
         : [<ErrorCircle16Filled key="i" />, styles.baja];
   return (

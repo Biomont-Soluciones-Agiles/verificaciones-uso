@@ -141,9 +141,9 @@ export const TIPO_RESPUESTA = opcion<TipoRespuesta>('vu_pregunta.vu_tiporespuest
 });
 
 export const RESULTADO = opcion<ResultadoAdopcion>('vu_verificacion.vu_resultado', {
-  'Usabilidad confirmada': 100000000,
-  'Usabilidad parcial': 100000001,
-  'No confirmada': 100000002,
+  'Adopción plena': 100000000,
+  'Adopción parcial': 100000001,
+  'Adopción baja': 100000002,
 });
 
 export const ESTADO_ENTREVISTA = opcion<EstadoEntrevista>('vu_entrevista.vu_estadoentrevista', {

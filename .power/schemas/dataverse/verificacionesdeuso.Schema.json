@@ -541,7 +541,7 @@
         },
         "vu_indiceadopcion": {
           "type": "string",
-          "title": "Puntaje de usabilidad (0–40)",
+          "title": "Índice de adopción (%)",
           "x-ms-dataverse-attribute": "vu_indiceadopcion",
           "x-ms-dataverse-type": "DecimalType",
           "x-ms-schema-name": "vu_IndiceAdopcion"
@@ -687,9 +687,9 @@
           "x-ms-dataverse-type": "PicklistType",
           "x-ms-schema-name": "vu_Resultado",
           "enum": [
-            "Usabilidad confirmada",
-            "Usabilidad parcial",
-            "No confirmada"
+            "Adopción plena",
+            "Adopción parcial",
+            "Adopción baja"
           ],
           "x-ms-enum-values": [
             100000000,
