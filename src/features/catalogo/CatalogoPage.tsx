@@ -1,4 +1,4 @@
-import { Button, Field, Input, makeStyles, Select, Text, tokens } from '@fluentui/react-components';
+import { Button, Field, Input, makeStyles, mergeClasses, Text, ToggleButton, tokens } from '@fluentui/react-components';
 import { Add24Regular, Search20Regular } from '@fluentui/react-icons';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -16,7 +16,25 @@ const useStyles = makeStyles({
     alignItems: 'flex-end',
     '& > *': { flex: '1 1 260px' },
   },
-  conteo: { color: tokens.colorNeutralForeground2, flex: '0 0 auto' },
+  conteo: { color: tokens.colorNeutralForeground2, flex: '0 0 auto', fontVariantNumeric: 'tabular-nums' },
+  // Filtro por estado como fichas con su recuento: se ve de un vistazo cuántas soluciones hay en
+  // cada estado (según la búsqueda) y se cambia con un toque. En móvil se desplaza en horizontal.
+  fichas: {
+    display: 'flex',
+    gap: tokens.spacingHorizontalXS,
+    overflowX: 'auto',
+    paddingBlock: tokens.spacingVerticalXXS,
+    '@media (min-width: 641px)': { flexWrap: 'wrap', overflowX: 'visible' },
+  },
+  ficha: { flexShrink: 0 },
+  fichaActiva: {
+    backgroundColor: tokens.colorBrandBackground2,
+    color: tokens.colorBrandForeground2,
+    border: `1px solid ${tokens.colorBrandStroke2}`,
+    ':hover': { backgroundColor: tokens.colorBrandBackground2Hover, color: tokens.colorBrandForeground2 },
+    ':hover:active': { backgroundColor: tokens.colorBrandBackground2Pressed, color: tokens.colorBrandForeground2 },
+  },
+  recuento: { marginInlineStart: tokens.spacingHorizontalXS, fontVariantNumeric: 'tabular-nums', opacity: 0.8 },
 });
 
 function coincide(s: Solucion, texto: string): boolean {
@@ -33,9 +51,10 @@ export function CatalogoPage() {
   const [estado, setEstado] = useState<EstadoVU | 'Todos'>('Todos');
   const [detalle, setDetalle] = useState<Solucion | null>(null);
 
-  const filtradas = (soluciones ?? []).filter(
-    (s) => coincide(s, busqueda) && (estado === 'Todos' || s.estadoVU === estado),
-  );
+  const porBusqueda = (soluciones ?? []).filter((s) => coincide(s, busqueda));
+  const filtradas = porBusqueda.filter((s) => estado === 'Todos' || s.estadoVU === estado);
+  const recuento = (e: EstadoVU | 'Todos') =>
+    e === 'Todos' ? porBusqueda.length : porBusqueda.filter((s) => s.estadoVU === e).length;
   const hayFiltros = busqueda.trim() !== '' || estado !== 'Todos';
   const limpiarFiltros = () => {
     setBusqueda('');
@@ -63,16 +82,6 @@ export function CatalogoPage() {
             onChange={(_, d) => setBusqueda(d.value)}
           />
         </Field>
-        <Field label="Estado">
-          <Select value={estado} onChange={(_, d) => setEstado(d.value as EstadoVU | 'Todos')}>
-            <option value="Todos">Todos</option>
-            {ESTADOS_VU.map((e) => (
-              <option key={e} value={e}>
-                {e}
-              </option>
-            ))}
-          </Select>
-        </Field>
         {soluciones && (
           <Text className={styles.conteo} role="status" aria-live="polite">
             {filtradas.length === soluciones.length
@@ -80,6 +89,21 @@ export function CatalogoPage() {
               : `${filtradas.length} de ${soluciones.length} soluciones`}
           </Text>
         )}
+      </div>
+      <div className={styles.fichas} role="group" aria-label="Filtrar por estado">
+        {(['Todos', ...ESTADOS_VU] as const).map((e) => (
+          <ToggleButton
+            key={e}
+            size="small"
+            shape="circular"
+            checked={estado === e}
+            className={mergeClasses(styles.ficha, estado === e && styles.fichaActiva)}
+            onClick={() => setEstado(e)}
+          >
+            {e}
+            <span className={styles.recuento}>{recuento(e)}</span>
+          </ToggleButton>
+        ))}
       </div>
       {error ? (
         <ErrorCarga error={error} onReintentar={() => void refetch()} />

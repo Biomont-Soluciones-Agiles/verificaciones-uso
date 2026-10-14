@@ -17,6 +17,8 @@ const useStyles = makeStyles({
   },
   etiqueta: { gridArea: 'etiqueta', fontWeight: tokens.fontWeightSemibold },
   deslizador: { gridArea: 'deslizador', width: '100%' },
+  // Con paso 0,1 Fluent dibuja 90 marcas en la pista; la pista queda limpia y el valor se lee a la derecha.
+  pista: { '::before': { backgroundImage: 'none' } },
   valor: {
     gridArea: 'valor',
     textAlign: 'right',
@@ -46,6 +48,7 @@ export function ScoreSlider({ etiqueta, valor, onChange, paso = 0.1, deshabilita
       <Slider
         id={id}
         className={styles.deslizador}
+        rail={{ className: styles.pista }}
         min={PUNTAJE_MINIMO}
         max={PUNTAJE_MAXIMO}
         step={paso}

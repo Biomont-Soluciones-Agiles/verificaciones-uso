@@ -1,5 +1,6 @@
 import { Badge, Button, Field, makeStyles, Text, Textarea, tokens } from '@fluentui/react-components';
 import { ArrowUndo16Regular } from '@fluentui/react-icons';
+import { aparecer, CURVA_SALIDA, DURACION, fundir, MENOS_MOVIMIENTO } from '../../app/movimiento';
 import { ScoreSlider } from '../../components/ScoreSlider';
 import { faltaSustento, formatearPuntaje, requiereSustento } from '../../domain/evaluacion';
 import type { PuntajeCriterio } from '../../domain/tipos';
@@ -14,6 +15,13 @@ const useStyles = makeStyles({
   },
   sugerido: { display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: tokens.spacingHorizontalS },
   nota: { color: tokens.colorNeutralForeground2, fontVariantNumeric: 'tabular-nums' },
+  // Lo que aparece porque el puntaje final se separó del sugerido (RN-05) se asienta en su sitio.
+  aparece: {
+    animationName: aparecer,
+    animationDuration: DURACION.estado,
+    animationTimingFunction: CURVA_SALIDA,
+    [MENOS_MOVIMIENTO]: { animationName: fundir },
+  },
 });
 
 export interface CriterioEvaluacionProps {
@@ -44,7 +52,7 @@ export function CriterioEvaluacion({ puntaje, soloLectura, mostrarErrores, onCha
             : `Sugerido: ${formatearPuntaje(puntaje.puntajeSugerido)} · Final: ${formatearPuntaje(puntaje.puntajeFinal)}`}
         </Text>
         {exige && puntaje.puntajeSugerido !== null && (
-          <Badge appearance="outline" color="warning" size="small">
+          <Badge appearance="outline" color="warning" size="small" className={styles.aparece}>
             Ajustado
           </Badge>
         )}
@@ -61,6 +69,7 @@ export function CriterioEvaluacion({ puntaje, soloLectura, mostrarErrores, onCha
       </div>
       {exige && (
         <Field
+          className={styles.aparece}
           label={`Sustento del ajuste de ${puntaje.titulo}`}
           required
           validationState={falta ? (mostrarErrores ? 'error' : 'warning') : 'none'}

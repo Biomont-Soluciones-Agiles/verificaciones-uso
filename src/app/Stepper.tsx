@@ -1,6 +1,7 @@
 import { makeStyles, mergeClasses, Text, tokens } from '@fluentui/react-components';
 import { Checkmark12Filled } from '@fluentui/react-icons';
 import { ETAPAS } from '../domain/flujo';
+import { CURVA_SALIDA, DURACION, MENOS_MOVIMIENTO } from './movimiento';
 
 const ESTRECHO = '@media (max-width: 640px)';
 
@@ -12,13 +13,32 @@ const useStyles = makeStyles({
     padding: tokens.spacingVerticalXS,
   },
   lista: {
+    position: 'relative',
     display: 'grid',
     gridTemplateColumns: `repeat(${ETAPAS.length}, minmax(0, 1fr))`,
-    gap: tokens.spacingHorizontalXXS,
     listStyle: 'none',
     margin: 0,
     padding: 0,
   },
+  // Una sola pieza marca la etapa actual y se desliza a la nueva: el cambio de etapa se lee como
+  // un avance (o un retroceso) en el proceso, no como un salto.
+  indicador: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    width: `calc(100% / ${ETAPAS.length})`,
+    boxSizing: 'border-box',
+    borderRadius: tokens.borderRadiusMedium,
+    borderBottom: `3px solid ${tokens.colorBrandStroke1}`,
+    backgroundColor: tokens.colorBrandBackground2,
+    pointerEvents: 'none',
+    transitionProperty: 'transform',
+    transitionDuration: DURACION.vista,
+    transitionTimingFunction: CURVA_SALIDA,
+    [MENOS_MOVIMIENTO]: { transitionDuration: '1ms' },
+  },
+  elemento: { position: 'relative' },
   paso: {
     width: '100%',
     height: '100%',
@@ -41,13 +61,12 @@ const useStyles = makeStyles({
     ':disabled': { cursor: 'default', backgroundColor: 'transparent', color: tokens.colorNeutralForeground2 },
     [ESTRECHO]: { flexDirection: 'column', justifyContent: 'flex-start', gap: tokens.spacingVerticalXXS, textAlign: 'center' },
   },
+  // El fondo y el borde de la etapa actual los pinta `indicador`, por debajo del botón.
   actual: {
-    backgroundColor: tokens.colorBrandBackground2,
-    borderBottomColor: tokens.colorBrandStroke1,
     color: tokens.colorNeutralForeground1,
     fontWeight: tokens.fontWeightSemibold,
-    ':hover': { backgroundColor: tokens.colorBrandBackground2Hover },
-    ':disabled': { backgroundColor: tokens.colorBrandBackground2, color: tokens.colorNeutralForeground1 },
+    ':hover': { backgroundColor: 'transparent', color: tokens.colorNeutralForeground1 },
+    ':disabled': { color: tokens.colorNeutralForeground1 },
   },
   marcador: {
     flexShrink: 0,
@@ -111,12 +130,15 @@ export function Stepper({ actual, completadas = [], onSeleccionar }: StepperProp
   return (
     <nav aria-label="Etapas de la verificación" className={styles.contenedor}>
       <ol className={styles.lista}>
+        {actual >= 0 && actual < ETAPAS.length && (
+          <li aria-hidden="true" className={styles.indicador} style={{ transform: `translateX(${actual * 100}%)` }} />
+        )}
         {ETAPAS.map((etapa, i) => {
           const esActual = i === actual;
           const hecha = !!completadas[i];
           const estado = hecha ? 'Completada' : esActual ? 'Etapa actual' : 'Pendiente';
           return (
-            <li key={etapa}>
+            <li key={etapa} className={styles.elemento}>
               <button
                 type="button"
                 className={mergeClasses(styles.paso, esActual && styles.actual)}

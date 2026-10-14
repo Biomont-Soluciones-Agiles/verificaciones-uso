@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useConfirmar } from '../../components/Confirmacion';
 import { DosColumnas, Encabezado, LineaResumen, ListaResumen, Pila, Tarjeta } from '../../components/Estructura';
 import { IndiceAdopcion } from '../../components/IndiceAdopcion';
+import { SelloAprobacion } from '../../components/SelloAprobacion';
 import type { DatosConsolidado } from '../../data/servicios';
 import { consolidarTextos, resumirEvidencias, textoEvidencias } from '../../domain/consolidacion';
 import { indiceAdopcion } from '../../domain/evaluacion';
@@ -72,7 +73,18 @@ export function FormularioRevision({ verificacion, entrevistas, evidencias, punt
       <DosColumnas>
         <Pila>
           <Tarjeta titulo="Resumen de resultados">
-            <IndiceAdopcion indice={indice} etiqueta={editable ? 'Índice preliminar' : 'Índice de adopción'} />
+            {(verificacion.estado === 'Aprobada' || verificacion.estado === 'Aprobada piloto') && (
+              <SelloAprobacion
+                verificacionId={verificacion.id}
+                nivel={verificacion.estado === 'Aprobada' ? 'Productiva' : 'Piloto'}
+                fecha={verificacion.fechaAprobacion}
+              />
+            )}
+            <IndiceAdopcion
+              indice={indice}
+              etiqueta={editable ? 'Índice preliminar' : 'Índice de adopción'}
+              variante="plano"
+            />
             <ListaResumen>
               <LineaResumen etiqueta="Solución" valor={verificacion.solucionNombre} />
               <LineaResumen etiqueta="Verificación" valor={verificacion.codigo} />
