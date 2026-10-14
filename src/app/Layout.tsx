@@ -30,20 +30,17 @@ const useStyles = makeStyles({
     boxShadow: tokens.shadow8,
     ':focus': { top: tokens.spacingVerticalS },
   },
+  // Como en biomont.com.pe: franja superior roja con texto blanco y, debajo, la barra
+  // de navegación blanca con sombra suave.
   cabecera: {
     position: 'sticky',
     top: 0,
     zIndex: 1,
     display: 'flex',
     flexDirection: 'column',
-    gap: tokens.spacingVerticalS,
-    paddingTop: tokens.spacingVerticalM,
-    paddingBottom: tokens.spacingVerticalS,
-    paddingInline: tokens.spacingHorizontalXL,
     backgroundColor: tokens.colorNeutralBackground1,
-    borderBottom: `1px solid ${tokens.colorNeutralStroke2}`,
-    boxShadow: tokens.shadow2,
-    '@media (max-width: 640px)': { paddingInline: tokens.spacingHorizontalL, position: 'static' },
+    boxShadow: tokens.shadow4,
+    '@media (max-width: 640px)': { position: 'static' },
   },
   filaMarca: {
     display: 'flex',
@@ -51,9 +48,15 @@ const useStyles = makeStyles({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: tokens.spacingHorizontalM,
+    paddingBlock: tokens.spacingVerticalM,
+    paddingInline: tokens.spacingHorizontalXL,
+    backgroundColor: tokens.colorBrandBackground,
+    color: tokens.colorNeutralForegroundOnBrand,
+    '@media (max-width: 640px)': { paddingInline: tokens.spacingHorizontalL },
   },
   marca: { display: 'flex', alignItems: 'baseline', gap: tokens.spacingHorizontalS, flexWrap: 'wrap', minWidth: 0 },
-  subtitulo: { color: tokens.colorNeutralForeground3 },
+  titulo: { color: tokens.colorNeutralForegroundOnBrand, fontWeight: tokens.fontWeightBold },
+  subtitulo: { color: tokens.colorNeutralForegroundOnBrand },
   barra: {
     display: 'flex',
     alignItems: 'center',
@@ -61,9 +64,12 @@ const useStyles = makeStyles({
     // En pantallas estrechas la barra se desplaza en horizontal en vez de ocupar varias filas.
     overflowX: 'auto',
     scrollbarWidth: 'thin',
-    marginInline: `calc(-1 * ${tokens.spacingHorizontalXS})`,
-    paddingInline: tokens.spacingHorizontalXS,
-    paddingBlock: tokens.spacingVerticalXXS,
+    paddingInline: `calc(${tokens.spacingHorizontalXL} - ${tokens.spacingHorizontalXS})`,
+    paddingBlock: tokens.spacingVerticalS,
+    borderBottom: `1px solid ${tokens.colorNeutralStroke2}`,
+    '@media (max-width: 640px)': {
+      paddingInline: `calc(${tokens.spacingHorizontalL} - ${tokens.spacingHorizontalXS})`,
+    },
   },
   item: { flexShrink: 0, whiteSpace: 'nowrap' },
   contenido: {
@@ -153,12 +159,12 @@ export function Layout() {
       <header className={styles.cabecera}>
         <div className={styles.filaMarca}>
           <div className={styles.marca}>
-            <Text as="h1" size={500} weight="semibold">
+            <Text as="h1" size={500} className={styles.titulo}>
               Verificación de uso
             </Text>
             <Text className={styles.subtitulo}>Soluciones digitales</Text>
             {fuente === 'mock' && (
-              <Badge appearance="outline" color="informative">
+              <Badge appearance="tint" color="informative">
                 Datos de ejemplo
               </Badge>
             )}
@@ -182,6 +188,7 @@ export function Layout() {
                 key={item.seccion}
                 className={styles.item}
                 appearance={activo ? 'primary' : 'subtle'}
+                shape="circular"
                 icon={item.icono}
                 aria-current={activo ? 'page' : undefined}
                 disabledFocusable={!item.ruta}

@@ -1,9 +1,10 @@
-import { FluentProvider, Toaster, webLightTheme } from '@fluentui/react-components';
+import { FluentProvider, Toaster } from '@fluentui/react-components';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';
 import { TOASTER_ID } from '../components/avisos';
 import { ConfirmacionProvider } from '../components/Confirmacion';
 import { RepositoriesProvider } from './RepositoriesProvider';
+import { temaBiomont } from './tema';
 
 function crearQueryClient() {
   return new QueryClient({
@@ -17,7 +18,7 @@ function crearQueryClient() {
 export function Providers({ children }: { children: ReactNode }) {
   const [queryClient] = useState(crearQueryClient);
   return (
-    <FluentProvider theme={webLightTheme} style={{ minHeight: '100vh' }}>
+    <FluentProvider theme={temaBiomont} style={{ minHeight: '100vh' }}>
       <QueryClientProvider client={queryClient}>
         <RepositoriesProvider>
           <ConfirmacionProvider>

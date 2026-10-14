@@ -6,8 +6,10 @@ body,
   min-height: 100%;
 }
 
+/* Misma pila tipográfica que `fuenteBase` en src/app/tema.ts (los tokens de Fluent solo
+   existen dentro del FluentProvider, por eso aquí se repite). */
 body {
-  font-family: 'Segoe UI', 'Segoe UI Web (West European)', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica Neue', sans-serif;
+  font-family: 'Quicksand', 'Segoe UI', 'Segoe UI Web (West European)', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica Neue', sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
