@@ -16,7 +16,7 @@ import { CURVA_SALIDA, DURACION, fundir, MENOS_MOVIMIENTO } from '../../app/movi
 import { EstadoBadge } from '../../components/EstadoBadge';
 import { EstadoVacio } from '../../components/Estructura';
 import { formatearFecha } from '../../domain/fechas';
-import { ESTADOS_VU, type Id, type Solucion } from '../../domain/tipos';
+import { ESTADOS_VU, TIPOS_PROCESO, type Id, type Solucion } from '../../domain/tipos';
 
 const useStyles = makeStyles({
   contenedor: {
@@ -25,7 +25,7 @@ const useStyles = makeStyles({
     borderRadius: tokens.borderRadiusLarge,
     boxShadow: tokens.shadow4,
   },
-  tabla: { minWidth: '820px' },
+  tabla: { minWidth: '960px' },
   acciones: { display: 'flex', gap: tokens.spacingHorizontalXS, justifyContent: 'flex-end', whiteSpace: 'nowrap' },
   // La tabla reparte el ancho en columnas iguales: la de acciones necesita el suyo para no partir los botones.
   columnaAcciones: { width: '330px' },
@@ -42,12 +42,13 @@ const useStyles = makeStyles({
   },
 });
 
-type Columna = 'titulo' | 'proceso' | 'responsable' | 'proximaVU' | 'estado';
+type Columna = 'titulo' | 'proceso' | 'area' | 'responsable' | 'proximaVU' | 'estado';
 type Direccion = 'ascending' | 'descending';
 
 const COLUMNAS: { id: Columna; titulo: string }[] = [
   { id: 'titulo', titulo: 'Solución' },
   { id: 'proceso', titulo: 'Proceso' },
+  { id: 'area', titulo: 'Área' },
   { id: 'responsable', titulo: 'Responsable' },
   { id: 'proximaVU', titulo: 'Próxima VU' },
   { id: 'estado', titulo: 'Estado' },
@@ -61,6 +62,8 @@ function comparar(a: Solucion, b: Solucion, columna: Columna): number {
     case 'titulo':
       return texto(a.titulo, b.titulo);
     case 'proceso':
+      return TIPOS_PROCESO.indexOf(a.tipoProceso!) - TIPOS_PROCESO.indexOf(b.tipoProceso!);
+    case 'area':
       return texto(a.procesoNombre, b.procesoNombre);
     case 'responsable':
       return texto(a.responsable?.nombre ?? '', b.responsable?.nombre ?? '');
@@ -72,7 +75,11 @@ function comparar(a: Solucion, b: Solucion, columna: Columna): number {
 }
 
 function vacio(s: Solucion, columna: Columna): boolean {
-  return (columna === 'responsable' && !s.responsable) || (columna === 'proximaVU' && !s.proximaVU);
+  return (
+    (columna === 'proceso' && !s.tipoProceso) ||
+    (columna === 'responsable' && !s.responsable) ||
+    (columna === 'proximaVU' && !s.proximaVU)
+  );
 }
 
 /** Retraso escalonado de la entrada de filas, con tope para que la tabla no "se haga esperar". */
@@ -105,7 +112,7 @@ export function TablaSoluciones({ soluciones, onVerDetalle, onAbrirVerificacion,
       <EstadoVacio
         icono={<Search24Regular />}
         titulo="Ninguna solución coincide con la búsqueda"
-        descripcion="Prueba con otro nombre, proceso o responsable, o muestra todos los estados."
+        descripcion="Prueba con otro nombre, proceso, área o responsable, o muestra todos los estados."
         accion={<Button onClick={onLimpiarFiltros}>Quitar filtros</Button>}
       />
     ) : (
@@ -145,6 +152,7 @@ export function TablaSoluciones({ soluciones, onVerDetalle, onAbrirVerificacion,
               <TableCell>
                 <Text weight="semibold">{s.titulo}</Text>
               </TableCell>
+              <TableCell className={styles.secundario}>{s.tipoProceso ?? '—'}</TableCell>
               <TableCell className={styles.secundario}>{s.procesoNombre}</TableCell>
               <TableCell className={styles.secundario}>{s.responsable?.nombre ?? 'Sin responsable'}</TableCell>
               <TableCell className={styles.fecha}>{formatearFecha(s.proximaVU)}</TableCell>

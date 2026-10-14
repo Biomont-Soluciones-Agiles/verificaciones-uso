@@ -40,7 +40,9 @@ const useStyles = makeStyles({
 function coincide(s: Solucion, texto: string): boolean {
   const t = texto.trim().toLocaleLowerCase('es');
   if (!t) return true;
-  return [s.titulo, s.procesoNombre, s.responsable?.nombre ?? ''].some((v) => v.toLocaleLowerCase('es').includes(t));
+  return [s.titulo, s.tipoProceso ?? '', s.procesoNombre, s.responsable?.nombre ?? ''].some((v) =>
+    v.toLocaleLowerCase('es').includes(t),
+  );
 }
 
 export function CatalogoPage() {
@@ -77,7 +79,7 @@ export function CatalogoPage() {
           <Input
             type="search"
             contentBefore={<Search20Regular />}
-            placeholder="Nombre, proceso o responsable"
+            placeholder="Nombre, proceso, área o responsable"
             value={busqueda}
             onChange={(_, d) => setBusqueda(d.value)}
           />

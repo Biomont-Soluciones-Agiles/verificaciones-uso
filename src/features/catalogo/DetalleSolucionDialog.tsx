@@ -59,7 +59,8 @@ export function DetalleSolucionDialog({ solucion, onCerrar }: DetalleSolucionDia
               {solucion.descripcion}
             </Text>
             <ListaResumen>
-              <LineaResumen etiqueta="Área propietaria" valor={solucion.procesoNombre} />
+              <LineaResumen etiqueta="Proceso" valor={solucion.tipoProceso ?? 'Sin definir'} />
+              <LineaResumen etiqueta="Área responsable" valor={solucion.procesoNombre} />
               <LineaResumen etiqueta="Responsable" valor={solucion.responsable?.nombre ?? 'Sin responsable'} />
               <LineaResumen
                 etiqueta="Usuarios objetivo"

@@ -32,12 +32,14 @@ import {
 } from '../../data/hooks/useSoluciones';
 import {
   TIPOS_DOCUMENTO,
+  TIPOS_PROCESO,
   TIPOS_SOLUCION,
   type Area,
   type Documento,
   type Id,
   type Persona,
   type Solucion,
+  type TipoProceso,
   type TipoDocumento,
   type TipoSolucion,
 } from '../../domain/tipos';
@@ -83,6 +85,7 @@ export function AdminSoluciones() {
             <TableRow>
               <TableHeaderCell>Solución</TableHeaderCell>
               <TableHeaderCell>Proceso</TableHeaderCell>
+              <TableHeaderCell>Área responsable</TableHeaderCell>
               <TableHeaderCell>Responsable</TableHeaderCell>
               <TableHeaderCell>Periodicidad</TableHeaderCell>
               <TableHeaderCell>Estado VU</TableHeaderCell>
@@ -95,6 +98,7 @@ export function AdminSoluciones() {
             {listaSoluciones.map((s) => (
               <TableRow key={s.id}>
                 <TableCell>{s.titulo}</TableCell>
+                <TableCell>{s.tipoProceso ?? 'Sin definir'}</TableCell>
                 <TableCell>{s.procesoNombre}</TableCell>
                 <TableCell>{s.responsable?.nombre ?? 'Sin responsable'}</TableCell>
                 <TableCell>{s.periodicidadMeses} meses</TableCell>
@@ -124,7 +128,9 @@ export function AdminSoluciones() {
         <FormularioSolucion
           key={seleccion.modo === 'editar' ? seleccion.solucion.id : 'nueva'}
           solucion={seleccion.modo === 'editar' ? seleccion.solucion : null}
-          procesos={listaAreas.filter((a) => a.tipo === 'Proceso' && a.activo)}
+          areas={listaAreas
+            .filter((a) => a.activo || (seleccion.modo === 'editar' && a.id === seleccion.solucion.procesoId))
+            .sort((a, b) => a.titulo.localeCompare(b.titulo, 'es'))}
           onGuardada={(s) => setSeleccion({ modo: 'editar', solucion: s })}
           onCerrar={() => setSeleccion(null)}
         />
@@ -137,12 +143,12 @@ type DatosSolucion = Omit<Solucion, 'id' | 'responsable'> & { responsable: Perso
 
 function FormularioSolucion({
   solucion,
-  procesos,
+  areas,
   onGuardada,
   onCerrar,
 }: {
   solucion: Solucion | null;
-  procesos: Area[];
+  areas: Area[];
   onGuardada: (s: Solucion) => void;
   onCerrar: () => void;
 }) {
@@ -153,8 +159,9 @@ function FormularioSolucion({
       titulo: '',
       descripcion: '',
       tipoSolucion: 'Power App',
-      procesoId: procesos[0]?.id ?? '',
-      procesoNombre: procesos[0]?.titulo ?? '',
+      tipoProceso: null,
+      procesoId: '',
+      procesoNombre: '',
       responsable: null,
       usuariosObjetivo: null,
       fechaActualizacion: null,
@@ -164,7 +171,12 @@ function FormularioSolucion({
       ultimaVerificacionId: null,
     },
   );
-  const valido = datos.titulo.trim() !== '' && datos.procesoId !== '' && datos.responsable !== null && datos.periodicidadMeses > 0;
+  const valido =
+    datos.titulo.trim() !== '' &&
+    !!datos.tipoProceso &&
+    datos.procesoId !== '' &&
+    datos.responsable !== null &&
+    datos.periodicidadMeses > 0;
 
   const enviar = async () => {
     if (!datos.responsable) return;
@@ -197,8 +209,29 @@ function FormularioSolucion({
           </Select>
         </Field>
         <Field label="Proceso" required>
-          <Select value={String(datos.procesoId)} onChange={(_, d) => setDatos({ ...datos, procesoId: d.value })}>
-            {procesos.map((a) => (
+          <Select
+            value={datos.tipoProceso ?? ''}
+            onChange={(_, d) => setDatos({ ...datos, tipoProceso: (d.value || null) as TipoProceso | null })}
+          >
+            <option value="" disabled>
+              Selecciona el tipo de proceso
+            </option>
+            {TIPOS_PROCESO.map((t) => (
+              <option key={t}>{t}</option>
+            ))}
+          </Select>
+        </Field>
+        <Field label="Área responsable" required>
+          <Select
+            value={String(datos.procesoId)}
+            onChange={(_, d) =>
+              setDatos({ ...datos, procesoId: d.value, procesoNombre: areas.find((a) => a.id === d.value)?.titulo ?? '' })
+            }
+          >
+            <option value="" disabled>
+              Selecciona el área
+            </option>
+            {areas.map((a) => (
               <option key={a.id} value={a.id}>
                 {a.titulo}
               </option>
