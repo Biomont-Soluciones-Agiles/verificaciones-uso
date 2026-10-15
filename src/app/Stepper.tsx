@@ -1,6 +1,6 @@
-import { makeStyles, mergeClasses, Text, tokens } from '@fluentui/react-components';
-import { Checkmark12Filled } from '@fluentui/react-icons';
-import { ETAPAS } from '../domain/flujo';
+import { makeStyles, mergeClasses, Text, tokens, Tooltip } from '@fluentui/react-components';
+import { Checkmark12Filled, LockClosed12Regular } from '@fluentui/react-icons';
+import { ETAPAS, motivoEtapaBloqueada } from '../domain/flujo';
 import { CURVA_SALIDA, DURACION, MENOS_MOVIMIENTO } from './movimiento';
 
 const ESTRECHO = '@media (max-width: 640px)';
@@ -39,6 +39,7 @@ const useStyles = makeStyles({
     [MENOS_MOVIMIENTO]: { transitionDuration: '1ms' },
   },
   elemento: { position: 'relative' },
+  envoltura: { display: 'block', height: '100%' },
   paso: {
     width: '100%',
     height: '100%',
@@ -87,6 +88,16 @@ const useStyles = makeStyles({
     border: `1px solid ${tokens.colorBrandBackground}`,
     color: tokens.colorNeutralForegroundOnBrand,
   },
+  // Etapa aún no disponible: atenuada y con candado en lugar del número.
+  bloqueado: {
+    color: tokens.colorNeutralForegroundDisabled,
+    ':hover': { backgroundColor: 'transparent', color: tokens.colorNeutralForegroundDisabled },
+    ':disabled': { color: tokens.colorNeutralForegroundDisabled, cursor: 'not-allowed' },
+  },
+  marcadorBloqueado: {
+    border: `1px dashed ${tokens.colorNeutralStrokeDisabled}`,
+    color: tokens.colorNeutralForegroundDisabled,
+  },
   marcadorCompletado: {
     backgroundColor: tokens.colorPaletteGreenBackground3,
     border: `1px solid ${tokens.colorPaletteGreenBackground3}`,
@@ -121,11 +132,13 @@ export interface StepperProps {
   /** Índice de la etapa visible (0–4). */
   actual: number;
   completadas?: readonly boolean[];
+  /** Etapas que se pueden abrir (cada una exige completar la anterior). Por defecto, todas. */
+  disponibles?: readonly boolean[];
   onSeleccionar?: (indice: number) => void;
 }
 
 /** Programación → Entrevistas → Evaluación → Consolidación → Aprobación. */
-export function Stepper({ actual, completadas = [], onSeleccionar }: StepperProps) {
+export function Stepper({ actual, completadas = [], disponibles, onSeleccionar }: StepperProps) {
   const styles = useStyles();
   return (
     <nav aria-label="Etapas de la verificación" className={styles.contenedor}>
@@ -136,35 +149,47 @@ export function Stepper({ actual, completadas = [], onSeleccionar }: StepperProp
         {ETAPAS.map((etapa, i) => {
           const esActual = i === actual;
           const hecha = !!completadas[i];
-          const estado = hecha ? 'Completada' : esActual ? 'Etapa actual' : 'Pendiente';
+          const bloqueada = disponibles !== undefined && !disponibles[i];
+          const estado = hecha ? 'Completada' : esActual ? 'Etapa actual' : bloqueada ? 'Bloqueada' : 'Pendiente';
+          const boton = (
+            <button
+              type="button"
+              className={mergeClasses(styles.paso, esActual && styles.actual, bloqueada && styles.bloqueado)}
+              aria-current={esActual ? 'step' : undefined}
+              aria-label={`Paso ${i + 1} de ${ETAPAS.length}: ${etapa}. ${estado}.${bloqueada ? ` ${motivoEtapaBloqueada(i)}` : ''}`}
+              title={bloqueada ? undefined : etapa}
+              disabled={!onSeleccionar || bloqueada}
+              onClick={() => onSeleccionar?.(i)}
+            >
+              <span
+                aria-hidden="true"
+                className={mergeClasses(
+                  styles.marcador,
+                  hecha && styles.marcadorCompletado,
+                  esActual && !hecha && styles.marcadorActual,
+                  bloqueada && styles.marcadorBloqueado,
+                )}
+              >
+                {hecha ? <Checkmark12Filled /> : bloqueada ? <LockClosed12Regular /> : i + 1}
+              </span>
+              <span className={styles.textos} aria-hidden="true">
+                <span className={mergeClasses(styles.etiqueta, !esActual && styles.etiquetaOculta)}>{etapa}</span>
+                <Text size={100} className={styles.estadoPaso}>
+                  {estado}
+                </Text>
+              </span>
+            </button>
+          );
           return (
             <li key={etapa} className={styles.elemento}>
-              <button
-                type="button"
-                className={mergeClasses(styles.paso, esActual && styles.actual)}
-                aria-current={esActual ? 'step' : undefined}
-                aria-label={`Paso ${i + 1} de ${ETAPAS.length}: ${etapa}. ${estado}.`}
-                title={etapa}
-                disabled={!onSeleccionar}
-                onClick={() => onSeleccionar?.(i)}
-              >
-                <span
-                  aria-hidden="true"
-                  className={mergeClasses(
-                    styles.marcador,
-                    hecha && styles.marcadorCompletado,
-                    esActual && !hecha && styles.marcadorActual,
-                  )}
-                >
-                  {hecha ? <Checkmark12Filled /> : i + 1}
-                </span>
-                <span className={styles.textos} aria-hidden="true">
-                  <span className={mergeClasses(styles.etiqueta, !esActual && styles.etiquetaOculta)}>{etapa}</span>
-                  <Text size={100} className={styles.estadoPaso}>
-                    {estado}
-                  </Text>
-                </span>
-              </button>
+              {bloqueada && onSeleccionar ? (
+                // Un botón deshabilitado no recibe el puntero: el aviso se ancla a su envoltura.
+                <Tooltip content={motivoEtapaBloqueada(i)} relationship="description">
+                  <span className={styles.envoltura}>{boton}</span>
+                </Tooltip>
+              ) : (
+                boton
+              )}
             </li>
           );
         })}

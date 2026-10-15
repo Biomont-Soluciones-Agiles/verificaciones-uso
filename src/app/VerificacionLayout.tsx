@@ -1,13 +1,12 @@
 import { makeStyles } from '@fluentui/react-components';
 import { useEffect, useRef } from 'react';
-import { Outlet, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { Navigate, Outlet, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Cargando, ErrorCarga, Pila } from '../components/Estructura';
 import { useVerificacion } from '../data/hooks/useVerificaciones';
 import { idDeTexto } from '../domain/codigo';
-import { etapasCompletadas } from '../domain/flujo';
+import { estaEnviada, etapasCompletadas, etapasDisponibles } from '../domain/flujo';
 import { CURVA_SALIDA, DURACION, fundir, MENOS_MOVIMIENTO } from './movimiento';
 import { Stepper } from './Stepper';
-import { recordarVerificacion } from './verificacionActiva';
 
 const RUTA_POR_ETAPA = ['programacion', 'entrevistas', 'evaluacion', 'revision', 'revision'] as const;
 
@@ -35,10 +34,6 @@ export function VerificacionLayout() {
   const valido = verificacionId !== null;
   const { data: verificacion, isPending, error } = useVerificacion(verificacionId);
 
-  useEffect(() => {
-    if (verificacionId) recordarVerificacion(verificacionId);
-  }, [verificacionId]);
-
   const seccion = pathname.split('/').pop();
   const indiceSeccion = Math.max(0, RUTA_POR_ETAPA.indexOf(seccion as (typeof RUTA_POR_ETAPA)[number]));
   // Dirección del último cambio de etapa: se calcula al renderizar y se guarda después.
@@ -51,15 +46,22 @@ export function VerificacionLayout() {
   if (error) return <ErrorCarga error={error} titulo="No se pudo abrir la verificación" />;
   if (isPending || !verificacion) return <Cargando texto="Abriendo la verificación…" />;
 
-  const enviada = ['En revisión', 'Aprobada piloto', 'Aprobada'].includes(verificacion.estado);
+  const enviada = estaEnviada(verificacion.estado);
   const actual =
     seccion === 'entrevistas' ? 1 : seccion === 'evaluacion' ? 2 : seccion === 'revision' ? (enviada ? 4 : 3) : 0;
+  // Cada etapa exige la anterior: una URL a una etapa bloqueada lleva a la última disponible.
+  const disponibles = etapasDisponibles(verificacion);
+  if (!disponibles[actual]) {
+    const ultima = disponibles.lastIndexOf(true);
+    return <Navigate replace to={`/verificaciones/${verificacionId}/${RUTA_POR_ETAPA[ultima]}`} />;
+  }
 
   return (
     <Pila>
       <Stepper
         actual={actual}
         completadas={etapasCompletadas(verificacion)}
+        disponibles={disponibles}
         onSeleccionar={(i) => navigate(`/verificaciones/${verificacionId}/${RUTA_POR_ETAPA[i]}`)}
       />
       <div key={seccion} className={styles.etapa} style={{ '--desde': `${desde}px` } as React.CSSProperties}>

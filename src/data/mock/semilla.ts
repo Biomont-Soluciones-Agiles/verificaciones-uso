@@ -1,5 +1,6 @@
 import type {
   Aprobacion,
+  CambioPuntaje,
   Area,
   Criterio,
   Documento,
@@ -51,6 +52,7 @@ export interface Semilla {
   puntajes: PuntajeCriterio[];
   evidencias: Evidencia[];
   aprobaciones: Aprobacion[];
+  historialPuntajes: CambioPuntaje[];
 }
 
 const SITIO = 'https://biomont.sharepoint.com/sites/VerificacionUso';
@@ -235,7 +237,6 @@ export function crearSemilla(): Semilla {
       oportunidadesConsolidadas: '',
       recomendacionesConsolidadas: '',
       aprobadorPiloto: P.alexandra,
-      aprobadorProductivo: P.denis,
       notificarAlFinalizar: false,
       fechaEnvio: null,
       fechaAprobacion: null,
@@ -480,5 +481,6 @@ export function crearSemilla(): Semilla {
     puntajes,
     evidencias,
     aprobaciones: [],
+    historialPuntajes: [],
   };
 }

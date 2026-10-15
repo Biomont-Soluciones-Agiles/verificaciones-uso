@@ -25,6 +25,7 @@ export const CONJUNTOS = {
   puntaje: 'vu_puntajecriterios',
   aprobacion: 'vu_aprobacions',
   notificacion: 'vu_notificacions',
+  historialPuntaje: 'vu_historialpuntajes',
   usuario: 'systemusers',
 } as const;
 export type Conjunto = (typeof CONJUNTOS)[keyof typeof CONJUNTOS];

@@ -2,8 +2,10 @@ import { Badge, Button, Checkbox, Field, Input, Select, Textarea } from '@fluent
 import { Delete24Regular } from '@fluentui/react-icons';
 import { useState } from 'react';
 import { Campos } from '../../components/Estructura';
+import { HistorialRespuesta } from '../../components/HistorialPuntaje';
 import { PuntajeInput } from '../../components/PuntajeInput';
-import type { Criterio, Evidencia, Id, Respuesta } from '../../domain/tipos';
+import { SustentoPlegable } from '../../components/SustentoPlegable';
+import type { CambioPuntaje, Criterio, Evidencia, Id, Respuesta } from '../../domain/tipos';
 import { useEstilosRespuesta } from './estilos';
 
 export interface PreguntaSurgidaProps {
@@ -11,6 +13,8 @@ export interface PreguntaSurgidaProps {
   criterios: Criterio[];
   /** Evidencias de la entrevista (para vincular una a esta respuesta). */
   evidencias: Evidencia[];
+  /** Cambios de su puntaje (historial). */
+  cambios: CambioPuntaje[];
   soloLectura: boolean;
   enfocar: boolean;
   onChange: (cambios: Partial<Respuesta>) => void;
@@ -24,6 +28,7 @@ export function PreguntaSurgida({
   respuesta,
   criterios,
   evidencias,
+  cambios,
   soloLectura,
   enfocar,
   onChange,
@@ -43,9 +48,11 @@ export function PreguntaSurgida({
           Pregunta surgida en reunión
         </Badge>
         {criterio && <Badge appearance="outline">Impacta: {criterio.titulo}</Badge>}
+        <span className={styles.espaciador}>
+          <HistorialRespuesta cambios={cambios} />
+        </span>
         {!soloLectura && (
           <Button
-            className={styles.espaciador}
             appearance="subtle"
             size="small"
             icon={<Delete24Regular />}
@@ -93,15 +100,12 @@ export function PreguntaSurgida({
           <PuntajeInput valor={respuesta.puntaje} deshabilitado={soloLectura} onChange={(puntaje) => onChange({ puntaje })} />
         </Field>
       </Campos>
-      <Field label="Sustento del puntaje">
-        <Textarea
-          rows={2}
-          resize="vertical"
-          value={respuesta.sustento}
-          disabled={soloLectura}
-          onChange={(_, d) => onChange({ sustento: d.value })}
-        />
-      </Field>
+      <SustentoPlegable
+        etiqueta="Sustento del puntaje"
+        valor={respuesta.sustento}
+        soloLectura={soloLectura}
+        onChange={(sustento) => onChange({ sustento })}
+      />
       <Checkbox
         label="Vincular una evidencia específica a esta respuesta"
         checked={vincular}

@@ -58,7 +58,7 @@ function Aprobaciones({ verificacion }: { verificacion: Verificacion }) {
   if (aprobaciones.length === 0) {
     return (
       <Text size={200} className={styles.nota}>
-        El flujo de aprobación registrará aquí las decisiones de cada nivel.
+        El flujo de aprobación registrará aquí la decisión de la aprobadora.
       </Text>
     );
   }
@@ -67,10 +67,12 @@ function Aprobaciones({ verificacion }: { verificacion: Verificacion }) {
       {aprobaciones.map((a) => (
         <div key={a.id} className={styles.aprobacion}>
           <span className={styles.aprobacionTextos}>
-            <Text weight="semibold">Nivel {a.nivel}</Text>
+            <Text weight="semibold">{a.aprobador.nombre}</Text>
             <Text size={200} className={styles.nota}>
-              {a.aprobador.nombre} · solicitada {formatearFechaHora(a.fechaSolicitud)}
+              Solicitada {formatearFechaHora(a.fechaSolicitud)}
+              {a.fechaDecision ? ` · decidida ${formatearFechaHora(a.fechaDecision)}` : ''}
             </Text>
+            {a.comentario.trim() && <Text size={200}>“{a.comentario.trim()}”</Text>}
           </span>
           <EstadoBadge estado={a.decision} />
         </div>
@@ -79,7 +81,7 @@ function Aprobaciones({ verificacion }: { verificacion: Verificacion }) {
   );
 }
 
-/** "Control del envío": RN-06/RN-07, aprobadoras (RN-08) y finalización. */
+/** "Control del envío": RN-06/RN-07, aprobadora de la verificación (RN-08) y finalización. */
 export function ControlEnvio({ verificacion, completas, puntajes, datos, onCambiar }: ControlEnvioProps) {
   const styles = useStyles();
   const avisos = useAvisos();
@@ -118,7 +120,7 @@ export function ControlEnvio({ verificacion, completas, puntajes, datos, onCambi
     if (!ok) return;
     try {
       await finalizar.mutateAsync(datos);
-      avisos.exito('Consolidado enviado a la aprobadora del piloto.');
+      avisos.exito('Consolidado enviado a la aprobadora de la verificación.');
     } catch (e) {
       avisos.error(e, 'No se pudo enviar a revisión');
     }
@@ -160,13 +162,6 @@ export function ControlEnvio({ verificacion, completas, puntajes, datos, onCambi
         </MessageBar>
       )}
 
-      <Field label="Aprobadora del piloto" required>
-        <PersonaPicker
-          valor={datos.aprobadorPiloto}
-          deshabilitado={!editable}
-          onChange={(p) => onCambiar('aprobadorPiloto', p)}
-        />
-      </Field>
       <Field label="Responsable de la verificación">
         {verificacion.responsable ? (
           <span className={styles.persona}>
@@ -179,11 +174,11 @@ export function ControlEnvio({ verificacion, completas, puntajes, datos, onCambi
           <Text className={styles.nota}>Sin responsable</Text>
         )}
       </Field>
-      <Field label="Aprobadora productiva posterior">
+      <Field label="Aprobadora de la verificación" required hint="Recibe el consolidado y decide: aprobar u observar.">
         <PersonaPicker
-          valor={datos.aprobadorProductivo}
+          valor={datos.aprobadorPiloto}
           deshabilitado={!editable}
-          onChange={(p) => onCambiar('aprobadorProductivo', p)}
+          onChange={(p) => onCambiar('aprobadorPiloto', p)}
         />
       </Field>
       <Switch

@@ -1,6 +1,7 @@
 import type {
   Aprobacion,
   Area,
+  CambioPuntaje,
   Criterio,
   Documento,
   Entrevista,
@@ -114,6 +115,14 @@ export interface AprobacionesRepo {
   listarPorVerificacion(verificacionId: Id): Promise<Aprobacion[]>;
 }
 
+/** Historial de cambios de puntaje. El autor y la fecha los pone Dataverse (`createdby`/`modifiedon`). */
+export interface HistorialPuntajesRepo {
+  /** Del más reciente al más antiguo. */
+  listarPorVerificacion(verificacionId: Id): Promise<CambioPuntaje[]>;
+  crear(datos: Pick<CambioPuntaje, 'titulo' | 'respuestaId' | 'verificacionId' | 'puntajeAnterior' | 'puntajeNuevo'>): Promise<CambioPuntaje>;
+  actualizar(id: Id, cambios: Pick<CambioPuntaje, 'puntajeNuevo'>): Promise<CambioPuntaje>;
+}
+
 /** Personas: usuarios del entorno (`systemuser`) para el usuario actual y el selector de personas. */
 export interface DirectorioRepo {
   usuarioActual(): Promise<Persona>;
@@ -131,5 +140,6 @@ export interface Repositorios {
   evidencias: EvidenciasRepo;
   catalogo: CatalogoRepo;
   aprobaciones: AprobacionesRepo;
+  historialPuntajes: HistorialPuntajesRepo;
   directorio: DirectorioRepo;
 }

@@ -137,6 +137,10 @@ export async function programarVerificacion(
     if (actual.estado !== 'Borrador' && actual.estado !== 'Programada') {
       throw new ErrorValidacion([`La programación ya no se puede modificar (estado "${actual.estado}").`]);
     }
+    const registradas = (await repos.entrevistas.listarPorVerificacion(actual.id)).length;
+    if (datos.entrevistasPrevistas < registradas) {
+      throw new ErrorValidacion([`Ya hay ${registradas} entrevistas registradas: las previstas no pueden ser menos.`]);
+    }
     const cambios: Cambios<Verificacion> = { ...datos, fechaAlerta };
     // Si cambia la fecha de alerta, el flujo F1 debe volver a avisar.
     if (actual.fechaAlerta !== fechaAlerta) cambios.alertaEnviada = false;
@@ -163,7 +167,6 @@ export async function programarVerificacion(
       oportunidadesConsolidadas: '',
       recomendacionesConsolidadas: '',
       aprobadorPiloto: null,
-      aprobadorProductivo: null,
       notificarAlFinalizar: false,
       fechaEnvio: null,
       fechaAprobacion: null,
@@ -184,8 +187,9 @@ export async function cancelarVerificacion(repos: Repositorios, id: Id): Promise
 // ---------------------------------------------------------------------------
 
 /**
- * Recuenta las entrevistas completas (nunca `+1`) y avanza el estado si corresponde:
- * Programada → En levantamiento (hay alguna iniciada) → En evaluación (completas = previstas).
+ * Recuenta las entrevistas completas (nunca `+1`) y ajusta el estado si corresponde:
+ * Programada → En levantamiento (hay alguna iniciada) → En evaluación (completas = previstas),
+ * y En evaluación → En levantamiento si se aumentaron las previstas por encima de las completas.
  */
 export async function recontarCompletas(repos: Repositorios, verificacionId: Id): Promise<Verificacion> {
   const [v, entrevistas] = await Promise.all([
@@ -204,9 +208,43 @@ export async function recontarCompletas(repos: Repositorios, verificacionId: Id)
   ) {
     estado = 'En evaluación';
   }
+  if (
+    estado === 'En evaluación' &&
+    !puedeFinalizar({ entrevistasCompletas: completas, entrevistasPrevistas: v.entrevistasPrevistas })
+  ) {
+    estado = 'En levantamiento';
+  }
   if (estado !== v.estado) cambios.estado = estado;
 
   return Object.keys(cambios).length > 0 ? repos.verificaciones.actualizar(v.id, cambios) : v;
+}
+
+/**
+ * Cambia la cantidad de entrevistas previstas en cualquier momento antes del envío. No puede
+ * quedar por debajo de las entrevistas ya registradas; recuenta para ajustar el estado (RN-07).
+ */
+export async function cambiarEntrevistasPrevistas(
+  repos: Repositorios,
+  verificacionId: Id,
+  previstas: number,
+): Promise<Verificacion> {
+  const v = await obtenerVerificacion(repos, verificacionId);
+  if (!esEditableDesdeApp(v.estado)) {
+    throw new ErrorValidacion([`Las entrevistas previstas no se pueden cambiar en estado "${v.estado}".`]);
+  }
+  if (!Number.isInteger(previstas) || previstas < 1 || previstas > 20) {
+    throw new ErrorValidacion(['Las entrevistas previstas deben estar entre 1 y 20.']);
+  }
+  const registradas = (await repos.entrevistas.listarPorVerificacion(verificacionId)).length;
+  if (previstas < registradas) {
+    throw new ErrorValidacion([
+      `Ya hay ${registradas} entrevistas registradas: las previstas no pueden ser menos.`,
+    ]);
+  }
+  if (previstas !== v.entrevistasPrevistas) {
+    await repos.verificaciones.actualizar(v.id, { entrevistasPrevistas: previstas });
+  }
+  return recontarCompletas(repos, verificacionId);
 }
 
 export interface DatosNuevaEntrevista {
@@ -334,6 +372,51 @@ export interface CambiosBorradorEntrevista {
   respuestas: { id: Id; cambios: Cambios<Respuesta> }[];
 }
 
+/** Los cambios seguidos de una misma persona dentro de esta ventana se agrupan en una fila. */
+export const VENTANA_AGRUPAR_CAMBIOS_MS = 5 * 60 * 1000;
+
+const mismaPersona = (a: Persona | null, b: Persona) =>
+  !!a && (a.id && b.id ? a.id === b.id : a.email.toLowerCase() === b.email.toLowerCase());
+
+/**
+ * Historial de puntajes: anota cada cambio del puntaje de una respuesta que ya tenía uno
+ * (el primer registro no es un cambio). El autoguardado escribe cada pocos cientos de ms,
+ * así que los cambios seguidos de la misma persona actualizan la última fila en lugar de
+ * crear otra (anterior → último valor). Reintentable: volver a aplicar el mismo valor no
+ * crea filas nuevas.
+ */
+async function registrarCambiosPuntaje(
+  repos: Repositorios,
+  entrevista: Entrevista,
+  cambios: CambiosBorradorEntrevista['respuestas'],
+): Promise<void> {
+  const [guardadas, historial, usuario] = await Promise.all([
+    repos.respuestas.listarPorEntrevista(entrevista.id),
+    repos.historialPuntajes.listarPorVerificacion(entrevista.verificacionId),
+    repos.directorio.usuarioActual(),
+  ]);
+  const ahora = Date.now();
+  for (const { id, cambios: c } of cambios) {
+    if (c.puntaje === undefined) continue;
+    const guardada = guardadas.find((r) => r.id === id);
+    if (!guardada || guardada.puntaje === c.puntaje) continue;
+    const ultimo = historial.find((h) => h.respuestaId === id);
+    const reciente =
+      ultimo && mismaPersona(ultimo.autor, usuario) && ahora - Date.parse(ultimo.fecha) < VENTANA_AGRUPAR_CAMBIOS_MS;
+    if (reciente) {
+      await repos.historialPuntajes.actualizar(ultimo.id, { puntajeNuevo: c.puntaje });
+    } else if (guardada.puntaje !== null) {
+      await repos.historialPuntajes.crear({
+        titulo: guardada.titulo,
+        respuestaId: id,
+        verificacionId: entrevista.verificacionId,
+        puntajeAnterior: guardada.puntaje,
+        puntajeNuevo: c.puntaje,
+      });
+    }
+  }
+}
+
 /**
  * Autoguardado / "Guardar avance sin notificar": escribe solo los campos modificados.
  * La primera vez que se toca una entrevista Pendiente pasa a "En curso" (y la verificación
@@ -348,6 +431,10 @@ export async function guardarBorradorEntrevista(
   const cambiosEntrevista: Cambios<Entrevista> = { ...cambios.entrevista };
   if (e.estado === 'Pendiente') cambiosEntrevista.estado = 'En curso';
   if (Object.keys(cambiosEntrevista).length > 0) e = await repos.entrevistas.actualizar(e.id, cambiosEntrevista);
+  // El historial se registra antes de escribir, comparando con el puntaje guardado.
+  if (cambios.respuestas.some((r) => r.cambios.puntaje !== undefined)) {
+    await registrarCambiosPuntaje(repos, e, cambios.respuestas);
+  }
   for (const r of cambios.respuestas) {
     if (Object.keys(r.cambios).length > 0) await repos.respuestas.actualizar(r.id, normalizarRespuesta(r.cambios));
   }
@@ -487,7 +574,6 @@ export interface DatosConsolidado {
   oportunidadesConsolidadas: string;
   recomendacionesConsolidadas: string;
   aprobadorPiloto: Persona | null;
-  aprobadorProductivo: Persona | null;
   notificarAlFinalizar: boolean;
 }
 

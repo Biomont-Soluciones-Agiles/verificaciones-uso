@@ -54,6 +54,13 @@ export const dataSourcesInfo = {
     "dataSourceType": "Dataverse",
     "apis": {}
   },
+  "vu_historialpuntajes": {
+    "tableId": "",
+    "version": "",
+    "primaryKey": "vu_historialpuntajeid",
+    "dataSourceType": "Dataverse",
+    "apis": {}
+  },
   "vu_notificacions": {
     "tableId": "",
     "version": "",

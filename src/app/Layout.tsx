@@ -1,20 +1,12 @@
-import { Badge, Button, makeStyles, Text, tokens, Tooltip } from '@fluentui/react-components';
-import {
-  CalendarClock24Regular,
-  ChatMultiple24Regular,
-  ClipboardTaskListLtr24Regular,
-  Gauge24Regular,
-  Grid24Regular,
-  Settings24Regular,
-} from '@fluentui/react-icons';
+import { Badge, Button, makeStyles, Text, tokens } from '@fluentui/react-components';
+import { Grid24Regular, Settings24Regular } from '@fluentui/react-icons';
 import { useEffect, type ReactElement } from 'react';
 import { Outlet, useLocation, useMatch, useNavigate } from 'react-router-dom';
 import { useFuenteDatos } from '../data/contexto';
-import { useVerificacion, useVerificaciones } from '../data/hooks/useVerificaciones';
-import { compararCodigoDesc, idDeTexto } from '../domain/codigo';
-import { esVerificacionActiva, estaSinNotificar } from '../domain/flujo';
+import { useVerificacion } from '../data/hooks/useVerificaciones';
+import { idDeTexto } from '../domain/codigo';
+import { estaSinNotificar } from '../domain/flujo';
 import type { Verificacion } from '../domain/tipos';
-import { useVerificacionRecordada } from './verificacionActiva';
 
 const useStyles = makeStyles({
   raiz: { minHeight: '100vh', backgroundColor: tokens.colorNeutralBackground2 },
@@ -81,21 +73,26 @@ const useStyles = makeStyles({
   },
 });
 
-type Seccion = 'catalogo' | 'programacion' | 'entrevistas' | 'evaluacion' | 'revision' | 'admin';
+type Seccion = 'catalogo' | 'admin';
 
 interface ItemNavegacion {
   seccion: Seccion;
   texto: string;
   icono: ReactElement;
-  ruta: string | null;
+  ruta: string;
 }
 
-function seccionDeRuta(pathname: string): Seccion | null {
-  if (pathname.startsWith('/catalogo')) return 'catalogo';
-  if (pathname.startsWith('/admin')) return 'admin';
-  if (pathname.startsWith('/programar')) return 'programacion';
-  const m = /^\/verificaciones\/\d+\/(programacion|entrevistas|evaluacion|revision)/.exec(pathname);
-  return m ? (m[1] as Seccion) : null;
+const ITEMS: readonly ItemNavegacion[] = [
+  { seccion: 'catalogo', texto: 'Catálogo', icono: <Grid24Regular />, ruta: '/catalogo' },
+  { seccion: 'admin', texto: 'Administración', icono: <Settings24Regular />, ruta: '/admin' },
+];
+
+/**
+ * Las etapas de una verificación (Programación → Revisión final) no van en la barra: se recorren
+ * con el stepper al entrar a la verificación desde el catálogo, que queda como sección activa.
+ */
+function seccionDeRuta(pathname: string): Seccion {
+  return pathname.startsWith('/admin') ? 'admin' : 'catalogo';
 }
 
 function textoEstado(v: Verificacion): string {
@@ -111,36 +108,8 @@ export function Layout() {
   const { pathname } = useLocation();
   const fuente = useFuenteDatos();
   const match = useMatch('/verificaciones/:id/*');
-  const recordada = useVerificacionRecordada();
-  const { data: verificaciones } = useVerificaciones();
-
-  const idRuta = idDeTexto(match?.params.id);
-  const predeterminada =
-    verificaciones
-      ?.filter((v) => esVerificacionActiva(v.estado))
-      .sort(compararCodigoDesc)[0]?.id ?? null;
-  const idActiva = idRuta ?? recordada ?? predeterminada;
-  const { data: verificacion } = useVerificacion(idActiva);
-
-  const rutaVerificacion = (s: string) => (idActiva ? `/verificaciones/${idActiva}/${s}` : null);
-  const items: ItemNavegacion[] = [
-    { seccion: 'catalogo', texto: 'Catálogo', icono: <Grid24Regular />, ruta: '/catalogo' },
-    {
-      seccion: 'programacion',
-      texto: 'Programación',
-      icono: <CalendarClock24Regular />,
-      ruta: rutaVerificacion('programacion') ?? '/programar',
-    },
-    { seccion: 'entrevistas', texto: 'Entrevistas', icono: <ChatMultiple24Regular />, ruta: rutaVerificacion('entrevistas') },
-    { seccion: 'evaluacion', texto: 'Evaluación', icono: <Gauge24Regular />, ruta: rutaVerificacion('evaluacion') },
-    {
-      seccion: 'revision',
-      texto: 'Revisión final',
-      icono: <ClipboardTaskListLtr24Regular />,
-      ruta: rutaVerificacion('revision'),
-    },
-    { seccion: 'admin', texto: 'Administración', icono: <Settings24Regular />, ruta: '/admin' },
-  ];
+  // El estado de la verificación solo se muestra dentro de ella.
+  const { data: verificacion } = useVerificacion(idDeTexto(match?.params.id));
   const seccionActual = seccionDeRuta(pathname);
 
   // El HashRouter no restaura el scroll: al cambiar de pantalla se vuelve arriba.
@@ -181,9 +150,9 @@ export function Layout() {
           )}
         </div>
         <nav className={styles.barra} aria-label="Pantallas">
-          {items.map((item) => {
+          {ITEMS.map((item) => {
             const activo = item.seccion === seccionActual;
-            const boton = (
+            return (
               <Button
                 key={item.seccion}
                 className={styles.item}
@@ -191,18 +160,10 @@ export function Layout() {
                 shape="circular"
                 icon={item.icono}
                 aria-current={activo ? 'page' : undefined}
-                disabledFocusable={!item.ruta}
-                onClick={() => item.ruta && navigate(item.ruta)}
+                onClick={() => navigate(item.ruta)}
               >
                 {item.texto}
               </Button>
-            );
-            return item.ruta ? (
-              boton
-            ) : (
-              <Tooltip key={item.seccion} content="Programa o abre una verificación primero" relationship="description">
-                {boton}
-              </Tooltip>
             );
           })}
         </nav>

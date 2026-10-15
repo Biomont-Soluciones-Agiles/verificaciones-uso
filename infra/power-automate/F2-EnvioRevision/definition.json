@@ -123,7 +123,7 @@
             "parameters": {
               "entityName": "vu_verificacions",
               "recordId": "@triggerOutputs()?['body/vu_verificacionid']",
-              "$select": "vu_verificacionid,vu_name,vu_estado,vu_entrevistasprevistas,vu_indiceadopcion,vu_resultado,vu_sustentoglobal,vu_oportunidadesconsolidadas,vu_recomendacionesconsolidadas,_vu_solucionid_value,_vu_responsableid_value,_vu_aprobadorpilotoid_value,_vu_aprobadorproductivoid_value"
+              "$select": "vu_verificacionid,vu_name,vu_estado,vu_entrevistasprevistas,vu_indiceadopcion,vu_resultado,vu_sustentoglobal,vu_oportunidadesconsolidadas,vu_recomendacionesconsolidadas,_vu_solucionid_value,_vu_responsableid_value,_vu_aprobadorpilotoid_value"
             }
           }
         },
@@ -261,8 +261,7 @@
             "responsableId": "@body('Leer_verificacion')?['_vu_responsableid_value']",
             "responsable": "@coalesce(body('Leer_responsable')?['internalemailaddress'], body('Leer_responsable')?['domainname'])",
             "responsableNombre": "@body('Leer_responsable')?['fullname']",
-            "aprobadorPilotoId": "@coalesce(body('Leer_verificacion')?['_vu_aprobadorpilotoid_value'], '')",
-            "aprobadorProductivoId": "@coalesce(body('Leer_verificacion')?['_vu_aprobadorproductivoid_value'], '')"
+            "aprobadorPilotoId": "@coalesce(body('Leer_verificacion')?['_vu_aprobadorpilotoid_value'], '')"
           }
         },
         "Si_cumple_RN07": {
@@ -309,7 +308,7 @@
                     },
                     "parameters": {
                       "entityName": "vu_aprobacions",
-                      "item/vu_name": "@{outputs('Datos_RN07')?['codigo']} · Piloto",
+                      "item/vu_name": "@{outputs('Datos_RN07')?['codigo']} · Aprobación",
                       "item/vu_VerificacionId@odata.bind": "/vu_verificacions(@{triggerOutputs()?['body/vu_verificacionid']})",
                       "item/vu_nivel": 100000000,
                       "item/vu_AprobadorId@odata.bind": "/systemusers(@{outputs('Aprobador_Piloto')?['id']})",
@@ -336,14 +335,14 @@
                     },
                     "parameters": {
                       "approvalType": "CustomResponse",
-                      "WebhookApprovalCreationInput/title": "Verificación de uso @{outputs('Datos_RN07')?['codigo']} · @{outputs('Datos_RN07')?['solucion']} · nivel Piloto",
+                      "WebhookApprovalCreationInput/title": "Verificación de uso @{outputs('Datos_RN07')?['codigo']} · @{outputs('Datos_RN07')?['solucion']}",
                       "WebhookApprovalCreationInput/responseOptions": [
                         "Aprobar",
                         "Observar",
                         "Rechazar"
                       ],
                       "WebhookApprovalCreationInput/assignedTo": "@{outputs('Aprobador_Piloto')?['email']}",
-                      "WebhookApprovalCreationInput/details": "**Verificación:** @{outputs('Datos_RN07')?['codigo']}\n\n**Solución:** @{outputs('Datos_RN07')?['solucion']}\n\n**Responsable:** @{outputs('Datos_RN07')?['responsableNombre']}\n\n**Entrevistas completas:** @{outputs('Datos_RN07')?['completas']} de @{outputs('Datos_RN07')?['previstas']}\n\n**Índice de adopción:** @{body('Leer_verificacion')?['vu_indiceadopcion']} %\n\n**Resultado:** @{body('Leer_verificacion')?['vu_resultado@OData.Community.Display.V1.FormattedValue']}\n\n**Sustento global:**\n\n@{coalesce(body('Leer_verificacion')?['vu_sustentoglobal'], '-')}\n\n**Oportunidades de mejora:**\n\n@{coalesce(body('Leer_verificacion')?['vu_oportunidadesconsolidadas'], '-')}\n\n**Recomendaciones:**\n\n@{coalesce(body('Leer_verificacion')?['vu_recomendacionesconsolidadas'], '-')}\n\n---\n\nResponda **Aprobar**, **Observar** (vuelve al responsable para corregir) o **Rechazar**. Nivel: **Piloto**.",
+                      "WebhookApprovalCreationInput/details": "**Verificación:** @{outputs('Datos_RN07')?['codigo']}\n\n**Solución:** @{outputs('Datos_RN07')?['solucion']}\n\n**Responsable:** @{outputs('Datos_RN07')?['responsableNombre']}\n\n**Entrevistas completas:** @{outputs('Datos_RN07')?['completas']} de @{outputs('Datos_RN07')?['previstas']}\n\n**Índice de adopción:** @{body('Leer_verificacion')?['vu_indiceadopcion']} %\n\n**Resultado:** @{body('Leer_verificacion')?['vu_resultado@OData.Community.Display.V1.FormattedValue']}\n\n**Sustento global:**\n\n@{coalesce(body('Leer_verificacion')?['vu_sustentoglobal'], '-')}\n\n**Oportunidades de mejora:**\n\n@{coalesce(body('Leer_verificacion')?['vu_oportunidadesconsolidadas'], '-')}\n\n**Recomendaciones:**\n\n@{coalesce(body('Leer_verificacion')?['vu_recomendacionesconsolidadas'], '-')}\n\n---\n\nLas entrevistas (respuestas, puntajes, sustentos e historial de cambios de puntaje) se pueden revisar en la app **Verificación de uso** → Catálogo → @{outputs('Datos_RN07')?['solucion']} → Historial de verificaciones → @{outputs('Datos_RN07')?['codigo']} → Revisión final.\n\nResponda **Aprobar** (la verificación queda Aprobada), **Observar** (vuelve al responsable para corregir) o **Rechazar**.",
                       "WebhookApprovalCreationInput/enableNotifications": true,
                       "WebhookApprovalCreationInput/enableReassignment": false
                     }
@@ -466,7 +465,7 @@
                   "type": "SetVariable",
                   "inputs": {
                     "name": "varEstadoFinal",
-                    "value": "@if(equals(outputs('Respuesta_Piloto'), 'Aprobar'), 100000006, 100000005)"
+                    "value": "@if(equals(outputs('Respuesta_Piloto'), 'Aprobar'), 100000007, 100000005)"
                   }
                 },
                 "Avisar_decision_correo_Piloto": {
@@ -484,8 +483,8 @@
                     },
                     "parameters": {
                       "emailMessage/To": "@{outputs('Datos_RN07')?['responsable']}",
-                      "emailMessage/Subject": "Verificación @{outputs('Datos_RN07')?['codigo']} · nivel Piloto: @{if(equals(outputs('Respuesta_Piloto'), 'Expirada'), 'sin respuesta (expirada)', toLower(outputs('Decision_Piloto')?['texto']))}",
-                      "emailMessage/Body": "<p>Hola @{outputs('Datos_RN07')?['responsableNombre']}:</p><p>La aprobación de nivel <b>Piloto</b> de la verificación <b>@{outputs('Datos_RN07')?['codigo']}</b> (@{outputs('Datos_RN07')?['solucion']}) terminó con la decisión <b>@{if(equals(outputs('Respuesta_Piloto'), 'Expirada'), 'sin respuesta (expirada)', toLower(outputs('Decision_Piloto')?['texto']))}</b>.</p><p><b>Comentario:</b> @{outputs('Decision_Piloto')?['comentario']}</p><p>@{if(equals(outputs('Respuesta_Piloto'), 'Aprobar'), if(empty(outputs('Datos_RN07')?['aprobadorProductivoId']), 'No hay aprobadora productiva registrada: la verificación queda en estado Aprobada piloto.', 'Se solicita ahora la aprobación productiva.'), if(equals(outputs('Respuesta_Piloto'), 'Expirada'), 'La solicitud expiró sin respuesta: la verificación queda Observada para que pueda reenviarla.', 'La verificación queda Observada: revise los comentarios, corrija en la app y vuelva a enviarla.'))}</p>",
+                      "emailMessage/Subject": "Verificación @{outputs('Datos_RN07')?['codigo']}: @{if(equals(outputs('Respuesta_Piloto'), 'Expirada'), 'sin respuesta (expirada)', toLower(outputs('Decision_Piloto')?['texto']))}",
+                      "emailMessage/Body": "<p>Hola @{outputs('Datos_RN07')?['responsableNombre']}:</p><p>La aprobación de la verificación <b>@{outputs('Datos_RN07')?['codigo']}</b> (@{outputs('Datos_RN07')?['solucion']}) terminó con la decisión <b>@{if(equals(outputs('Respuesta_Piloto'), 'Expirada'), 'sin respuesta (expirada)', toLower(outputs('Decision_Piloto')?['texto']))}</b>.</p><p><b>Comentario:</b> @{outputs('Decision_Piloto')?['comentario']}</p><p>@{if(equals(outputs('Respuesta_Piloto'), 'Aprobar'), 'La verificación queda Aprobada y se calculó la próxima verificación de la solución.', if(equals(outputs('Respuesta_Piloto'), 'Expirada'), 'La solicitud expiró sin respuesta: la verificación queda Observada para que pueda reenviarla.', 'La verificación queda Observada: revise los comentarios, corrija en la app y vuelva a enviarla.'))}</p>",
                       "emailMessage/Importance": "Normal"
                     }
                   }
@@ -533,7 +532,7 @@
                         "size": "Medium",
                         "weight": "Bolder",
                         "wrap": true,
-                        "text": "Verificación @{outputs('Datos_RN07')?['codigo']} · nivel Piloto: @{if(equals(outputs('Respuesta_Piloto'), 'Expirada'), 'sin respuesta (expirada)', toLower(outputs('Decision_Piloto')?['texto']))}"
+                        "text": "Verificación @{outputs('Datos_RN07')?['codigo']}: @{if(equals(outputs('Respuesta_Piloto'), 'Expirada'), 'sin respuesta (expirada)', toLower(outputs('Decision_Piloto')?['texto']))}"
                       },
                       {
                         "type": "FactSet",
@@ -541,10 +540,6 @@
                           {
                             "title": "Solución",
                             "value": "@{outputs('Datos_RN07')?['solucion']}"
-                          },
-                          {
-                            "title": "Nivel",
-                            "value": "Piloto"
                           },
                           {
                             "title": "Decisión",
@@ -559,7 +554,7 @@
                       {
                         "type": "TextBlock",
                         "wrap": true,
-                        "text": "@{if(equals(outputs('Respuesta_Piloto'), 'Aprobar'), if(empty(outputs('Datos_RN07')?['aprobadorProductivoId']), 'No hay aprobadora productiva registrada: la verificación queda en estado Aprobada piloto.', 'Se solicita ahora la aprobación productiva.'), if(equals(outputs('Respuesta_Piloto'), 'Expirada'), 'La solicitud expiró sin respuesta: la verificación queda Observada para que pueda reenviarla.', 'La verificación queda Observada: revise los comentarios, corrija en la app y vuelva a enviarla.'))}"
+                        "text": "@{if(equals(outputs('Respuesta_Piloto'), 'Aprobar'), 'La verificación queda Aprobada y se calculó la próxima verificación de la solución.', if(equals(outputs('Respuesta_Piloto'), 'Expirada'), 'La solicitud expiró sin respuesta: la verificación queda Observada para que pueda reenviarla.', 'La verificación queda Observada: revise los comentarios, corrija en la app y vuelva a enviarla.'))}"
                       }
                     ]
                   }
@@ -619,436 +614,6 @@
                 ]
               },
               "type": "Scope"
-            },
-            "Leer_verificacion_tras_piloto": {
-              "runAfter": {
-                "Scope_Nivel_Piloto": [
-                  "Succeeded"
-                ]
-              },
-              "type": "OpenApiConnection",
-              "inputs": {
-                "host": {
-                  "connectionName": "shared_commondataserviceforapps",
-                  "operationId": "GetItem",
-                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
-                },
-                "parameters": {
-                  "entityName": "vu_verificacions",
-                  "recordId": "@triggerOutputs()?['body/vu_verificacionid']",
-                  "$select": "vu_estado"
-                }
-              }
-            },
-            "Si_continua_a_nivel_Productiva": {
-              "actions": {
-                "Marcar_Aprobada_piloto": {
-                  "runAfter": {},
-                  "type": "OpenApiConnection",
-                  "inputs": {
-                    "host": {
-                      "connectionName": "shared_commondataserviceforapps",
-                      "operationId": "UpdateOnlyRecord",
-                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
-                    },
-                    "parameters": {
-                      "entityName": "vu_verificacions",
-                      "recordId": "@triggerOutputs()?['body/vu_verificacionid']",
-                      "item/vu_estado": 100000006
-                    }
-                  }
-                },
-                "Leer_aprobador_Productiva": {
-                  "runAfter": {
-                    "Marcar_Aprobada_piloto": [
-                      "Succeeded"
-                    ]
-                  },
-                  "type": "OpenApiConnection",
-                  "inputs": {
-                    "host": {
-                      "connectionName": "shared_commondataserviceforapps",
-                      "operationId": "GetItem",
-                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
-                    },
-                    "parameters": {
-                      "entityName": "systemusers",
-                      "recordId": "@outputs('Datos_RN07')?['aprobadorProductivoId']",
-                      "$select": "systemuserid,fullname,internalemailaddress,domainname"
-                    }
-                  }
-                },
-                "Aprobador_Productiva": {
-                  "runAfter": {
-                    "Leer_aprobador_Productiva": [
-                      "Succeeded"
-                    ]
-                  },
-                  "type": "Compose",
-                  "inputs": {
-                    "id": "@body('Leer_aprobador_Productiva')?['systemuserid']",
-                    "email": "@coalesce(body('Leer_aprobador_Productiva')?['internalemailaddress'], body('Leer_aprobador_Productiva')?['domainname'])",
-                    "nombre": "@body('Leer_aprobador_Productiva')?['fullname']"
-                  }
-                },
-                "Scope_Nivel_Productiva": {
-                  "actions": {
-                    "Crear_aprobacion_Productiva": {
-                      "runAfter": {},
-                      "type": "OpenApiConnection",
-                      "inputs": {
-                        "host": {
-                          "connectionName": "shared_commondataserviceforapps",
-                          "operationId": "CreateRecord",
-                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
-                        },
-                        "parameters": {
-                          "entityName": "vu_aprobacions",
-                          "item/vu_name": "@{outputs('Datos_RN07')?['codigo']} · Productiva",
-                          "item/vu_VerificacionId@odata.bind": "/vu_verificacions(@{triggerOutputs()?['body/vu_verificacionid']})",
-                          "item/vu_nivel": 100000001,
-                          "item/vu_AprobadorId@odata.bind": "/systemusers(@{outputs('Aprobador_Productiva')?['id']})",
-                          "item/vu_decision": 100000000,
-                          "item/vu_fechasolicitud": "@utcNow()"
-                        }
-                      }
-                    },
-                    "Solicitar_aprobacion_Productiva": {
-                      "runAfter": {
-                        "Crear_aprobacion_Productiva": [
-                          "Succeeded"
-                        ]
-                      },
-                      "limit": {
-                        "timeout": "P14D"
-                      },
-                      "type": "OpenApiConnectionWebhook",
-                      "inputs": {
-                        "host": {
-                          "connectionName": "shared_approvals",
-                          "operationId": "StartAndWaitForAnApproval",
-                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_approvals"
-                        },
-                        "parameters": {
-                          "approvalType": "CustomResponse",
-                          "WebhookApprovalCreationInput/title": "Verificación de uso @{outputs('Datos_RN07')?['codigo']} · @{outputs('Datos_RN07')?['solucion']} · nivel Productiva",
-                          "WebhookApprovalCreationInput/responseOptions": [
-                            "Aprobar",
-                            "Observar",
-                            "Rechazar"
-                          ],
-                          "WebhookApprovalCreationInput/assignedTo": "@{outputs('Aprobador_Productiva')?['email']}",
-                          "WebhookApprovalCreationInput/details": "**Verificación:** @{outputs('Datos_RN07')?['codigo']}\n\n**Solución:** @{outputs('Datos_RN07')?['solucion']}\n\n**Responsable:** @{outputs('Datos_RN07')?['responsableNombre']}\n\n**Entrevistas completas:** @{outputs('Datos_RN07')?['completas']} de @{outputs('Datos_RN07')?['previstas']}\n\n**Índice de adopción:** @{body('Leer_verificacion')?['vu_indiceadopcion']} %\n\n**Resultado:** @{body('Leer_verificacion')?['vu_resultado@OData.Community.Display.V1.FormattedValue']}\n\n**Sustento global:**\n\n@{coalesce(body('Leer_verificacion')?['vu_sustentoglobal'], '-')}\n\n**Oportunidades de mejora:**\n\n@{coalesce(body('Leer_verificacion')?['vu_oportunidadesconsolidadas'], '-')}\n\n**Recomendaciones:**\n\n@{coalesce(body('Leer_verificacion')?['vu_recomendacionesconsolidadas'], '-')}\n\n---\n\nResponda **Aprobar**, **Observar** (vuelve al responsable para corregir) o **Rechazar**. Nivel: **Productiva**.",
-                          "WebhookApprovalCreationInput/enableNotifications": true,
-                          "WebhookApprovalCreationInput/enableReassignment": false
-                        }
-                      }
-                    },
-                    "Registrar_envio_revision_Productiva": {
-                      "runAfter": {
-                        "Solicitar_aprobacion_Productiva": [
-                          "Succeeded",
-                          "Failed",
-                          "TimedOut"
-                        ]
-                      },
-                      "type": "OpenApiConnection",
-                      "inputs": {
-                        "host": {
-                          "connectionName": "shared_commondataserviceforapps",
-                          "operationId": "CreateRecord",
-                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
-                        },
-                        "parameters": {
-                          "entityName": "vu_notificacions",
-                          "item/vu_name": "Solicitud de aprobación (Productiva) · @{outputs('Datos_RN07')?['codigo']}",
-                          "item/vu_tiponotificacion": 100000001,
-                          "item/vu_DestinatarioId@odata.bind": "/systemusers(@{outputs('Aprobador_Productiva')?['id']})",
-                          "item/vu_canal": 100000000,
-                          "item/vu_fechaenvio": "@body('Crear_aprobacion_Productiva')?['vu_fechasolicitud']",
-                          "item/vu_estadoenvio": "@if(equals(actions('Solicitar_aprobacion_Productiva')?['status'], 'Failed'), 100000001, 100000000)",
-                          "item/vu_VerificacionId@odata.bind": "/vu_verificacions(@{triggerOutputs()?['body/vu_verificacionid']})"
-                        }
-                      }
-                    },
-                    "Si_fallo_la_solicitud_Productiva": {
-                      "actions": {
-                        "Terminar_por_error_de_aprobacion_Productiva": {
-                          "runAfter": {},
-                          "type": "Terminate",
-                          "inputs": {
-                            "runStatus": "Failed",
-                            "runError": {
-                              "code": "AprobacionNoCreada",
-                              "message": "No se pudo crear la aprobación de nivel Productiva. La verificación sigue en su estado actual; corrija la causa y vuelva a enviar esta ejecución."
-                            }
-                          }
-                        }
-                      },
-                      "runAfter": {
-                        "Registrar_envio_revision_Productiva": [
-                          "Succeeded"
-                        ]
-                      },
-                      "expression": {
-                        "and": [
-                          {
-                            "equals": [
-                              "@actions('Solicitar_aprobacion_Productiva')?['status']",
-                              "Failed"
-                            ]
-                          }
-                        ]
-                      },
-                      "type": "If",
-                      "else": {
-                        "actions": {}
-                      }
-                    },
-                    "Respuesta_Productiva": {
-                      "runAfter": {
-                        "Si_fallo_la_solicitud_Productiva": [
-                          "Succeeded"
-                        ]
-                      },
-                      "type": "Compose",
-                      "inputs": "@if(equals(actions('Solicitar_aprobacion_Productiva')?['status'], 'Succeeded'), coalesce(actions('Solicitar_aprobacion_Productiva')?['outputs']?['body']?['outcome'], 'Expirada'), 'Expirada')"
-                    },
-                    "Decision_Productiva": {
-                      "runAfter": {
-                        "Respuesta_Productiva": [
-                          "Succeeded"
-                        ]
-                      },
-                      "type": "Compose",
-                      "inputs": {
-                        "decision": "@if(equals(outputs('Respuesta_Productiva'), 'Aprobar'), 100000001, if(equals(outputs('Respuesta_Productiva'), 'Observar'), 100000002, if(equals(outputs('Respuesta_Productiva'), 'Rechazar'), 100000003, 100000000)))",
-                        "texto": "@if(equals(outputs('Respuesta_Productiva'), 'Aprobar'), 'Aprobada', if(equals(outputs('Respuesta_Productiva'), 'Observar'), 'Observada', if(equals(outputs('Respuesta_Productiva'), 'Rechazar'), 'Rechazada', 'Pendiente')))",
-                        "comentario": "@if(equals(outputs('Respuesta_Productiva'), 'Expirada'), 'Sin respuesta: la solicitud expiró a los 14 días y se canceló.', coalesce(actions('Solicitar_aprobacion_Productiva')?['outputs']?['body']?['responses']?[0]?['comments'], ''))",
-                        "fechaDecision": "@coalesce(actions('Solicitar_aprobacion_Productiva')?['outputs']?['body']?['responses']?[0]?['responseDate'], utcNow())",
-                        "approvalId": "@coalesce(actions('Solicitar_aprobacion_Productiva')?['outputs']?['body']?['name'], '')"
-                      }
-                    },
-                    "Actualizar_aprobacion_Productiva": {
-                      "runAfter": {
-                        "Decision_Productiva": [
-                          "Succeeded"
-                        ]
-                      },
-                      "type": "OpenApiConnection",
-                      "inputs": {
-                        "host": {
-                          "connectionName": "shared_commondataserviceforapps",
-                          "operationId": "UpdateOnlyRecord",
-                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
-                        },
-                        "parameters": {
-                          "entityName": "vu_aprobacions",
-                          "recordId": "@body('Crear_aprobacion_Productiva')?['vu_aprobacionid']",
-                          "item/vu_decision": "@outputs('Decision_Productiva')?['decision']",
-                          "item/vu_comentario": "@outputs('Decision_Productiva')?['comentario']",
-                          "item/vu_fechadecision": "@outputs('Decision_Productiva')?['fechaDecision']",
-                          "item/vu_approvalid": "@outputs('Decision_Productiva')?['approvalId']"
-                        }
-                      }
-                    },
-                    "Fijar_estado_tras_Productiva": {
-                      "runAfter": {
-                        "Actualizar_aprobacion_Productiva": [
-                          "Succeeded"
-                        ]
-                      },
-                      "type": "SetVariable",
-                      "inputs": {
-                        "name": "varEstadoFinal",
-                        "value": "@if(equals(outputs('Respuesta_Productiva'), 'Aprobar'), 100000007, if(equals(outputs('Respuesta_Productiva'), 'Expirada'), 100000006, 100000005))"
-                      }
-                    },
-                    "Avisar_decision_correo_Productiva": {
-                      "runAfter": {
-                        "Fijar_estado_tras_Productiva": [
-                          "Succeeded"
-                        ]
-                      },
-                      "type": "OpenApiConnection",
-                      "inputs": {
-                        "host": {
-                          "connectionName": "shared_office365",
-                          "operationId": "SendEmailV2",
-                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365"
-                        },
-                        "parameters": {
-                          "emailMessage/To": "@{outputs('Datos_RN07')?['responsable']}",
-                          "emailMessage/Subject": "Verificación @{outputs('Datos_RN07')?['codigo']} · nivel Productiva: @{if(equals(outputs('Respuesta_Productiva'), 'Expirada'), 'sin respuesta (expirada)', toLower(outputs('Decision_Productiva')?['texto']))}",
-                          "emailMessage/Body": "<p>Hola @{outputs('Datos_RN07')?['responsableNombre']}:</p><p>La aprobación de nivel <b>Productiva</b> de la verificación <b>@{outputs('Datos_RN07')?['codigo']}</b> (@{outputs('Datos_RN07')?['solucion']}) terminó con la decisión <b>@{if(equals(outputs('Respuesta_Productiva'), 'Expirada'), 'sin respuesta (expirada)', toLower(outputs('Decision_Productiva')?['texto']))}</b>.</p><p><b>Comentario:</b> @{outputs('Decision_Productiva')?['comentario']}</p><p>@{if(equals(outputs('Respuesta_Productiva'), 'Aprobar'), 'La verificación queda Aprobada y se recalcula la próxima VU de la solución.', if(equals(outputs('Respuesta_Productiva'), 'Expirada'), 'La solicitud expiró sin respuesta: la verificación se queda en Aprobada piloto.', 'La verificación queda Observada: revise los comentarios, corrija en la app y vuelva a enviarla.'))}</p>",
-                          "emailMessage/Importance": "Normal"
-                        }
-                      }
-                    },
-                    "Registrar_decision_correo_Productiva": {
-                      "runAfter": {
-                        "Avisar_decision_correo_Productiva": [
-                          "Succeeded",
-                          "Failed",
-                          "TimedOut"
-                        ]
-                      },
-                      "type": "OpenApiConnection",
-                      "inputs": {
-                        "host": {
-                          "connectionName": "shared_commondataserviceforapps",
-                          "operationId": "CreateRecord",
-                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
-                        },
-                        "parameters": {
-                          "entityName": "vu_notificacions",
-                          "item/vu_name": "Verificación @{outputs('Datos_RN07')?['codigo']} · nivel Productiva: @{if(equals(outputs('Respuesta_Productiva'), 'Expirada'), 'sin respuesta (expirada)', toLower(outputs('Decision_Productiva')?['texto']))}",
-                          "item/vu_tiponotificacion": 100000002,
-                          "item/vu_DestinatarioId@odata.bind": "/systemusers(@{outputs('Datos_RN07')?['responsableId']})",
-                          "item/vu_canal": 100000000,
-                          "item/vu_fechaenvio": "@utcNow()",
-                          "item/vu_estadoenvio": "@if(equals(actions('Avisar_decision_correo_Productiva')?['status'], 'Succeeded'), 100000000, 100000001)",
-                          "item/vu_VerificacionId@odata.bind": "/vu_verificacions(@{triggerOutputs()?['body/vu_verificacionid']})"
-                        }
-                      }
-                    },
-                    "Tarjeta_decision_Productiva": {
-                      "runAfter": {
-                        "Fijar_estado_tras_Productiva": [
-                          "Succeeded"
-                        ]
-                      },
-                      "type": "Compose",
-                      "inputs": {
-                        "type": "AdaptiveCard",
-                        "version": "1.4",
-                        "body": [
-                          {
-                            "type": "TextBlock",
-                            "size": "Medium",
-                            "weight": "Bolder",
-                            "wrap": true,
-                            "text": "Verificación @{outputs('Datos_RN07')?['codigo']} · nivel Productiva: @{if(equals(outputs('Respuesta_Productiva'), 'Expirada'), 'sin respuesta (expirada)', toLower(outputs('Decision_Productiva')?['texto']))}"
-                          },
-                          {
-                            "type": "FactSet",
-                            "facts": [
-                              {
-                                "title": "Solución",
-                                "value": "@{outputs('Datos_RN07')?['solucion']}"
-                              },
-                              {
-                                "title": "Nivel",
-                                "value": "Productiva"
-                              },
-                              {
-                                "title": "Decisión",
-                                "value": "@{if(equals(outputs('Respuesta_Productiva'), 'Expirada'), 'sin respuesta (expirada)', toLower(outputs('Decision_Productiva')?['texto']))}"
-                              },
-                              {
-                                "title": "Comentario",
-                                "value": "@{outputs('Decision_Productiva')?['comentario']}"
-                              }
-                            ]
-                          },
-                          {
-                            "type": "TextBlock",
-                            "wrap": true,
-                            "text": "@{if(equals(outputs('Respuesta_Productiva'), 'Aprobar'), 'La verificación queda Aprobada y se recalcula la próxima VU de la solución.', if(equals(outputs('Respuesta_Productiva'), 'Expirada'), 'La solicitud expiró sin respuesta: la verificación se queda en Aprobada piloto.', 'La verificación queda Observada: revise los comentarios, corrija en la app y vuelva a enviarla.'))}"
-                          }
-                        ]
-                      }
-                    },
-                    "Avisar_decision_Teams_Productiva": {
-                      "runAfter": {
-                        "Tarjeta_decision_Productiva": [
-                          "Succeeded"
-                        ]
-                      },
-                      "type": "OpenApiConnection",
-                      "inputs": {
-                        "host": {
-                          "connectionName": "shared_teams",
-                          "operationId": "PostCardToConversation",
-                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_teams"
-                        },
-                        "parameters": {
-                          "poster": "Flow bot",
-                          "location": "Chat with Flow bot",
-                          "body/recipient": "@{outputs('Datos_RN07')?['responsable']}",
-                          "body/messageBody": "@{string(outputs('Tarjeta_decision_Productiva'))}"
-                        }
-                      }
-                    },
-                    "Registrar_decision_Teams_Productiva": {
-                      "runAfter": {
-                        "Avisar_decision_Teams_Productiva": [
-                          "Succeeded",
-                          "Failed",
-                          "TimedOut"
-                        ]
-                      },
-                      "type": "OpenApiConnection",
-                      "inputs": {
-                        "host": {
-                          "connectionName": "shared_commondataserviceforapps",
-                          "operationId": "CreateRecord",
-                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
-                        },
-                        "parameters": {
-                          "entityName": "vu_notificacions",
-                          "item/vu_name": "Verificación @{outputs('Datos_RN07')?['codigo']} · nivel Productiva: @{if(equals(outputs('Respuesta_Productiva'), 'Expirada'), 'sin respuesta (expirada)', toLower(outputs('Decision_Productiva')?['texto']))}",
-                          "item/vu_tiponotificacion": 100000002,
-                          "item/vu_DestinatarioId@odata.bind": "/systemusers(@{outputs('Datos_RN07')?['responsableId']})",
-                          "item/vu_canal": 100000001,
-                          "item/vu_fechaenvio": "@utcNow()",
-                          "item/vu_estadoenvio": "@if(equals(actions('Avisar_decision_Teams_Productiva')?['status'], 'Succeeded'), 100000000, 100000001)",
-                          "item/vu_VerificacionId@odata.bind": "/vu_verificacions(@{triggerOutputs()?['body/vu_verificacionid']})"
-                        }
-                      }
-                    }
-                  },
-                  "runAfter": {
-                    "Aprobador_Productiva": [
-                      "Succeeded"
-                    ]
-                  },
-                  "type": "Scope"
-                }
-              },
-              "runAfter": {
-                "Leer_verificacion_tras_piloto": [
-                  "Succeeded"
-                ]
-              },
-              "expression": {
-                "and": [
-                  {
-                    "equals": [
-                      "@variables('varEstadoFinal')",
-                      100000006
-                    ]
-                  },
-                  {
-                    "not": {
-                      "equals": [
-                        "@empty(outputs('Datos_RN07')?['aprobadorProductivoId'])",
-                        true
-                      ]
-                    }
-                  },
-                  {
-                    "equals": [
-                      "@body('Leer_verificacion_tras_piloto')?['vu_estado']",
-                      100000004
-                    ]
-                  }
-                ]
-              },
-              "type": "If",
-              "else": {
-                "actions": {}
-              }
             }
           },
           "runAfter": {

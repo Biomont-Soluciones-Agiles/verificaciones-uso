@@ -39,6 +39,7 @@ export function crearRepositoriosMock(opciones: OpcionesMock = {}): Repositorios
   const puntajes = crearTabla('el puntaje', s.puntajes);
   const evidencias = crearTabla('la evidencia', s.evidencias);
   const aprobaciones = crearTabla('la aprobación', s.aprobaciones);
+  const historialPuntajes = crearTabla('el cambio de puntaje', s.historialPuntajes);
   const personas = s.personas.map((p) => ({ ...p }));
 
   const esperar = () => (latencia > 0 ? new Promise<void>((r) => setTimeout(r, latencia)) : Promise.resolve());
@@ -258,6 +259,17 @@ export function crearRepositoriosMock(opciones: OpcionesMock = {}): Repositorios
       listarPorVerificacion: op((verificacionId: Id) =>
         aprobaciones.donde((a) => a.verificacionId === verificacionId),
       ),
+    },
+
+    historialPuntajes: {
+      listarPorVerificacion: op((verificacionId: Id) =>
+        historialPuntajes
+          .donde((c) => c.verificacionId === verificacionId)
+          .sort((a, b) => b.fecha.localeCompare(a.fecha) || Number(b.id) - Number(a.id)),
+      ),
+      // Como Dataverse: el autor (createdby) y la fecha (modifiedon) los pone el servidor.
+      crear: op((datos) => historialPuntajes.insertar({ ...datos, autor: { ...s.usuarioActual }, fecha: ahoraISO() })),
+      actualizar: op((id, cambios) => historialPuntajes.actualizar(id, { ...cambios, fecha: ahoraISO() })),
     },
 
     directorio: {

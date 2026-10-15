@@ -1,10 +1,10 @@
-# F2 · Envío a revisión y aprobación en dos niveles
+# F2 · Envío a revisión y aprobación
 
 **Propósito.** Cuando la app pone una verificación en `vu_estado = En revisión` ("Finalizar y enviar"), el flujo:
 
-1. Revalida RN-07 en el servidor (entrevistas completas = previstas) y que haya aprobadora del piloto.
-2. Pide la aprobación del **piloto** y después la **productiva** (RN-08) con Approvals (respuestas personalizadas *Aprobar / Observar / Rechazar*).
-3. Registra cada nivel en `vu_aprobacion`.
+1. Revalida RN-07 en el servidor (entrevistas completas = previstas) y que haya aprobadora de la verificación (`vu_aprobadorpilotoid`).
+2. Pide la aprobación a la **aprobadora de la verificación** (RN-08, un solo nivel) con Approvals (respuestas personalizadas *Aprobar / Observar / Rechazar*). El detalle indica cómo abrir las entrevistas en la app.
+3. La registra en `vu_aprobacion` (`vu_nivel = Piloto`, el único nivel).
 4. Avisa al responsable por correo y Teams, y deja constancia en `vu_notificacion` (`Enviada` o `Error`).
 5. Escribe los estados posteriores a *En revisión* (§2.4: solo los escribe este flujo).
 6. Al aprobar, escribe `vu_fechaaprobacion` y recalcula `vu_solucion.vu_proximavu = hoy + vu_periodicidadmeses` (RN-10).
@@ -30,14 +30,10 @@ flowchart TD
     G -- sí --> X[Terminate Succeeded]
     G -- no --> E["Listar_entrevistas_completas<br/>_vu_verificacionid_value eq id and vu_estadoentrevista eq 100000002"]
     E --> D["Leer_solucion · Leer_responsable (systemusers) · Datos_RN07"]
-    D --> K{completas = previstas<br/>y hay aprobadora del piloto}
+    D --> K{completas = previstas<br/>y hay aprobadora}
     K -- no --> KE[varEstadoFinal = En evaluación 100000003<br/>varMotivoDevolucion]
     K -- sí --> SP[[Scope_Nivel_Piloto]]
-    SP --> RP[Leer_verificacion_tras_piloto]
-    RP --> Q{Piloto aprobó, hay aprobadora productiva<br/>y sigue En revisión}
-    Q -- sí --> MP["vu_estado = Aprobada piloto 100000006"] --> SQ[[Scope_Nivel_Productiva]]
-    Q -- no --> Z
-    SQ --> Z
+    SP --> Z
     KE --> Z[Leer_verificacion_cierre]
     Z --> C{Estado actual En revisión o Aprobada piloto<br/>y distinto de varEstadoFinal}
     C -- "sí, Aprobada" --> AP["vu_solucion.vu_proximavu = hoy + periodicidad<br/>luego vu_estado = Aprobada 100000007 + vu_fechaaprobacion"]
@@ -48,24 +44,26 @@ flowchart TD
     F -- sí --> M["Correo al responsable con el motivo<br/>+ vu_notificacion Envío a revisión"]
 ```
 
-Cada **Scope_Nivel_<N>** hace:
+**Scope_Nivel_Piloto** (el nombre se conserva; es el único nivel) hace:
 
-1. `Add a new row` en `vu_aprobacions`: `vu_name = "<código> · <nivel>"`, `vu_VerificacionId@odata.bind`, `vu_nivel`, `vu_AprobadorId@odata.bind`, `vu_decision = Pendiente`, `vu_fechasolicitud`.
+1. `Add a new row` en `vu_aprobacions`: `vu_name = "<código> · Aprobación"`, `vu_VerificacionId@odata.bind`, `vu_nivel`, `vu_AprobadorId@odata.bind`, `vu_decision = Pendiente`, `vu_fechasolicitud`.
 2. *Start and wait for an approval* (`CustomResponse`, `Aprobar/Observar/Rechazar`, `limit.timeout = P14D`).
 3. `vu_notificacion` *Envío a revisión* hacia la aprobadora (`Error` si la solicitud falló). Si la solicitud falló, la ejecución termina en `Failed` y la verificación se queda como estaba.
 4. `Update a row` en `vu_aprobacions`: `vu_decision`, `vu_comentario`, `vu_fechadecision`, `vu_approvalid`.
 5. Fija `varEstadoFinal`, avisa al responsable por correo y Teams y registra ambos avisos (`runAfter` Succeeded/Failed/TimedOut con `vu_estadoenvio` calculado, para que un fallo de aviso no detenga la aprobación).
 
-| Respuesta | `vu_decision` | Estado tras **Piloto** | Estado tras **Productiva** |
-|---|---|---|---|
-| Aprobar | Aprobada `100000001` | Aprobada piloto `100000006` | Aprobada `100000007` |
-| Observar | Observada `100000002` | Observada `100000005` | Observada `100000005` |
-| Rechazar | Rechazada `100000003` | Observada `100000005` | Observada `100000005` |
-| Sin respuesta en 14 días | Pendiente `100000000` + comentario de expiración | Observada `100000005` | Aprobada piloto `100000006` |
+| Respuesta | `vu_decision` | Estado de la verificación |
+|---|---|---|
+| Aprobar | Aprobada `100000001` | Aprobada `100000007` (+ `vu_fechaaprobacion` y `vu_proximavu`) |
+| Observar | Observada `100000002` | Observada `100000005` |
+| Rechazar | Rechazada `100000003` | Observada `100000005` |
+| Sin respuesta en 14 días | Pendiente `100000000` + comentario de expiración | Observada `100000005` |
+
+*Aprobada piloto* (`100000006`) ya no se produce. El cierre sigue aceptando verificaciones en ese estado (datos de la aprobación en dos niveles) para no dejarlas bloqueadas.
 
 ## Concurrencia 25
 
-El disparador lleva `runtimeConfiguration.concurrency.runs = 25` (no 1). Cada ejecución puede esperar hasta 28 días (dos niveles de 14 días); con concurrencia 1 todas las demás verificaciones se quedarían en cola detrás de la primera. Las ejecuciones en paralelo son seguras porque:
+El disparador lleva `runtimeConfiguration.concurrency.runs = 25` (no 1). Cada ejecución puede esperar hasta 14 días; con concurrencia 1 todas las demás verificaciones se quedarían en cola detrás de la primera. Las ejecuciones en paralelo son seguras porque:
 
 - Cada ejecución trabaja sobre una sola verificación (la del disparador).
 - Al empezar vuelve a leer `vu_estado` y termina si ya no está *En revisión*.

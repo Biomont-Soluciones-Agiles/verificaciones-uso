@@ -7,7 +7,7 @@ import type { FechaHoraISO, Id } from '../domain/tipos';
 
 const useStyles = makeStyles({
   // Sello de tinta, como la firma de un registro en el cuaderno de laboratorio: borde doble verde,
-  // ligeramente girado. Es un dato (quién aprobó en qué nivel y cuándo), no un adorno.
+  // ligeramente girado. Es un dato (que se aprobó y cuándo), no un adorno.
   sello: {
     alignSelf: 'flex-start',
     display: 'inline-flex',
@@ -38,14 +38,14 @@ const useStyles = makeStyles({
   detalle: { color: 'inherit', fontVariantNumeric: 'tabular-nums' },
 });
 
-const clave = (id: Id, nivel: string) => `vu-sello-visto:${id}:${nivel}`;
+const clave = (id: Id) => `vu-sello-visto:${id}`;
 
 /** true la primera vez que se muestra este sello en este navegador (y lo deja anotado). */
-function useEsPrimeraVez(id: Id, nivel: string): boolean {
+function useEsPrimeraVez(id: Id): boolean {
   const [primera] = useState(() => {
     try {
-      if (window.localStorage.getItem(clave(id, nivel))) return false;
-      window.localStorage.setItem(clave(id, nivel), '1');
+      if (window.localStorage.getItem(clave(id))) return false;
+      window.localStorage.setItem(clave(id), '1');
       return true;
     } catch {
       return false;
@@ -56,16 +56,15 @@ function useEsPrimeraVez(id: Id, nivel: string): boolean {
 
 export interface SelloAprobacionProps {
   verificacionId: Id;
-  nivel: 'Piloto' | 'Productiva';
   fecha: FechaHoraISO | null;
 }
 
-/** Sello de aprobación de una verificación (piloto o productiva). */
-export function SelloAprobacion({ verificacionId, nivel, fecha }: SelloAprobacionProps) {
+/** Sello de aprobación de una verificación (RN-08: un solo nivel). */
+export function SelloAprobacion({ verificacionId, fecha }: SelloAprobacionProps) {
   const styles = useStyles();
-  const primera = useEsPrimeraVez(verificacionId, nivel);
-  const titulo = nivel === 'Productiva' ? 'Aprobada' : 'Piloto aprobado';
-  const detalle = nivel === 'Productiva' ? `Aprobación productiva${fecha ? ` · ${formatearFecha(fecha)}` : ''}` : 'Falta la aprobación productiva';
+  const primera = useEsPrimeraVez(verificacionId);
+  const titulo = 'Aprobada';
+  const detalle = fecha ? `Resultados aprobados · ${formatearFecha(fecha)}` : 'Resultados aprobados';
   return (
     <div className={mergeClasses(styles.sello, primera && styles.estampar)} role="img" aria-label={`${titulo}. ${detalle}.`}>
       <CheckmarkStarburst24Regular aria-hidden="true" />

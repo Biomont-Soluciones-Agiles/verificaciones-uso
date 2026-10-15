@@ -182,9 +182,9 @@ describe('verificación', () => {
   });
 
   it('actualizar: solo lo modificado; quitar aprobador = bind nulo', () => {
-    expect(verificacionARegistro({ estado: 'En revisión', aprobadorProductivo: null })).toEqual({
+    expect(verificacionARegistro({ estado: 'En revisión', aprobadorPiloto: null })).toEqual({
       vu_estado: 100000004,
-      'vu_AprobadorProductivoId@odata.bind': null,
+      'vu_AprobadorPilotoId@odata.bind': null,
     });
   });
 

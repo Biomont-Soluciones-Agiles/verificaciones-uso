@@ -1,5 +1,6 @@
 import type {
   Aprobacion,
+  CambioPuntaje,
   Area,
   Criterio,
   DiasAnticipacion,
@@ -135,7 +136,6 @@ export const SELECT = {
     'vu_oportunidadesconsolidadas',
     'vu_recomendacionesconsolidadas',
     '_vu_aprobadorpilotoid_value',
-    '_vu_aprobadorproductivoid_value',
     'vu_notificaralfinalizar',
     'vu_fechaenvio',
     'vu_fechaaprobacion',
@@ -200,6 +200,16 @@ export const SELECT = {
     'vu_fechasolicitud',
     'vu_fechadecision',
     'vu_approvalid',
+  ],
+  historialPuntaje: [
+    'vu_historialpuntajeid',
+    'vu_name',
+    '_vu_respuestaid_value',
+    '_vu_verificacionid_value',
+    'vu_puntajeanterior',
+    'vu_puntajenuevo',
+    '_createdby_value',
+    'modifiedon',
   ],
   usuario: ['systemuserid', 'fullname', 'internalemailaddress', 'domainname'],
 } as const satisfies Record<string, readonly string[]>;
@@ -444,7 +454,6 @@ export function verificacionDesdeFila(f: Fila): Verificacion {
     oportunidadesConsolidadas: texto(f, 'vu_oportunidadesconsolidadas'),
     recomendacionesConsolidadas: texto(f, 'vu_recomendacionesconsolidadas'),
     aprobadorPiloto: personaDeBusqueda(f, 'vu_aprobadorpilotoid'),
-    aprobadorProductivo: personaDeBusqueda(f, 'vu_aprobadorproductivoid'),
     notificarAlFinalizar: booleano(f, 'vu_notificaralfinalizar'),
     fechaEnvio: fechaHora(f, 'vu_fechaenvio'),
     fechaAprobacion: fechaHora(f, 'vu_fechaaprobacion'),
@@ -480,7 +489,6 @@ export function verificacionARegistro(c: Cambios<Verificacion>, creando = false)
     vu_oportunidadesconsolidadas: opcionalTexto(c.oportunidadesConsolidadas),
     vu_recomendacionesconsolidadas: opcionalTexto(c.recomendacionesConsolidadas),
     ...(c.aprobadorPiloto !== undefined ? bindPersona('vu_AprobadorPilotoId', c.aprobadorPiloto) : {}),
-    ...(c.aprobadorProductivo !== undefined ? bindPersona('vu_AprobadorProductivoId', c.aprobadorProductivo) : {}),
     vu_notificaralfinalizar: c.notificarAlFinalizar ?? (creando ? false : undefined),
     vu_fechaenvio: c.fechaEnvio,
   });
@@ -631,6 +639,29 @@ export function puntajeARegistro(c: Cambios<PuntajeCriterio>): Registro {
     vu_puntajesugerido: c.puntajeSugerido,
     vu_puntajefinal: c.puntajeFinal,
     vu_sustentoajuste: opcionalTexto(c.sustentoAjuste),
+  });
+}
+
+export function cambioPuntajeDesdeFila(f: Fila): CambioPuntaje {
+  return {
+    id: idObligatorio(f, 'vu_historialpuntajeid'),
+    titulo: texto(f, 'vu_name'),
+    respuestaId: busqueda(f, 'vu_respuestaid'),
+    verificacionId: busqueda(f, 'vu_verificacionid'),
+    puntajeAnterior: numeroONull(f, 'vu_puntajeanterior'),
+    puntajeNuevo: numeroONull(f, 'vu_puntajenuevo'),
+    autor: personaDeBusqueda(f, 'createdby'),
+    fecha: fechaHora(f, 'modifiedon') ?? '',
+  };
+}
+
+export function cambioPuntajeARegistro(c: Partial<Omit<CambioPuntaje, 'id' | 'autor' | 'fecha'>>): Registro {
+  return sinIndefinidos({
+    vu_name: c.titulo === undefined ? undefined : c.titulo.slice(0, 500),
+    ...(c.respuestaId !== undefined ? bind('vu_RespuestaId', CONJUNTOS.respuesta, c.respuestaId) : {}),
+    ...(c.verificacionId !== undefined ? bind('vu_VerificacionId', CONJUNTOS.verificacion, c.verificacionId) : {}),
+    vu_puntajeanterior: c.puntajeAnterior,
+    vu_puntajenuevo: c.puntajeNuevo,
   });
 }
 

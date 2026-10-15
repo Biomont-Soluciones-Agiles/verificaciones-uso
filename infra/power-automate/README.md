@@ -7,7 +7,7 @@ Definiciones de los cuatro flujos de la app *Verificación de uso*, con el conec
 | Flujo | Carpeta | Disparador | Qué hace | Conexiones |
 |---|---|---|---|---|
 | **F1** Alerta anticipada | [`F1-AlertaAnticipada`](F1-AlertaAnticipada/README.md) | Recurrencia diaria a las 07:00 (Lima) | *List rows* `vu_verificacions` con `vu_estado eq 100000001 and vu_fechaalerta le <hoy> and vu_alertaenviada eq false` → correo al **responsable**, `vu_alertaenviada = true` y `vu_notificacion` | `vu_dataverse`, `vu_office365` |
-| **F2** Envío a revisión | [`F2-EnvioRevision`](F2-EnvioRevision/README.md) | Dataverse *Modified* en `vu_verificacion`, columnas de filtro `vu_estado`, filtro de filas `vu_estado eq 100000004`, concurrencia 25 | Revalida RN-07 → aprobación del piloto → aprobación productiva (Approvals: Aprobar/Observar/Rechazar, 14 días por nivel) → `vu_aprobacion`, `vu_estado`, `vu_fechaaprobacion`, `vu_proximavu` y avisos | `vu_dataverse`, `vu_approvals`, `vu_office365`, `vu_teams` |
+| **F2** Envío a revisión | [`F2-EnvioRevision`](F2-EnvioRevision/README.md) | Dataverse *Modified* en `vu_verificacion`, columnas de filtro `vu_estado`, filtro de filas `vu_estado eq 100000004`, concurrencia 25 | Revalida RN-07 → aprobación de la aprobadora de la verificación (Approvals: Aprobar/Observar/Rechazar, 14 días) → `vu_aprobacion`, `vu_estado`, `vu_fechaaprobacion`, `vu_proximavu` y avisos | `vu_dataverse`, `vu_approvals`, `vu_office365`, `vu_teams` |
 | **F3** Estado de la solución | [`F3-EstadoSolucion`](F3-EstadoSolucion/README.md) | Dataverse *Added or Modified* en `vu_verificacion`, columnas de filtro `vu_estado`, concurrencia 1 | Recalcula `vu_estadovu` y `vu_ultimaverificacionid` de la solución (§2.5). También se dispara con los cambios de F2 | `vu_dataverse` |
 | **F4** Vencimiento | [`F4-Vencimiento`](F4-Vencimiento/README.md) | Recurrencia semanal, lunes a las 07:00 (Lima) | `vu_proximavu ≤ hoy + 30` y sin verificación activa → recordatorio al responsable + `vu_notificacion` con `vu_solucionid`; si ya venció, `vu_estadovu = Pendiente` | `vu_dataverse`, `vu_office365` |
 
@@ -65,9 +65,8 @@ Requisitos: tablas aprovisionadas con `infra/dataverse/` y datos semilla, la Cod
 | F3 | Crea una verificación en `Borrador` y pásala a `Programada` | `vu_estadovu`: `Pendiente` y luego `Programada`; `vu_ultimaverificacionid` = la verificación |
 | F3 | Cambia `vu_objetivo` sin tocar `vu_estado` | No hay ejecución (columna de filtro) |
 | F2 | `En revisión` con menos entrevistas `Completa` que `vu_entrevistasprevistas` | Vuelve a `En evaluación`, correo con el motivo, fila *Envío a revisión*. F3 deja `En proceso`. No se crea ninguna aprobación |
-| F2 | RN-07 correcta y la aprobadora del piloto responde **Observar** | `vu_aprobacion` *Observada* con el comentario, `vu_estado = Observada`, correo y tarjeta de Teams al responsable, 3 filas en `vu_notificacion` |
-| F2 | Piloto **Aprobar** y productiva **Aprobar** | `Aprobada piloto` → `Aprobada`, `vu_fechaaprobacion`, `vu_proximavu = hoy + vu_periodicidadmeses`, F3 deja `Vigente` |
-| F2 | Piloto **Aprobar** sin aprobadora productiva | Se queda en `Aprobada piloto`; F3 deja `En revisión` |
+| F2 | RN-07 correcta y la aprobadora responde **Observar** | `vu_aprobacion` *Observada* con el comentario, `vu_estado = Observada`, correo y tarjeta de Teams al responsable, 3 filas en `vu_notificacion` |
+| F2 | La aprobadora responde **Aprobar** | `En revisión` → `Aprobada`, `vu_fechaaprobacion`, `vu_proximavu = hoy + vu_periodicidadmeses`, F3 deja `Vigente` |
 | F2 | Volver a guardar la fila con `vu_estado = En revisión` mientras espera la aprobación | La nueva ejecución termina en *Terminar_sin_cambios* (guarda de idempotencia) |
 | F2 | Editar otro campo de una verificación *En revisión* | No hay ejecución |
 | F4 | Solución con `vu_proximavu` = hoy + 10 y sin verificación activa | Recordatorio "por vencer (en 10 días)" y fila *Recordatorio de vencimiento* con `vu_solucionid` |
@@ -107,8 +106,8 @@ Acepta una carpeta como argumento (`python -I validar_definiciones.py <copia>`) 
 | # | Hueco | Decisión tomada |
 |---|---|---|
 | 1 | §2.4 no tiene estado *Rechazada*, pero `vu_aprobacion.vu_decision` sí | Rechazar → `vu_decision = Rechazada` y `vu_estado = Observada` (pregunta abierta n.º 7) |
-| 2 | Sin aprobadora productiva no hay forma de lanzar después el nivel productivo (pregunta n.º 4) | Se queda en `Aprobada piloto`. No hay disparador que lo relance (F2 solo escucha `En revisión`): hay que definirlo |
-| 3 | Qué pasa si nadie responde | 14 días por nivel. En el piloto pasa a `Observada` (se puede reenviar) y en el productivo se queda en `Aprobada piloto`. `vu_decision` queda `Pendiente` con un comentario de expiración (no existe el valor *Expirada*) |
+| 2 | ~~Sin aprobadora productiva no se lanzaba el nivel productivo~~ | Resuelto: RN-08 tiene un solo nivel (aprobadora de la verificación) |
+| 3 | Qué pasa si nadie responde | 14 días. Pasa a `Observada` (se puede reenviar). `vu_decision` queda `Pendiente` con un comentario de expiración (no existe el valor *Expirada*) |
 | 4 | El disparador de Dataverse se activa aunque `vu_estado` no cambie de valor si viene en la actualización | Guarda de idempotencia en F2 (aprobación *Pendiente* de menos de 14 días). Se recomienda que la app solo envíe `vu_estado` cuando cambia |
 | 5 | `vu_tiponotificacion` no tiene valor para "devuelta por RN-07" | Se registra como *Envío a revisión* |
 | 6 | `vu_notificaralfinalizar` no tiene efecto definido en el servidor (pregunta n.º 6) | F2 lo ignora: las solicitudes de aprobación siempre se notifican |

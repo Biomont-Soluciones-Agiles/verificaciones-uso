@@ -5,6 +5,7 @@ import type { Repositorios } from '../repositorios';
 import {
   abrirVerificacion,
   agregarEntrevista,
+  cambiarEntrevistasPrevistas,
   completarEntrevista,
   finalizarYEnviar,
   guardarBorradorEntrevista,
@@ -125,7 +126,6 @@ describe('evaluación y envío', () => {
         oportunidadesConsolidadas: '',
         recomendacionesConsolidadas: '',
         aprobadorPiloto: v.aprobadorPiloto,
-        aprobadorProductivo: v.aprobadorProductivo,
         notificarAlFinalizar: true,
       }),
     ).rejects.toThrow('2 de 4');
@@ -139,7 +139,6 @@ describe('evaluación y envío', () => {
       oportunidadesConsolidadas: 'A',
       recomendacionesConsolidadas: 'B',
       aprobadorPiloto: PERSONAS.alexandra,
-      aprobadorProductivo: PERSONAS.denis,
       notificarAlFinalizar: true,
     });
     expect(v.estado).toBe('En revisión');
@@ -149,5 +148,52 @@ describe('evaluación y envío', () => {
     // Simulación de F2: aprobación de nivel Piloto pendiente.
     const aprobaciones = await repos.aprobaciones.listarPorVerificacion('1');
     expect(aprobaciones).toMatchObject([{ nivel: 'Piloto', decision: 'Pendiente', titulo: 'VU-00001 · Piloto' }]);
+  });
+});
+
+describe('cambiarEntrevistasPrevistas', () => {
+  it('aumentar en evaluación vuelve a levantamiento; volver a bajar retoma la evaluación', async () => {
+    await simularLevantamientoCompleto(repos, '1');
+    expect((await abrirVerificacion(repos, '1')).estado).toBe('En evaluación');
+    let v = await cambiarEntrevistasPrevistas(repos, '1', 5);
+    expect([v.entrevistasPrevistas, v.estado]).toEqual([5, 'En levantamiento']);
+    v = await cambiarEntrevistasPrevistas(repos, '1', 4);
+    expect([v.entrevistasPrevistas, v.estado]).toEqual([4, 'En evaluación']);
+  });
+
+  it('no baja de las entrevistas ya registradas', async () => {
+    const registradas = (await repos.entrevistas.listarPorVerificacion('1')).length;
+    await expect(cambiarEntrevistasPrevistas(repos, '1', registradas - 1)).rejects.toThrow(ErrorValidacion);
+  });
+
+  it('no se cambia después del envío', async () => {
+    await simularLevantamientoCompleto(repos, '1');
+    await finalizarYEnviar(repos, '1', {
+      oportunidadesConsolidadas: '',
+      recomendacionesConsolidadas: '',
+      aprobadorPiloto: PERSONAS.alexandra,
+      notificarAlFinalizar: true,
+    });
+    await expect(cambiarEntrevistasPrevistas(repos, '1', 6)).rejects.toThrow('En revisión');
+  });
+});
+
+describe('historial de puntajes', () => {
+  it('anota el cambio de un puntaje ya registrado y agrupa los cambios seguidos', async () => {
+    await guardarBorradorEntrevista(repos, '1', { entrevista: {}, respuestas: [{ id: '1', cambios: { puntaje: 6 } }] });
+    await guardarBorradorEntrevista(repos, '1', { entrevista: {}, respuestas: [{ id: '1', cambios: { puntaje: 5 } }] });
+    const historial = await repos.historialPuntajes.listarPorVerificacion('1');
+    expect(historial).toHaveLength(1);
+    expect(historial[0]).toMatchObject({ respuestaId: '1', puntajeAnterior: 8, puntajeNuevo: 5 });
+    expect(historial[0].autor?.email).toBeTruthy();
+  });
+
+  it('el primer puntaje no es un cambio y repetir el mismo valor no crea filas', async () => {
+    const [nueva] = (await repos.respuestas.listarPorEntrevista('1')).filter((r) => r.puntaje === null);
+    if (nueva) {
+      await guardarBorradorEntrevista(repos, '1', { entrevista: {}, respuestas: [{ id: nueva.id, cambios: { puntaje: 7 } }] });
+    }
+    await guardarBorradorEntrevista(repos, '1', { entrevista: {}, respuestas: [{ id: '1', cambios: { puntaje: 8 } }] });
+    expect(await repos.historialPuntajes.listarPorVerificacion('1')).toHaveLength(0);
   });
 });

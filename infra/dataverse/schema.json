@@ -966,7 +966,8 @@
           "relationshipSchemaName": "vu_systemuser_verificacion_aprobadorpilotoid",
           "navigationProperty": "vu_AprobadorPilotoId",
           "odataBind": "vu_AprobadorPilotoId@odata.bind",
-          "readProperty": "_vu_aprobadorpilotoid_value"
+          "readProperty": "_vu_aprobadorpilotoid_value",
+          "$comment": "RN-08 tiene un solo nivel: es la \"Aprobadora de la verificación\" (se conserva el nombre lógico)."
         },
         {
           "logicalName": "vu_aprobadorproductivoid",
@@ -979,7 +980,8 @@
           "relationshipSchemaName": "vu_systemuser_verificacion_aprobadorproductivoid",
           "navigationProperty": "vu_AprobadorProductivoId",
           "odataBind": "vu_AprobadorProductivoId@odata.bind",
-          "readProperty": "_vu_aprobadorproductivoid_value"
+          "readProperty": "_vu_aprobadorproductivoid_value",
+          "$comment": "Sin uso desde que RN-08 tiene un solo nivel; se conserva para no romper la solución administrada."
         },
         {
           "logicalName": "vu_notificaralfinalizar",
@@ -1739,6 +1741,71 @@
         }
       ],
       "keys": []
+    },
+    {
+      "schemaName": "vu_HistorialPuntaje",
+      "logicalName": "vu_historialpuntaje",
+      "entitySetName": "vu_historialpuntajes",
+      "primaryIdAttribute": "vu_historialpuntajeid",
+      "displayName": "Historial de puntaje",
+      "displayCollectionName": "Historial de puntajes",
+      "description": "Cambios del puntaje de una respuesta ya registrada: anterior → nuevo, quién (createdby) y cuándo (modifiedon).",
+      "ownershipType": "UserOwned",
+      "isAuditEnabled": false,
+      "primaryName": {
+        "logicalName": "vu_name",
+        "schemaName": "vu_Name",
+        "displayName": "Pregunta",
+        "maxLength": 500,
+        "requiredLevel": "ApplicationRequired"
+      },
+      "columns": [
+        {
+          "logicalName": "vu_respuestaid",
+          "schemaName": "vu_RespuestaId",
+          "displayName": "Respuesta",
+          "type": "Lookup",
+          "target": "vu_respuesta",
+          "cascade": "Parental",
+          "requiredLevel": "ApplicationRequired",
+          "relationshipSchemaName": "vu_respuesta_historialpuntaje_respuestaid",
+          "navigationProperty": "vu_RespuestaId",
+          "odataBind": "vu_RespuestaId@odata.bind",
+          "readProperty": "_vu_respuestaid_value"
+        },
+        {
+          "logicalName": "vu_verificacionid",
+          "schemaName": "vu_VerificacionId",
+          "displayName": "Verificación",
+          "type": "Lookup",
+          "target": "vu_verificacion",
+          "cascade": "RemoveLink",
+          "requiredLevel": "ApplicationRequired",
+          "relationshipSchemaName": "vu_verificacion_historialpuntaje_verificacionid",
+          "navigationProperty": "vu_VerificacionId",
+          "odataBind": "vu_VerificacionId@odata.bind",
+          "readProperty": "_vu_verificacionid_value"
+        },
+        {
+          "logicalName": "vu_puntajeanterior",
+          "schemaName": "vu_PuntajeAnterior",
+          "displayName": "Puntaje anterior",
+          "type": "Integer",
+          "minValue": 1,
+          "maxValue": 10,
+          "requiredLevel": "None"
+        },
+        {
+          "logicalName": "vu_puntajenuevo",
+          "schemaName": "vu_PuntajeNuevo",
+          "displayName": "Puntaje nuevo",
+          "type": "Integer",
+          "minValue": 1,
+          "maxValue": 10,
+          "requiredLevel": "None"
+        }
+      ],
+      "keys": []
     }
   ],
   "roles": [
@@ -1833,6 +1900,29 @@
             "Read"
           ],
           "depth": "Basic"
+        },
+        {
+          "entities": [
+            "vu_historialpuntaje"
+          ],
+          "rights": [
+            "Create",
+            "Read",
+            "Write",
+            "Append",
+            "AppendTo"
+          ],
+          "depth": "Basic",
+          "$comment": "Historial de cambios de puntaje: lo escribe la app al modificar un puntaje ya registrado."
+        },
+        {
+          "entities": [
+            "vu_historialpuntaje"
+          ],
+          "rights": [
+            "Read"
+          ],
+          "depth": "Local"
         }
       ]
     },
@@ -1877,6 +1967,15 @@
             "Write"
           ],
           "depth": "Global"
+        },
+        {
+          "entities": [
+            "vu_historialpuntaje"
+          ],
+          "rights": [
+            "Read"
+          ],
+          "depth": "Global"
         }
       ]
     },
@@ -1898,7 +1997,8 @@
             "vu_evidencia",
             "vu_puntajecriterio",
             "vu_aprobacion",
-            "vu_notificacion"
+            "vu_notificacion",
+            "vu_historialpuntaje"
           ],
           "rights": [
             "Create",

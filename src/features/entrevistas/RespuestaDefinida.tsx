@@ -1,7 +1,10 @@
 import { Badge, Checkbox, Field, Select, Text, Textarea } from '@fluentui/react-components';
 import { Campos } from '../../components/Estructura';
+import { HistorialRespuesta } from '../../components/HistorialPuntaje';
 import { PuntajeInput } from '../../components/PuntajeInput';
-import type { OpcionRespuesta, Pregunta, Respuesta } from '../../domain/tipos';
+import { SustentoPlegable } from '../../components/SustentoPlegable';
+import { NO_APLICA } from '../../domain/flujo';
+import type { CambioPuntaje, OpcionRespuesta, Pregunta, Respuesta } from '../../domain/tipos';
 import { useEstilosRespuesta } from './estilos';
 
 export interface RespuestaDefinidaProps {
@@ -9,18 +12,25 @@ export interface RespuestaDefinidaProps {
   pregunta: Pregunta | undefined;
   opciones: OpcionRespuesta[];
   criterioNombre: string;
+  /** Cambios de su puntaje (historial). */
+  cambios: CambioPuntaje[];
   soloLectura: boolean;
   onChange: (cambios: Partial<Respuesta>) => void;
 }
-
-/** Texto con el que se guarda una pregunta no obligatoria marcada como "No aplica" (sin puntaje). */
-const NO_APLICA = 'No aplica';
 
 /**
  * Pregunta del catálogo: la opción elegida precarga el puntaje (editable). Las no obligatorias
  * se pueden marcar "No aplica": quedan sin puntaje y no cuentan en el promedio del criterio.
  */
-export function RespuestaDefinida({ respuesta, pregunta, opciones, criterioNombre, soloLectura, onChange }: RespuestaDefinidaProps) {
+export function RespuestaDefinida({
+  respuesta,
+  pregunta,
+  opciones,
+  criterioNombre,
+  cambios,
+  soloLectura,
+  onChange,
+}: RespuestaDefinidaProps) {
   const styles = useEstilosRespuesta();
   const esSeleccion = pregunta?.tipoRespuesta === 'Selección';
   const opcional = pregunta?.obligatoria === false;
@@ -37,6 +47,9 @@ export function RespuestaDefinida({ respuesta, pregunta, opciones, criterioNombr
             Opcional · si corresponde
           </Badge>
         )}
+        <span className={styles.espaciador}>
+          <HistorialRespuesta cambios={cambios} />
+        </span>
       </div>
       <Text weight="semibold">{respuesta.titulo}</Text>
       {opcional && (
@@ -93,15 +106,12 @@ export function RespuestaDefinida({ respuesta, pregunta, opciones, criterioNombr
           </Field>
         </Campos>
       )}
-      <Field label="Sustento">
-        <Textarea
-          rows={2}
-          resize="vertical"
-          value={respuesta.sustento}
-          disabled={soloLectura}
-          onChange={(_, d) => onChange({ sustento: d.value })}
-        />
-      </Field>
+      <SustentoPlegable
+        etiqueta="Sustento"
+        valor={respuesta.sustento}
+        soloLectura={soloLectura}
+        onChange={(sustento) => onChange({ sustento })}
+      />
     </section>
   );
 }

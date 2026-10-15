@@ -18,9 +18,9 @@ Gestionar el ciclo de **Verificación de Uso (VU)** de las soluciones digitales 
 | 1 | **Programación** | Crea la verificación de una solución y activa una alerta anticipada para el responsable (sin avisar todavía a la aprobadora). | Solución, responsable VU, fecha objetivo, anticipación del aviso (7/15/30 días), entrevistas previstas (1–20), modalidad (Teams/Presencial/Mixta), objetivo. **Fecha de alerta = fecha objetivo − anticipación** (15/08 − 15 d = 31/07) |
 | 2 | **Entrevistas** | Lista de entrevistas con su avance (x de N). Cada entrevista tiene una grabación, evidencias, **preguntas definidas** (catálogo) y **preguntas surgidas en la reunión** (libres, vinculadas a un criterio y con puntaje opcional), además de oportunidades de mejora y recomendaciones. Se guarda automáticamente. | Entrevistado, área, fecha y hora, modalidad, URL de la grabación, archivos, respuestas (opción, puntaje de 1 a 10, sustento, evidencia vinculada) |
 | 3 | **Evaluación** | Puntaje sugerido por criterio (calculado a partir de las respuestas) que el usuario puede ajustar dejando un sustento. Índice preliminar. | 4 criterios con peso: Frecuencia 30 %, Cobertura 25 %, Sustitución 30 %, Satisfacción 15 %. Sustento global |
-| 4 | **Revisión final** | Consolidado: entrevistas completadas, índice, resultado ("Adopción parcial"), cuántas evidencias hay, oportunidades y recomendaciones. "Finalizar y enviar" solo se habilita cuando están completas todas las entrevistas previstas. | Aprobadora del piloto, aprobadora productiva posterior, notificar al finalizar |
+| 4 | **Revisión final** | Consolidado: entrevistas completadas, índice, resultado ("Adopción parcial"), cuántas evidencias hay, oportunidades y recomendaciones. "Finalizar y enviar" solo se habilita cuando están completas todas las entrevistas previstas. | Aprobadora de la verificación (una sola), notificar al finalizar. Información de las entrevistas (respuestas, puntajes, sustentos) e historial de cambios de puntaje, para la aprobadora |
 
-El stepper indica 5 etapas: **Programación → Entrevistas → Evaluación → Consolidación → Aprobación**.
+El stepper indica 5 etapas: **Programación → Entrevistas → Evaluación → Consolidación → Aprobación**. Cada etapa exige la anterior: Entrevistas una vez programada, Evaluación con el levantamiento completo (RN-07) y Consolidación/Aprobación con la evaluación guardada. La barra superior solo tiene Catálogo y Administración; a las etapas se entra desde la verificación (detalle de la solución → historial de verificaciones).
 
 ### 1.3 Reglas de negocio extraídas
 1. **RN-01 Fecha de alerta** = `fecha_objetivo − dias_anticipacion`.
@@ -30,7 +30,7 @@ El stepper indica 5 etapas: **Programación → Entrevistas → Evaluación → 
 5. **RN-05 Un ajuste manual exige sustento**: si `puntaje_final ≠ puntaje_sugerido`, el sustento es obligatorio.
 6. **RN-06 Sin notificaciones parciales**: guardar un borrador o el avance nunca dispara avisos. La **primera** notificación a la aprobadora se envía al finalizar.
 7. **RN-07 Finalizar** solo si `completas = previstas` (el switch de notificación y el botón se bloquean hasta entonces).
-8. **RN-08 Aprobación en dos niveles**: primero la aprobadora del piloto y después la aprobadora productiva.
+8. **RN-08 Aprobación en un solo nivel**: la *aprobadora de la verificación* aprueba (→ Aprobada) u observa/rechaza (→ Observada). La aprobación en dos niveles (piloto y productiva) se retiró; el estado *Aprobada piloto* queda solo para datos históricos.
 9. **RN-09 Resultado** (Adopción plena / parcial / baja) se deriva del índice. *Los umbrales no están en el prototipo*; se toman del Excel de verificaciones ("Criterios (validar)": confirmada ≥ 30, parcial 20–30, no confirmada < 20, sobre 40) llevados a %: **≥ 75 % plena, 50–74 % parcial, < 50 % baja**.
 10. **RN-10 Próxima VU** de la solución se recalcula al aprobar (fecha de aprobación + periodicidad de la solución).
 
@@ -185,8 +185,8 @@ Leyenda de **Req.**: **Sí** = obligatorio para la empresa (*ApplicationRequired
 | vu_sustentoglobal | Texto multilínea (4000) | No | |
 | vu_oportunidadesconsolidadas | Texto multilínea (4000) | No | |
 | vu_recomendacionesconsolidadas | Texto multilínea (4000) | No | |
-| vu_aprobadorpilotoid | Búsqueda → systemuser | No (se valida al finalizar) | |
-| vu_aprobadorproductivoid | Búsqueda → systemuser | No | |
+| vu_aprobadorpilotoid | Búsqueda → systemuser | No (se valida al finalizar) | **Aprobadora de la verificación** (RN-08, único nivel; se conserva el nombre lógico) |
+| vu_aprobadorproductivoid | Búsqueda → systemuser | No | **Obsoleta**: sin uso desde que RN-08 tiene un solo nivel; se conserva para no romper la solución administrada |
 | vu_notificaralfinalizar | Sí/No (predeterminado No) | Sí | |
 | vu_fechaenvio | Fecha y hora | No | La escribe la app al finalizar |
 | vu_fechaaprobacion | Fecha y hora | No | La escribe F2 |
@@ -248,9 +248,9 @@ Leyenda de **Req.**: **Sí** = obligatorio para la empresa (*ApplicationRequired
 **`vu_aprobacion`**: Aprobación
 | Columna lógica | Tipo | Req. | Notas |
 |---|---|---|---|
-| vu_name | Texto (100) | Sí | "VU-00012 · Piloto" |
+| vu_name | Texto (100) | Sí | "VU-00012 · Aprobación" |
 | vu_verificacionid | Búsqueda → vu_verificacion (**Parental**) | Sí | |
-| vu_nivel | Opción local: Piloto 100000000 / Productiva 100000001 | Sí | |
+| vu_nivel | Opción local: Piloto 100000000 / Productiva 100000001 | Sí | F2 escribe siempre Piloto (100000000), el único nivel; Productiva solo en datos históricos |
 | vu_aprobadorid | Búsqueda → systemuser | Sí | |
 | vu_decision | Opción local: Pendiente 100000000 / Aprobada 100000001 / Observada 100000002 / Rechazada 100000003 | Sí | |
 | vu_comentario | Texto multilínea (4000) | No | |
@@ -270,6 +270,17 @@ Leyenda de **Req.**: **Sí** = obligatorio para la empresa (*ApplicationRequired
 | vu_fechaenvio | Fecha y hora | Sí | |
 | vu_estadoenvio | Opción local: Enviada 100000000 / Error 100000001 | Sí | |
 
+**`vu_historialpuntaje`**: Historial de puntaje (cambios del puntaje de una respuesta ya registrada)
+| Columna lógica | Tipo | Req. | Notas |
+|---|---|---|---|
+| vu_name | Texto (500) | Sí | Copia del texto de la pregunta |
+| vu_respuestaid | Búsqueda → vu_respuesta (**Parental**) | Sí | |
+| vu_verificacionid | Búsqueda → vu_verificacion (RemoveLink) | Sí | Desnormalizada, para listar el historial de una verificación |
+| vu_puntajeanterior | Entero 1–10 | No | Vacío = sin puntaje / "No aplica" |
+| vu_puntajenuevo | Entero 1–10 | No | Último valor del cambio |
+
+Quién y cuándo salen de `createdby` y `modifiedon`. La app escribe una fila cuando cambia un puntaje que ya existía (el primer registro no es un cambio). Los cambios seguidos de la misma persona en menos de 5 minutos actualizan la misma fila (el autoguardado escribe cada pocos cientos de milisegundos), y la app omite las filas cuyo valor volvió al original.
+
 #### Opciones globales
 | Nombre lógico | Valores |
 |---|---|
@@ -285,17 +296,16 @@ stateDiagram-v2
     Borrador --> Programada : Programar y activar alerta
     Programada --> EnLevantamiento : 1.ª entrevista En curso
     EnLevantamiento --> EnEvaluacion : completas = previstas
+    EnEvaluacion --> EnLevantamiento : se aumentan las previstas
     EnEvaluacion --> EnRevision : Finalizar y enviar (1.ª notificación)
     EnRevision --> Observada : Aprobadora observa / rechaza
-    AprobadaPiloto --> Observada : Aprobadora productiva observa
     Observada --> EnEvaluacion : Corregir
-    EnRevision --> AprobadaPiloto : Aprueba nivel piloto
-    AprobadaPiloto --> Aprobada : Aprueba nivel productivo
+    EnRevision --> Aprobada : Aprobadora aprueba
     Borrador --> Cancelada
     Programada --> Cancelada
     Aprobada --> [*]
 ```
-La app solo puede cambiar el estado hasta *En revisión*. Los estados posteriores los escribe el flujo F2.
+La app solo puede cambiar el estado hasta *En revisión*. Los estados posteriores los escribe el flujo F2. Las entrevistas previstas se pueden cambiar en cualquier momento antes del envío (nunca por debajo de las ya registradas); si al aumentarlas quedan entrevistas por completar, la verificación vuelve de *En evaluación* a *En levantamiento*. *Aprobada piloto* (100000006) ya no se produce: solo existe en datos de la aprobación en dos niveles.
 
 ### 2.5 Estado derivado de la solución (`vu_solucion.vu_estadovu`)
 | Situación de la última verificación | vu_estadovu |
@@ -367,7 +377,7 @@ flowchart LR
 | Flujo | Disparador | Lógica |
 |---|---|---|
 | **F1 Alerta anticipada** | Programado, diario a las 07:00 (Lima) | *List rows* `vu_verificacions` con el filtro `vu_estado eq 100000001 and vu_fechaalerta le <hoy> and vu_alertaenviada eq false` → correo al **responsable** → `vu_alertaenviada = true` + `vu_notificacion` |
-| **F2 Envío a revisión** | *When a row is added, modified or deleted* (Modified) en `vu_verificacion`, con **columnas de filtro `vu_estado`** y **filtro de filas `vu_estado eq 100000004`** | Revalida RN-07 (cuenta las `vu_entrevista` con `vu_estadoentrevista eq 100000002`) → crea `vu_aprobacion` (Piloto) → Approvals (Aprobar/Observar/Rechazar) → nivel Productivo → `vu_estado = Aprobada`, `vu_fechaaprobacion` y `vu_solucion.vu_proximavu = hoy + vu_periodicidadmeses`. Observada o Rechazada → `vu_estado = Observada` + aviso |
+| **F2 Envío a revisión** | *When a row is added, modified or deleted* (Modified) en `vu_verificacion`, con **columnas de filtro `vu_estado`** y **filtro de filas `vu_estado eq 100000004`** | Revalida RN-07 (cuenta las `vu_entrevista` con `vu_estadoentrevista eq 100000002`) → crea `vu_aprobacion` (único nivel) → Approvals (Aprobar/Observar/Rechazar) a la aprobadora de la verificación → Aprobar: `vu_estado = Aprobada`, `vu_fechaaprobacion` y `vu_solucion.vu_proximavu = hoy + vu_periodicidadmeses`. Observada o Rechazada → `vu_estado = Observada` + aviso |
 | **F3 Estado de la solución** | *When a row is added, modified or deleted* (Added, Modified) en `vu_verificacion`, con **columnas de filtro `vu_estado`** | Recalcula `vu_estadovu` y `vu_ultimaverificacionid` de la solución según §2.5. También se dispara con los cambios de estado que hace F2, porque el filtro es por columna y no hay riesgo de bucle: F3 solo escribe en `vu_solucion` |
 | **F4 Vencimiento** | Programado, semanal | Soluciones con `vu_proximavu` dentro de 30 días y sin una verificación activa → recordatorio + `vu_notificacion` (con `vu_solucionid`) |
 
@@ -404,8 +414,10 @@ src/
 |---|---|---|---|---|
 | **VU Lector** | Leer (organización) | – | – | – |
 | **VU Responsable** | Leer (organización) | Crear, leer, escribir y anexar: **usuario**; leer: unidad de negocio | Leer: usuario | – |
-| **VU Aprobador** | Leer (organización) | Leer (organización) | Leer y escribir (organización) | – |
+| **VU Aprobador** | Leer (organización) | Leer (organización): ve las entrevistas, respuestas y el historial de puntajes en la app | Leer y escribir (organización) | – |
 | **VU Administrador** | CRUD (organización) | CRUD (organización) | CRUD (organización) | Mantiene los catálogos y los pesos |
+
+`vu_historialpuntaje` sigue a las hijas de la verificación: VU Responsable crea, escribe y anexa (usuario) y lee (unidad de negocio); VU Aprobador lee (organización); VU Administrador, CRUD.
 
 Las tablas hijas heredan el propietario de su verificación por la relación *Parental* (al asignar se propaga). Los flujos usan una conexión de cuenta de servicio con un rol de administrador del sistema o "VU Administrador". Los entrevistados **no necesitan acceso**.
 
@@ -420,7 +432,7 @@ Las tablas hijas heredan el propietario de su verificación por la relación *Pa
 1. ~~Fórmula exacta del índice y umbrales de resultado.~~ Resuelto: fórmula del prototipo (redondeada a entero) y umbrales del Excel en % (RN-03, RN-09). Con 8, 6, 7 y 8 da 72 %; el 74 % del HTML es un valor fijo que el JS recalcula.
 2. Puntaje por defecto de cada opción de respuesta y la regla de agregación del puntaje sugerido.
 3. Periodicidad estándar de la VU.
-4. ¿La aprobación productiva ocurre inmediatamente después de la del piloto o en otro momento? Si no hay aprobadora productiva, hoy la verificación se queda en "Aprobada piloto".
+4. ~~¿La aprobación productiva ocurre inmediatamente después de la del piloto?~~ Resuelto: hay una sola aprobadora, la "Aprobadora de la verificación" (RN-08).
 5. ¿Qué pasa si una entrevista prevista no se puede realizar?
 6. Significado del switch "Notificar al finalizar" (hoy no tiene efecto).
 7. ¿Hace falta un estado "Rechazada" propio? Hoy un rechazo deja la verificación en "Observada".

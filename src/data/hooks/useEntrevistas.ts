@@ -22,6 +22,21 @@ export function useEntrevistas(verificacionId: Id) {
   });
 }
 
+/**
+ * Historial de cambios de puntaje de la verificación (del más reciente al más antiguo). Omite
+ * los cambios que volvieron al valor original.
+ */
+export function useHistorialPuntajes(verificacionId: Id) {
+  const repos = useRepositorios();
+  return useQuery({
+    queryKey: claves.historialPuntajes(verificacionId),
+    queryFn: async () =>
+      (await repos.historialPuntajes.listarPorVerificacion(verificacionId)).filter(
+        (c) => c.puntajeAnterior !== c.puntajeNuevo,
+      ),
+  });
+}
+
 export function useRespuestas(verificacionId: Id) {
   const repos = useRepositorios();
   return useQuery({

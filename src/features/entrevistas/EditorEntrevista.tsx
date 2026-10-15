@@ -4,16 +4,26 @@ import {
   Field,
   Input,
   makeStyles,
+  mergeClasses,
   MessageBar,
   MessageBarActions,
   MessageBarBody,
   MessageBarTitle,
   Spinner,
+  Tab,
+  TabList,
   Text,
   Textarea,
   tokens,
 } from '@fluentui/react-components';
-import { Checkmark24Regular, CommentAdd24Regular, ErrorCircle20Regular, Save24Regular } from '@fluentui/react-icons';
+import {
+  ArrowRight16Regular,
+  Checkmark24Regular,
+  CheckmarkCircle16Filled,
+  CommentAdd24Regular,
+  ErrorCircle20Regular,
+  Save24Regular,
+} from '@fluentui/react-icons';
 import { useIsMutating } from '@tanstack/react-query';
 import { useState } from 'react';
 import { MENSAJES, useAvisos } from '../../components/avisos';
@@ -27,10 +37,11 @@ import {
   useCompletarEntrevista,
   useEliminarRespuesta,
   useGuardarBorradorEntrevista,
+  useHistorialPuntajes,
   useRespuestasEntrevista,
 } from '../../data/hooks/useEntrevistas';
 import { formatearFechaHora } from '../../domain/fechas';
-import { puedeFinalizar, validarRespuestasDefinidas } from '../../domain/flujo';
+import { avancePorCriterio, puedeFinalizar, validarRespuestasDefinidas } from '../../domain/flujo';
 import type {
   Criterio,
   Entrevista,
@@ -62,7 +73,24 @@ const useStyles = makeStyles({
     letterSpacing: '0.04em',
     textTransform: 'uppercase',
   },
+  // Pestañas por criterio: en móvil se desplazan en horizontal en vez de partirse en filas.
+  aspectos: { display: 'flex', flexDirection: 'column', gap: tokens.spacingVerticalXS, paddingTop: tokens.spacingVerticalS },
+  aspectosCabecera: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    gap: tokens.spacingHorizontalS,
+  },
+  pestanas: { overflowX: 'auto', scrollbarWidth: 'thin', borderBottom: `1px solid ${tokens.colorNeutralStroke2}` },
+  pestana: { flexShrink: 0, whiteSpace: 'nowrap' },
+  contador: { marginLeft: tokens.spacingHorizontalXS, color: tokens.colorNeutralForeground3, fontVariantNumeric: 'tabular-nums' },
+  contadorCompleto: { color: tokens.colorPaletteGreenForeground1 },
+  siguiente: { alignSelf: 'flex-end' },
 });
+
+/** Pestaña "Todas" del filtro por criterio. */
+const TODAS = 'todas';
 
 export interface EditorEntrevistaProps {
   verificacion: Verificacion;
@@ -142,6 +170,8 @@ function FormularioEntrevista({
   const eliminarRespuesta = useEliminarRespuesta(verificacion.id);
   const evidenciasAcciones = useGestionEvidencias(verificacion, entrevista);
   const mutando = useIsMutating({ mutationKey: CLAVE_AUTOGUARDADO }) > 0;
+  const { data: historial = [] } = useHistorialPuntajes(verificacion.id);
+  const cambiosDe = (id: Id) => historial.filter((c) => c.respuestaId === id);
 
   const autoguardado = useAutoguardado(
     borrador,
@@ -153,8 +183,19 @@ function FormularioEntrevista({
   );
 
   const criteriosActivos = criterios.filter((c) => c.activo);
-  const definidas = borrador.respuestas.filter((r) => r.origen === 'Definida');
-  const surgidas = borrador.respuestas.filter((r) => r.origen === 'Surgida en reunión');
+  const [filtro, setFiltro] = useState<Id | typeof TODAS>(TODAS);
+  const avance = avancePorCriterio(
+    criteriosActivos.map((c) => c.id),
+    borrador.respuestas,
+  );
+  const criteriosCompletos = avance.filter((a) => a.completo).length;
+  const respondidasTotal = avance.reduce((n, a) => n + a.respondidas, 0);
+  const definidasTotal = avance.reduce((n, a) => n + a.total, 0);
+  const visible = (r: Respuesta) => filtro === TODAS || r.criterioId === filtro;
+  const definidas = borrador.respuestas.filter((r) => r.origen === 'Definida' && visible(r));
+  const surgidas = borrador.respuestas.filter((r) => r.origen === 'Surgida en reunión' && visible(r));
+  const indiceFiltro = criteriosActivos.findIndex((c) => c.id === filtro);
+  const siguienteCriterio = indiceFiltro >= 0 ? criteriosActivos[indiceFiltro + 1] : undefined;
   const motivos = validarRespuestasDefinidas(preguntas, borrador.respuestas);
   const ocupado = completar.isPending || guardarBorrador.isPending;
 
@@ -165,7 +206,8 @@ function FormularioEntrevista({
     setBorrador((b) => ({ ...b, respuestas: b.respuestas.map((r) => (r.id === id ? { ...r, ...cambios } : r)) }));
 
   const nuevaPregunta = async () => {
-    const criterio = criteriosActivos[0];
+    // En la pestaña de un criterio la pregunta nueva impacta ese criterio.
+    const criterio = criteriosActivos.find((c) => c.id === filtro) ?? criteriosActivos[0];
     if (!criterio) return avisos.error(new Error('No hay criterios activos.'));
     try {
       const r = await agregarSurgida.mutateAsync({ entrevistaId: entrevista.id, criterioId: criterio.id });
@@ -278,6 +320,54 @@ function FormularioEntrevista({
         />
       </Campos>
 
+      {criteriosActivos.length > 0 && (
+        <div className={styles.aspectos}>
+          <div className={styles.aspectosCabecera}>
+            <Text weight="semibold">Aspectos de evaluación</Text>
+            <Text
+              size={200}
+              className={mergeClasses(
+                styles.contador,
+                criteriosCompletos === criteriosActivos.length && styles.contadorCompleto,
+              )}
+            >
+              {criteriosCompletos} de {criteriosActivos.length} completos
+            </Text>
+          </div>
+          <TabList
+            className={styles.pestanas}
+            size="small"
+            selectedValue={filtro}
+            onTabSelect={(_, d) => setFiltro(d.value as Id)}
+            aria-label={`Aspectos de evaluación: ${criteriosCompletos} de ${criteriosActivos.length} completos`}
+          >
+            <Tab className={styles.pestana} value={TODAS}>
+              Todas
+              <span className={styles.contador}>
+                {respondidasTotal}/{definidasTotal}
+              </span>
+            </Tab>
+            {criteriosActivos.map((c) => {
+              const a = avance.find((x) => x.criterioId === c.id);
+              return (
+                <Tab
+                  key={c.id}
+                  className={styles.pestana}
+                  value={c.id}
+                  icon={a?.completo ? <CheckmarkCircle16Filled className={styles.contadorCompleto} /> : undefined}
+                  aria-label={`${c.titulo}: ${a?.respondidas ?? 0} de ${a?.total ?? 0} respondidas${a?.completo ? ', completo' : ''}`}
+                >
+                  {c.titulo}
+                  <span className={mergeClasses(styles.contador, a?.completo && styles.contadorCompleto)}>
+                    {a?.respondidas ?? 0}/{a?.total ?? 0}
+                  </span>
+                </Tab>
+              );
+            })}
+          </TabList>
+        </div>
+      )}
+
       {definidas.length > 0 && (
         <Text as="h4" className={styles.seccion}>
           Preguntas definidas ({definidas.length})
@@ -290,6 +380,7 @@ function FormularioEntrevista({
           pregunta={preguntas.find((p) => p.id === r.preguntaId)}
           opciones={opciones.filter((o) => o.preguntaId === r.preguntaId)}
           criterioNombre={criterios.find((c) => c.id === r.criterioId)?.titulo ?? ''}
+          cambios={cambiosDe(r.id)}
           soloLectura={soloLectura}
           onChange={(c) => cambiarRespuesta(r.id, c)}
         />
@@ -306,6 +397,7 @@ function FormularioEntrevista({
           respuesta={r}
           criterios={criteriosActivos}
           evidencias={evidencias}
+          cambios={cambiosDe(r.id)}
           soloLectura={soloLectura}
           enfocar={r.id === nuevaId}
           onChange={(c) => cambiarRespuesta(r.id, c)}
@@ -314,6 +406,18 @@ function FormularioEntrevista({
           onSubirVinculada={(archivos) => void evidenciasAcciones.subir(archivos, r.id)}
         />
       ))}
+
+      {siguienteCriterio && (
+        <Button
+          className={styles.siguiente}
+          appearance="subtle"
+          icon={<ArrowRight16Regular />}
+          iconPosition="after"
+          onClick={() => setFiltro(siguienteCriterio.id)}
+        >
+          Siguiente: {siguienteCriterio.titulo}
+        </Button>
+      )}
 
       {!soloLectura && (
         <div>

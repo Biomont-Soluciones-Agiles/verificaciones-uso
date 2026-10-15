@@ -11,6 +11,7 @@ import { indiceAdopcion } from '../../domain/evaluacion';
 import { contarCompletas, esEditableDesdeApp, puedeFinalizar } from '../../domain/flujo';
 import type { Entrevista, Evidencia, PuntajeCriterio, Verificacion } from '../../domain/tipos';
 import { ControlEnvio } from './ControlEnvio';
+import { InformacionEntrevistas } from './InformacionEntrevistas';
 
 export interface FormularioRevisionProps {
   verificacion: Verificacion;
@@ -73,12 +74,8 @@ export function FormularioRevision({ verificacion, entrevistas, evidencias, punt
       <DosColumnas>
         <Pila>
           <Tarjeta titulo="Resumen de resultados">
-            {(verificacion.estado === 'Aprobada' || verificacion.estado === 'Aprobada piloto') && (
-              <SelloAprobacion
-                verificacionId={verificacion.id}
-                nivel={verificacion.estado === 'Aprobada' ? 'Productiva' : 'Piloto'}
-                fecha={verificacion.fechaAprobacion}
-              />
+            {verificacion.estado === 'Aprobada' && (
+              <SelloAprobacion verificacionId={verificacion.id} fecha={verificacion.fechaAprobacion} />
             )}
             <IndiceAdopcion
               indice={indice}
@@ -122,6 +119,7 @@ export function FormularioRevision({ verificacion, entrevistas, evidencias, punt
               </div>
             )}
           </Tarjeta>
+          <InformacionEntrevistas verificacion={verificacion} entrevistas={entrevistas} />
         </Pila>
         <ControlEnvio
           verificacion={verificacion}

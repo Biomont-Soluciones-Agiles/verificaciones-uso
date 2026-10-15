@@ -1,6 +1,7 @@
 import { Button, makeStyles, mergeClasses, Text, tokens } from '@fluentui/react-components';
 import { PersonAdd24Regular } from '@fluentui/react-icons';
 import { useState } from 'react';
+import { CambiarPrevistas } from '../../components/CambiarPrevistas';
 import { EstadoBadge } from '../../components/EstadoBadge';
 import { Tarjeta } from '../../components/Estructura';
 import { ProgressBar } from '../../components/ProgressBar';
@@ -65,6 +66,7 @@ export function ListaEntrevistas({ verificacion, entrevistas, seleccionadaId, on
   return (
     <Tarjeta>
       <ProgressBar completas={contarCompletas(entrevistas)} previstas={verificacion.entrevistasPrevistas} />
+      {editable && <CambiarPrevistas key={verificacion.entrevistasPrevistas} verificacion={verificacion} />}
       <ul className={styles.lista} aria-label="Entrevistas">
         {entrevistas.map((e) => (
           <li key={e.id}>

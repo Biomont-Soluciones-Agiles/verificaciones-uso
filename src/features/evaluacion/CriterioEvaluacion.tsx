@@ -1,7 +1,8 @@
-import { Badge, Button, Field, makeStyles, Text, Textarea, tokens } from '@fluentui/react-components';
+import { Badge, Button, makeStyles, Text, tokens } from '@fluentui/react-components';
 import { ArrowUndo16Regular } from '@fluentui/react-icons';
 import { aparecer, CURVA_SALIDA, DURACION, fundir, MENOS_MOVIMIENTO } from '../../app/movimiento';
 import { ScoreSlider } from '../../components/ScoreSlider';
+import { SustentoPlegable } from '../../components/SustentoPlegable';
 import { faltaSustento, formatearPuntaje, requiereSustento } from '../../domain/evaluacion';
 import type { PuntajeCriterio } from '../../domain/tipos';
 
@@ -68,21 +69,16 @@ export function CriterioEvaluacion({ puntaje, soloLectura, mostrarErrores, onCha
         )}
       </div>
       {exige && (
-        <Field
-          className={styles.aparece}
-          label={`Sustento del ajuste de ${puntaje.titulo}`}
-          required
+        <SustentoPlegable
+          etiqueta="Sustento del ajuste"
+          valor={puntaje.sustentoAjuste}
+          soloLectura={soloLectura}
+          obligatorio
+          forzarAbierto={mostrarErrores && falta}
           validationState={falta ? (mostrarErrores ? 'error' : 'warning') : 'none'}
           validationMessage={falta ? 'Obligatorio: el puntaje final difiere del sugerido.' : undefined}
-        >
-          <Textarea
-            rows={2}
-            resize="vertical"
-            value={puntaje.sustentoAjuste}
-            disabled={soloLectura}
-            onChange={(_, d) => onChange({ sustentoAjuste: d.value })}
-          />
-        </Field>
+          onChange={(sustentoAjuste) => onChange({ sustentoAjuste })}
+        />
       )}
     </div>
   );

@@ -20,8 +20,9 @@ import { useFuenteDatos } from '../../data/contexto';
 import { useDocumentos } from '../../data/hooks/useSoluciones';
 import { useVerificaciones } from '../../data/hooks/useVerificaciones';
 import { formatearFecha } from '../../domain/fechas';
-import { esVerificacionActiva } from '../../domain/flujo';
+import { estaEnviada, esVerificacionActiva } from '../../domain/flujo';
 import type { Solucion } from '../../domain/tipos';
+import { HistorialVerificaciones } from './HistorialVerificaciones';
 
 const useStyles = makeStyles({
   contenido: { display: 'flex', flexDirection: 'column', gap: tokens.spacingVerticalM },
@@ -91,6 +92,12 @@ export function DetalleSolucionDialog({ solucion, onCerrar }: DetalleSolucionDia
                 ))
               )}
             </section>
+            <HistorialVerificaciones
+              solucionId={solucion.id}
+              onAbrir={(v) =>
+                navigate(`/verificaciones/${v.id}/${estaEnviada(v.estado) ? 'revision' : 'programacion'}`)
+              }
+            />
           </DialogContent>
           <DialogActions>
             <Button onClick={onCerrar}>Volver al catálogo</Button>

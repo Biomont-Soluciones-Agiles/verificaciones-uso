@@ -9,7 +9,7 @@ web
 ## Users
 
 - **Responsable de la verificación** (equipo de Proyectos Ágiles / Sistema Integrado de Gestión de Laboratorios Biomont): programa la verificación de uso de una solución digital interna, coordina y registra las entrevistas con sus usuarios, puntúa los 4 criterios con sustento y la envía a aprobación. Necesita el rol de seguridad *VU Responsable*.
-- **Aprobadoras** (piloto y productiva): reciben la solicitud por Approvals en Teams u Outlook y responden Aprobar, Observar o Rechazar; pueden no abrir la app.
+- **Aprobadora de la verificación** (una sola): recibe la solicitud por Approvals en Teams u Outlook y responde Aprobar, Observar o Rechazar; puede abrir la app para revisar las entrevistas (solo lectura).
 - **Administrador**: mantiene los catálogos (soluciones, áreas, criterios y sus pesos, preguntas).
 - Los entrevistados no usan la app; el responsable registra sus respuestas.
 
@@ -29,7 +29,7 @@ Reemplaza un Excel por un proceso con reglas: la fórmula del índice, el umbral
 ## Operating Context
 
 - Se usa en **escritorio y en móvil**: en la oficina, a menudo durante una llamada de Teams mientras se entrevista, y también en planta o en campo desde el celular.
-- Flujo por etapas de cada verificación: Programación → Entrevistas → Evaluación → Revisión (consolidado y envío) → aprobación piloto → aprobación productiva.
+- Flujo por etapas de cada verificación: Programación → Entrevistas → Evaluación → Revisión (consolidado y envío) → aprobación. Cada etapa exige completar la anterior.
 - Avisos fuera de la app: correos de alerta anticipada y de vencimiento, solicitudes de Approvals y tarjetas de Teams (Power Automate).
 - Las verificaciones se repiten periódicamente (por defecto cada 6 meses por solución).
 

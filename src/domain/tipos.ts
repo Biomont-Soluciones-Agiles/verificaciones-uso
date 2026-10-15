@@ -235,8 +235,8 @@ export interface Verificacion {
   sustentoGlobal: string;
   oportunidadesConsolidadas: string;
   recomendacionesConsolidadas: string;
+  /** Aprobadora de la verificación (único nivel, RN-08; columna `vu_aprobadorpilotoid`). */
   aprobadorPiloto: Persona | null;
-  aprobadorProductivo: Persona | null;
   notificarAlFinalizar: boolean;
   fechaEnvio: FechaHoraISO | null;
   fechaAprobacion: FechaHoraISO | null;
@@ -312,6 +312,25 @@ export interface Aprobacion {
   fechaSolicitud: FechaHoraISO;
   fechaDecision: FechaHoraISO | null;
   approvalId: string | null;
+}
+
+/**
+ * Cambio del puntaje de una respuesta ya registrada (`vu_historialpuntaje`). Los cambios seguidos
+ * de la misma persona se agrupan en una sola fila: anterior → último valor.
+ */
+export interface CambioPuntaje {
+  id: Id;
+  /** Copia del texto de la pregunta. */
+  titulo: string;
+  respuestaId: Id;
+  verificacionId: Id;
+  /** `null` = sin puntaje (vacío o "No aplica"). */
+  puntajeAnterior: number | null;
+  puntajeNuevo: number | null;
+  /** Quién hizo el cambio (`createdby`). */
+  autor: Persona | null;
+  /** Último ajuste del cambio (`modifiedon`). */
+  fecha: FechaHoraISO;
 }
 
 export interface Notificacion {

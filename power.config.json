@@ -83,6 +83,11 @@
           "entitySetName": "systemusers",
           "logicalName": "systemuser",
           "isHidden": false
+        },
+        "historialdepuntajes": {
+          "entitySetName": "vu_historialpuntajes",
+          "logicalName": "vu_historialpuntaje",
+          "isHidden": false
         }
       },
       "environmentVariableName": ""

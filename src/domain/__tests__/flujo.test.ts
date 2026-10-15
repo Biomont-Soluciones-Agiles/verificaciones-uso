@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
+  avancePorCriterio,
   etapasCompletadas,
+  etapasDisponibles,
   estadoSolucion,
   progreso,
   puedeFinalizar,
@@ -42,7 +44,8 @@ describe('transiciones de estado (§2.4)', () => {
     ['En evaluación', 'En revisión'],
     ['En revisión', 'Observada'],
     ['Observada', 'En evaluación'],
-    ['En revisión', 'Aprobada piloto'],
+    ['En revisión', 'Aprobada'],
+    ['En evaluación', 'En levantamiento'],
     ['Aprobada piloto', 'Aprobada'],
     ['Borrador', 'Cancelada'],
     ['Programada', 'Cancelada'],
@@ -52,7 +55,7 @@ describe('transiciones de estado (§2.4)', () => {
     ['Programada', 'En revisión'],
     ['En levantamiento', 'En revisión'],
     ['En levantamiento', 'Cancelada'],
-    ['En revisión', 'Aprobada'],
+    ['En revisión', 'Aprobada piloto'],
     ['Aprobada', 'Borrador'],
     ['Cancelada', 'Programada'],
     ['Observada', 'En revisión'],
@@ -74,8 +77,8 @@ describe('transiciones de estado (§2.4)', () => {
     expect(puedeTransicionarDesdeApp('En evaluación', 'En revisión')).toBe(true);
     expect(puedeTransicionarDesdeApp('Observada', 'En evaluación')).toBe(true);
     expect(puedeTransicionarDesdeApp('En revisión', 'Observada')).toBe(false);
-    expect(puedeTransicionarDesdeApp('En revisión', 'Aprobada piloto')).toBe(false);
-    expect(puedeTransicionarDesdeApp('Aprobada piloto', 'Aprobada')).toBe(false);
+    expect(puedeTransicionarDesdeApp('En revisión', 'Aprobada')).toBe(false);
+    expect(puedeTransicionarDesdeApp('En evaluación', 'En levantamiento')).toBe(true);
   });
 });
 
@@ -220,5 +223,61 @@ describe('etapasCompletadas', () => {
       true,
       true,
     ]);
+  });
+});
+
+describe('etapasDisponibles (cada etapa exige la anterior)', () => {
+  const v = (estado: EstadoVerificacion, completas: number, previstas: number, indice: number | null = null) => ({
+    estado,
+    entrevistasCompletas: completas,
+    entrevistasPrevistas: previstas,
+    indiceAdopcion: indice,
+  });
+
+  it('borrador: solo programación', () => {
+    expect(etapasDisponibles(v('Borrador', 0, 4))).toEqual([true, false, false, false, false]);
+  });
+
+  it('programada o en levantamiento incompleto: hasta entrevistas', () => {
+    expect(etapasDisponibles(v('Programada', 0, 4))).toEqual([true, true, false, false, false]);
+    expect(etapasDisponibles(v('En levantamiento', 2, 4, 72))).toEqual([true, true, false, false, false]);
+  });
+
+  it('levantamiento completo sin evaluación guardada: hasta evaluación', () => {
+    expect(etapasDisponibles(v('En evaluación', 4, 4))).toEqual([true, true, true, false, false]);
+  });
+
+  it('evaluación guardada: todas', () => {
+    expect(etapasDisponibles(v('En evaluación', 4, 4, 72))).toEqual([true, true, true, true, true]);
+    expect(etapasDisponibles(v('Observada', 4, 4, 72))).toEqual([true, true, true, true, true]);
+  });
+
+  it('enviada o aprobada (también las históricas sin entrevistas): todas', () => {
+    expect(etapasDisponibles(v('En revisión', 4, 4, 80))).toEqual([true, true, true, true, true]);
+    expect(etapasDisponibles(v('Aprobada', 0, 0, 87))).toEqual([true, true, true, true, true]);
+  });
+});
+
+describe('avancePorCriterio', () => {
+  const r = (criterioId: string, puntaje: number | null, origen: 'Definida' | 'Surgida en reunión' = 'Definida', respuestaTexto = '') => ({
+    criterioId,
+    puntaje,
+    origen,
+    respuestaTexto,
+  });
+
+  it('cuenta las definidas atendidas por criterio; "No aplica" cuenta como atendida', () => {
+    const avance = avancePorCriterio(
+      ['f', 'c'],
+      [r('f', 8), r('f', null), r('c', 7), r('c', null, 'Definida', 'No aplica'), r('c', null, 'Surgida en reunión')],
+    );
+    expect(avance).toEqual([
+      { criterioId: 'f', respondidas: 1, total: 2, completo: false },
+      { criterioId: 'c', respondidas: 2, total: 2, completo: true },
+    ]);
+  });
+
+  it('un criterio sin preguntas definidas no figura como completo', () => {
+    expect(avancePorCriterio(['x'], [])[0]).toEqual({ criterioId: 'x', respondidas: 0, total: 0, completo: false });
   });
 });

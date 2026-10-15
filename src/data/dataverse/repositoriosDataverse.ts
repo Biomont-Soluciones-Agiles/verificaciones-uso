@@ -9,6 +9,7 @@ import { Vu_criteriosService } from '../../generated/services/Vu_criteriosServic
 import { Vu_documentosolucionsService } from '../../generated/services/Vu_documentosolucionsService';
 import { Vu_entrevistasService } from '../../generated/services/Vu_entrevistasService';
 import { Vu_evidenciasService } from '../../generated/services/Vu_evidenciasService';
+import { Vu_historialpuntajesService } from '../../generated/services/Vu_historialpuntajesService';
 import { Vu_opcionrespuestasService } from '../../generated/services/Vu_opcionrespuestasService';
 import { Vu_preguntasService } from '../../generated/services/Vu_preguntasService';
 import { Vu_puntajecriteriosService } from '../../generated/services/Vu_puntajecriteriosService';
@@ -21,6 +22,8 @@ import type { Cambios, Repositorios } from '../repositorios';
 import {
   aprobacionDesdeFila,
   areaDesdeFila,
+  cambioPuntajeARegistro,
+  cambioPuntajeDesdeFila,
   criterioARegistro,
   criterioDesdeFila,
   documentoARegistro,
@@ -329,6 +332,15 @@ export function crearRepositoriosDataverse(): Repositorios {
     aprobacionDesdeFila,
   );
 
+  const historial = tabla(
+    'el cambio de puntaje',
+    CONJUNTOS.historialPuntaje,
+    'vu_historialpuntajeid',
+    Vu_historialpuntajesService,
+    SELECT.historialPuntaje,
+    cambioPuntajeDesdeFila,
+  );
+
   // --- Personas en las filas leídas -----------------------------------------
   const conPersonasSolucion = async <T extends { responsable: Persona | null } | null>(x: T): Promise<T> => {
     if (x) await personas.completar([x.responsable]);
@@ -338,9 +350,9 @@ export function crearRepositoriosDataverse(): Repositorios {
     await personas.completar(xs.map((x) => x.responsable));
     return xs;
   };
-  type ConPersonasVerificacion = { responsable: Persona | null; aprobadorPiloto: Persona | null; aprobadorProductivo: Persona | null };
+  type ConPersonasVerificacion = { responsable: Persona | null; aprobadorPiloto: Persona | null };
   const conPersonasVerificaciones = async <T extends ConPersonasVerificacion>(xs: T[]): Promise<T[]> => {
-    await personas.completar(xs.flatMap((x) => [x.responsable, x.aprobadorPiloto, x.aprobadorProductivo]));
+    await personas.completar(xs.flatMap((x) => [x.responsable, x.aprobadorPiloto]));
     return xs;
   };
   const conPersonasVerificacion = async <T extends ConPersonasVerificacion | null>(x: T): Promise<T> => {
@@ -353,7 +365,6 @@ export function crearRepositoriosDataverse(): Repositorios {
     ...c,
     responsable: await personas.conId(c.responsable),
     aprobadorPiloto: await personas.conId(c.aprobadorPiloto),
-    aprobadorProductivo: await personas.conId(c.aprobadorProductivo),
   });
   /** El entrevistado puede no ser usuario del entorno: solo se intenta resolver su id. */
   const resolverEntrevistado = async <C extends { entrevistado?: Persona | null }>(c: C): Promise<C> => {
@@ -487,6 +498,16 @@ export function crearRepositoriosDataverse(): Repositorios {
         await personas.completar(lista.map((a) => a.aprobador));
         return lista;
       },
+    },
+
+    historialPuntajes: {
+      listarPorVerificacion: async (verificacionId) => {
+        const lista = await historial.listar({ filter: porVerificacion(verificacionId), orderBy: ['modifiedon desc'] });
+        await personas.completar(lista.map((c) => c.autor));
+        return lista;
+      },
+      crear: (datos) => historial.crear(cambioPuntajeARegistro(datos)),
+      actualizar: (id, cambios) => historial.actualizar(id, cambioPuntajeARegistro(cambios)),
     },
 
     directorio: {

@@ -30,7 +30,6 @@ export function RevisionPage() {
         recomendacionesConsolidadas:
           verificacion.recomendacionesConsolidadas || consolidarTextos(completas.map((e) => e.recomendaciones)),
         aprobadorPiloto: verificacion.aprobadorPiloto,
-        aprobadorProductivo: verificacion.aprobadorProductivo,
         notificarAlFinalizar: true,
       }}
     />

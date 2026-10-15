@@ -79,7 +79,6 @@ export const SELECT = {
     'vu_oportunidadesconsolidadas',
     'vu_recomendacionesconsolidadas',
     '_vu_aprobadorpilotoid_value',
-    '_vu_aprobadorproductivoid_value',
     'vu_notificaralfinalizar',
     'vu_fechaenvio',
     'vu_fechaaprobacion',
@@ -144,6 +143,16 @@ export const SELECT = {
     'vu_fechasolicitud',
     'vu_fechadecision',
     'vu_approvalid',
+  ],
+  historialPuntaje: [
+    'vu_historialpuntajeid',
+    'vu_name',
+    '_vu_respuestaid_value',
+    '_vu_verificacionid_value',
+    'vu_puntajeanterior',
+    'vu_puntajenuevo',
+    '_createdby_value',
+    'modifiedon',
   ],
   usuario: ['systemuserid', 'fullname', 'internalemailaddress', 'domainname'],
 };
@@ -291,6 +300,10 @@ async function main() {
     await tabla('Aprobaciones', 'vu_aprobacions', SELECT.aprobacion, {
       filter: porVerificacion(id),
       orderBy: ['vu_fechasolicitud asc'],
+    });
+    await tabla('Historial de puntajes', 'vu_historialpuntajes', SELECT.historialPuntaje, {
+      filter: porVerificacion(id),
+      orderBy: ['modifiedon desc'],
     });
 
     console.log('\nPersonas (systemuser)');

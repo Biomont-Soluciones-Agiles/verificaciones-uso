@@ -15,11 +15,12 @@ import { MENSAJES, useAvisos } from '../../components/avisos';
 import { useConfirmar } from '../../components/Confirmacion';
 import { EstadoBadge } from '../../components/EstadoBadge';
 import { Acciones, Campos, DosColumnas, Encabezado, ListaMotivos, Pila, Tarjeta } from '../../components/Estructura';
+import { CambiarPrevistas } from '../../components/CambiarPrevistas';
 import { iconoOcupado } from '../../components/iconoOcupado';
 import { PersonaPicker } from '../../components/PersonaPicker';
 import { useCancelarVerificacion, useProgramarVerificacion, useVerificaciones } from '../../data/hooks/useVerificaciones';
 import { calcularFechaAlerta, compararFechas, esFechaValida, formatearFecha, hoyISO } from '../../domain/fechas';
-import { esVerificacionActiva, validarProgramacion } from '../../domain/flujo';
+import { esEditableDesdeApp, esVerificacionActiva, validarProgramacion } from '../../domain/flujo';
 import {
   DIAS_ANTICIPACION,
   MODALIDADES,
@@ -153,6 +154,7 @@ export function FormularioProgramacion({ verificacion, soluciones, inicial }: Fo
         <MessageBar intent="info">
           <MessageBarBody>
             La programación ya no se puede modificar porque la verificación está en estado "{estado}".
+            {esEditableDesdeApp(estado) && ' Aún puedes cambiar la cantidad de entrevistas previstas.'}
           </MessageBarBody>
         </MessageBar>
       )}
@@ -203,16 +205,21 @@ export function FormularioProgramacion({ verificacion, soluciones, inicial }: Fo
                 ))}
               </Select>
             </Field>
-            <Field label="Entrevistas previstas" required hint="Entre 1 y 20">
-              <Input
-                type="number"
-                min={1}
-                max={20}
-                value={String(valores.entrevistasPrevistas)}
-                disabled={!editable}
-                onChange={(_, d) => cambiar('entrevistasPrevistas', Number(d.value))}
-              />
-            </Field>
+            {editable || !verificacion || !esEditableDesdeApp(estado) ? (
+              <Field label="Entrevistas previstas" required hint="Entre 1 y 20">
+                <Input
+                  type="number"
+                  min={1}
+                  max={20}
+                  value={String(valores.entrevistasPrevistas)}
+                  disabled={!editable}
+                  onChange={(_, d) => cambiar('entrevistasPrevistas', Number(d.value))}
+                />
+              </Field>
+            ) : (
+              // Ya en levantamiento o evaluación la programación queda fija, salvo la cantidad de entrevistas.
+              <CambiarPrevistas key={verificacion.entrevistasPrevistas} verificacion={verificacion} />
+            )}
             <Field label="Modalidad preferida">
               <Select
                 value={valores.modalidad}

@@ -21,10 +21,13 @@ export const TRANSICIONES: Readonly<Record<EstadoVerificacion, readonly EstadoVe
   Borrador: ['Programada', 'Cancelada'],
   Programada: ['En levantamiento', 'Cancelada'],
   'En levantamiento': ['En evaluación'],
-  'En evaluación': ['En revisión'],
-  'En revisión': ['Observada', 'Aprobada piloto'],
+  // Vuelve a levantamiento si se aumentan las entrevistas previstas después de completarlas.
+  'En evaluación': ['En levantamiento', 'En revisión'],
+  // RN-08: un solo nivel de aprobación; la decisión lleva directamente a Aprobada u Observada.
+  'En revisión': ['Observada', 'Aprobada'],
   Observada: ['En evaluación'],
-  'Aprobada piloto': ['Aprobada'],
+  // Solo histórico (aprobación en dos niveles, ya retirada): ninguna verificación nueva llega aquí.
+  'Aprobada piloto': ['Aprobada', 'Observada'],
   Aprobada: [],
   Cancelada: [],
 };
@@ -81,7 +84,7 @@ export function puedeFinalizar(v: Pick<Verificacion, 'entrevistasCompletas' | 'e
 
 /**
  * Motivos que impiden "Finalizar y enviar". Lista vacía = se puede enviar.
- * Revalida RN-07, RN-05, la aprobadora del piloto y el estado.
+ * Revalida RN-07, RN-05, la aprobadora de la verificación y el estado.
  */
 export function validarEnvio(
   v: Pick<Verificacion, 'estado' | 'entrevistasCompletas' | 'entrevistasPrevistas' | 'aprobadorPiloto'>,
@@ -100,7 +103,7 @@ export function validarEnvio(
   for (const p of puntajes) {
     if (faltaSustento(p)) errores.push(`Falta el sustento del ajuste de ${p.titulo}.`);
   }
-  if (!v.aprobadorPiloto) errores.push('Indica la aprobadora del piloto.');
+  if (!v.aprobadorPiloto) errores.push('Indica la aprobadora de la verificación.');
   return errores;
 }
 
@@ -148,6 +151,39 @@ export function validarRespuestasDefinidas(
   return errores;
 }
 
+/** Texto con el que se guarda una pregunta no obligatoria marcada como "No aplica" (sin puntaje). */
+export const NO_APLICA = 'No aplica';
+
+/** Respuesta ya atendida: tiene puntaje o es una pregunta opcional marcada "No aplica". */
+export function estaRespondida(r: Pick<Respuesta, 'puntaje' | 'respuestaTexto'>): boolean {
+  return r.puntaje !== null || r.respuestaTexto === NO_APLICA;
+}
+
+export interface AvanceCriterio {
+  criterioId: Id;
+  /** Preguntas definidas del criterio ya atendidas (con puntaje o "No aplica"). */
+  respondidas: number;
+  /** Preguntas definidas del criterio (las surgidas en la reunión no cuentan). */
+  total: number;
+  /** Todas sus preguntas definidas están atendidas. */
+  completo: boolean;
+}
+
+/**
+ * Avance de una entrevista por criterio, sobre sus preguntas definidas. Solo informa: completar
+ * la entrevista sigue validando todas las preguntas obligatorias (`validarRespuestasDefinidas`).
+ */
+export function avancePorCriterio(
+  criterioIds: readonly Id[],
+  respuestas: readonly Pick<Respuesta, 'origen' | 'puntaje' | 'respuestaTexto' | 'criterioId'>[],
+): AvanceCriterio[] {
+  return criterioIds.map((criterioId) => {
+    const definidas = respuestas.filter((r) => r.origen === 'Definida' && r.criterioId === criterioId);
+    const respondidas = definidas.filter(estaRespondida).length;
+    return { criterioId, respondidas, total: definidas.length, completo: definidas.length > 0 && respondidas === definidas.length };
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Estado derivado de la solución (§2.5)
 // ---------------------------------------------------------------------------
@@ -186,11 +222,16 @@ export function estadoSolucion(
 export const ETAPAS = ['Programación', 'Entrevistas', 'Evaluación', 'Consolidación', 'Aprobación'] as const;
 export type Etapa = (typeof ETAPAS)[number];
 
+/** Ya se envió a revisión (la etapa de evaluación quedó cerrada). */
+export function estaEnviada(estado: EstadoVerificacion): boolean {
+  return ['En revisión', 'Aprobada piloto', 'Aprobada'].includes(estado);
+}
+
 /** Qué etapas están terminadas según el estado y el avance de la verificación. */
 export function etapasCompletadas(
   v: Pick<Verificacion, 'estado' | 'entrevistasCompletas' | 'entrevistasPrevistas'>,
 ): boolean[] {
-  const enviada = ['En revisión', 'Aprobada piloto', 'Aprobada'].includes(v.estado);
+  const enviada = estaEnviada(v.estado);
   return [
     v.estado !== 'Borrador' && v.estado !== 'Cancelada',
     enviada || puedeFinalizar(v),
@@ -198,4 +239,26 @@ export function etapasCompletadas(
     enviada,
     v.estado === 'Aprobada',
   ];
+}
+
+/**
+ * Qué etapas se pueden abrir: cada una exige haber completado la anterior.
+ * Entrevistas, una vez programada; Evaluación, con el levantamiento completo (RN-07);
+ * Consolidación y Aprobación, con la evaluación guardada (índice calculado).
+ */
+export function etapasDisponibles(
+  v: Pick<Verificacion, 'estado' | 'entrevistasCompletas' | 'entrevistasPrevistas' | 'indiceAdopcion'>,
+): boolean[] {
+  const enviada = estaEnviada(v.estado);
+  const programada = v.estado !== 'Borrador' && v.estado !== 'Cancelada';
+  const evaluacion = enviada || (programada && puedeFinalizar(v));
+  const revision = enviada || (evaluacion && v.indiceAdopcion !== null);
+  return [true, programada, evaluacion, revision, revision];
+}
+
+/** Por qué una etapa aún no se puede abrir (texto para la ayuda del stepper). */
+export function motivoEtapaBloqueada(indice: number): string {
+  if (indice === 1) return 'Programa la verificación primero.';
+  if (indice === 2) return 'Completa todas las entrevistas previstas primero.';
+  return 'Guarda la evaluación primero.';
 }
