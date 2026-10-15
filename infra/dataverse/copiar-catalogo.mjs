@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-// Copia el catálogo de soluciones (vu_area + vu_solucion) de un entorno a otro. Idempotente:
-// busca por vu_name; crea lo que falta y actualiza lo que existe.
+// Copia el catálogo (vu_area + vu_solucion) y la configuración de la evaluación (vu_criterio,
+// vu_pregunta, vu_opcionrespuesta) de un entorno a otro. Idempotente: busca por vu_name (y por su
+// padre en preguntas y opciones); crea lo que falta y actualiza lo que existe.
 //
 // Uso:
 //   node infra/dataverse/copiar-catalogo.mjs --destino https://orgXXXX.crm2.dynamics.com [--origen URL] [--dry-run]
@@ -11,6 +12,8 @@
 // - Soluciones: todas las columnas de vu_solucion en schema.json. El responsable se busca por correo
 //   en el destino (los systemuserid cambian entre entornos); si no existe, queda vacío.
 //   vu_ultimaverificacionid no se copia: las verificaciones no viajan con el catálogo.
+// - Configuración: criterios (peso, orden, activo), solo las preguntas activas (criterio, tipo,
+//   orden, obligatoria) y sus opciones de respuesta.
 // - El destino debe tener la solución VerificacionUso importada (verify.mjs --org <destino>).
 import { schema, createClient, log, warn, q } from './lib.mjs';
 
@@ -149,12 +152,73 @@ async function copiarSoluciones({ idDestino, nombrePorId }) {
   return soluciones.length;
 }
 
+// ---------------------------------------------------------------- configuración de la evaluación
+async function copiarConfiguracion() {
+  const criterios = await todas(origen, `${set('vu_criterio')}?$select=vu_criterioid,vu_name,vu_peso,vu_orden,statecode`);
+  const criteriosDestino = new Map(
+    (await todas(destino, `${set('vu_criterio')}?$select=vu_criterioid,vu_name`)).map((c) => [c.vu_name, c.vu_criterioid]),
+  );
+  const criterioDestino = new Map(); // id origen -> id destino
+  for (const c of criterios) {
+    const cuerpo = { vu_name: c.vu_name, vu_peso: c.vu_peso, vu_orden: c.vu_orden };
+    const previo = criteriosDestino.get(c.vu_name);
+    const id = previo ?? (await crear(destino, 'vu_criterio', cuerpo, `criterio "${c.vu_name}" (${c.vu_peso})`));
+    if (previo) await actualizar(destino, 'vu_criterio', previo, cuerpo, `criterio "${c.vu_name}" (${c.vu_peso})`);
+    if (!DRY) await destino.request('PATCH', `${set('vu_criterio')}(${id})`, c.statecode === 1 ? { statecode: 1, statuscode: 2 } : { statecode: 0, statuscode: 1 });
+    criterioDestino.set(c.vu_criterioid, id);
+  }
+
+  const preguntas = await todas(
+    origen,
+    `${set('vu_pregunta')}?$select=vu_preguntaid,vu_name,_vu_criterioid_value,vu_tiporespuesta,vu_orden,vu_obligatoria&$filter=statecode eq 0`,
+  );
+  const preguntasDestino = await todas(destino, `${set('vu_pregunta')}?$select=vu_preguntaid,vu_name,_vu_criterioid_value`);
+  for (const pr of preguntas) {
+    const criterio = criterioDestino.get(pr._vu_criterioid_value);
+    const cuerpo = {
+      vu_name: pr.vu_name,
+      vu_tiporespuesta: pr.vu_tiporespuesta,
+      vu_orden: pr.vu_orden,
+      vu_obligatoria: pr.vu_obligatoria ?? true,
+      ...bind('vu_pregunta', 'vu_criterioid', set('vu_criterio'), criterio),
+    };
+    const previa = preguntasDestino.find((x) => x.vu_name === pr.vu_name && x._vu_criterioid_value === criterio);
+    const que = `pregunta ${pr.vu_orden}${pr.vu_obligatoria === false ? ' (opcional)' : ''}: "${pr.vu_name}"`;
+    const id = previa?.vu_preguntaid ?? (await crear(destino, 'vu_pregunta', cuerpo, que));
+    if (previa) await actualizar(destino, 'vu_pregunta', previa.vu_preguntaid, cuerpo, que);
+
+    const opciones = await todas(
+      origen,
+      `${set('vu_opcionrespuesta')}?$select=vu_name,vu_puntajesugerido,vu_orden&$filter=_vu_preguntaid_value eq ${pr.vu_preguntaid}`,
+    );
+    const opcionesDestino = String(id).startsWith('dry-')
+      ? []
+      : await todas(destino, `${set('vu_opcionrespuesta')}?$select=vu_opcionrespuestaid,vu_name&$filter=_vu_preguntaid_value eq ${id}`);
+    for (const o of opciones) {
+      const cuerpoOpcion = {
+        vu_name: o.vu_name,
+        vu_puntajesugerido: o.vu_puntajesugerido,
+        vu_orden: o.vu_orden,
+        ...bind('vu_opcionrespuesta', 'vu_preguntaid', set('vu_pregunta'), id),
+      };
+      const previaOpcion = opcionesDestino.find((x) => x.vu_name === o.vu_name);
+      if (previaOpcion) await actualizar(destino, 'vu_opcionrespuesta', previaOpcion.vu_opcionrespuestaid, cuerpoOpcion, `  opción "${o.vu_name}"`);
+      else await crear(destino, 'vu_opcionrespuesta', cuerpoOpcion, `  opción "${o.vu_name}"`);
+    }
+  }
+  return { criterios: criterios.length, preguntas: preguntas.length };
+}
+
 // ---------------------------------------------------------------- main
 (async () => {
   log(`Origen: ${ORIGEN} → destino: ${DESTINO}${DRY ? '  (DRY-RUN)' : ''}`);
   const areas = await copiarAreas();
   const total = await copiarSoluciones(areas);
-  log(`Resumen: ${total} soluciones · creados ${stats.creados} · actualizados ${stats.actualizados} · áreas que ya existían ${stats.sinCambios}`);
+  const config = await copiarConfiguracion();
+  log(
+    `Resumen: ${total} soluciones · ${config.criterios} criterios · ${config.preguntas} preguntas activas · ` +
+      `creados ${stats.creados} · actualizados ${stats.actualizados} · áreas que ya existían ${stats.sinCambios}`,
+  );
 })().catch((e) => {
   console.error('\nERROR:', e.message);
   if (e.body?.error) console.error(JSON.stringify(e.body.error, null, 2).slice(0, 2000));
